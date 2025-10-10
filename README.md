@@ -176,6 +176,28 @@ Assets（示意用）：
 - Splash 動畫：`assets/images/Ghote_opening_animation.mp4`
   - 可將產品簡介 GIF/截圖放在 `assets/images/`，並在此 README 以連結的方式展示
 
+## Screenshots / 產品截圖
+
+<p align="center">
+  <img src="assets/images/Ghote_icon_black_background.png" alt="App Icon" width="120" />
+  <img src="assets/images/Ghote_icon_white_background.png" alt="App Icon White" width="120" />
+</p>
+
+<p align="center">
+  <em>App Icons - 深色與淺色版本</em>
+</p>
+
+<p align="center">
+  <video width="320" controls>
+    <source src="assets/images/Ghote_opening_animation.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+</p>
+
+<p align="center">
+  <em>Splash Animation - 開場動畫</em>
+</p>
+
 English
 - Ghote is a lightweight tool for learning and knowledge organization.
 - Project-based progress tracking with search and filters.
