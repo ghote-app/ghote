@@ -1,0 +1,17 @@
+enhancement:
+  - 'lib/**'
+  - 'assets/**'
+
+bug:
+  - 'lib/**'
+  - 'android/**'
+  - 'ios/**'
+
+docs:
+  - 'README.md'
+  - 'CONTRIBUTING.md'
+  - '.github/**'
+
+ci:
+  - '.github/workflows/**'
+
