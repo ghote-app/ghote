@@ -1,20 +1,21 @@
-name: PR Labeler
+# Temporarily disabled due to configuration issues
+# name: PR Labeler
 
-on:
-  pull_request_target:
-    types: [opened, synchronize]
+# on:
+#   pull_request_target:
+#     types: [opened, synchronize]
 
-jobs:
-  label:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+# jobs:
+#   label:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0
       
-      - uses: actions/labeler@v5
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          configuration-path: .github/labeler.yml
+#       - uses: actions/labeler@v5
+#         with:
+#           repo-token: ${{ secrets.GITHUB_TOKEN }}
+#           configuration-path: .github/labeler.yml
 
