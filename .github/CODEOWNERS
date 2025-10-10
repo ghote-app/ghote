@@ -1,6 +1,6 @@
-# Default owners
-* @ghote-app
+# Default owners（多位 reviewer 可並列）
+* @ghote-app @itsYoga
 
-# Optional: specific paths（可依需要擴充）
-# lib/ @ghote-app
+# Optional: specific paths（可依需要擴充例）
+# lib/ @ghote-app @itsYoga
 
