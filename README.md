@@ -154,7 +154,7 @@ lib/
 - 保留 `analysis_options.yaml` 中的規則，確保 lints 為 0
 
 ### Branch protection（建議）
-- 保護 `main`：只允許 PR 合併、至少 1 位 Reviewer 通過、CI 綠燈
+- 保護 `main`：只允許 PR 合併、CI 綠燈（無需 reviewer 批准）
 - 禁止直接 push 到 `main`
 - 啟用必須更新為最新 `main` 後才能合併（避免舊基礎合併）
 
@@ -187,20 +187,18 @@ lib/
    ```
 3. 建立 Pull Request：目標 `ghote-app/ghote` 的 `main`
 4. 等待 CI 綠燈（Actions 自動跑 analyze/build）
-5. 回應 Review 意見 → 修正 → push 更新 PR
+5. 等待 CI 檢查通過 → 自動合併
 
-### Review 與合併（ghote-app / Reviewer）
-- 在 PR 介面檢查：
-  - 內容與需求一致、沒有無關檔案
-  - CI 綠燈（Analyze/Build 皆成功）
-  - 程式風格遵循本專案規範（analysis_options、Responsive 原則）
-- Approve 後合併策略：
-  - 建議使用「Squash and merge」維持乾淨歷史
-  - 合併後刪除分支
-- 若 PR 不合併：Close PR 並簡述原因
+### 自動合併流程
+- CI 檢查通過後自動合併：
+  - Analyze 檢查通過
+  - Build 檢查通過（Android/iOS）
+  - 無需 reviewer 批准
+- 合併後自動刪除功能分支
+- 保持線性提交歷史
 
-### 其他成員如何幫忙 Review
-- 在 PR 頁面留言意見或使用 Review 功能（Comment/Approve/Request changes）
+### 團隊協作（可選）
+- 在 PR 頁面留言意見或建議（非強制）
 - 本地試跑（可選）：
   ```bash
   git fetch origin pull/<PR_NUMBER>/head:pr/<PR_NUMBER>
@@ -277,8 +275,8 @@ English
 
 ## Recent Updates / 最近更新
 
-### 🚀 **2024-10-11: 團隊協作環境完善**
-- ✅ **分支保護規則**: 啟用 main 分支保護，要求 PR 審查和 CI 檢查
+### 🚀 **2025-10-11: 團隊協作環境完善**
+- ✅ **分支保護規則**: 啟用 main 分支保護，要求 PR 和 CI 檢查
 - ✅ **Auto-merge 功能**: 當 CI 通過時自動合併 PR（無需 reviewer 批准）
 - ✅ **自動分支清理**: 合併後自動刪除功能分支
 - ✅ **CODEOWNERS**: 自動指派 @ghote-app @itsYoga @tina6662 @matthew930823 @wonogfsocry 為 reviewer
@@ -287,7 +285,7 @@ English
 - ✅ **自動標籤**: 根據檔案變更自動為 PR 添加標籤
 - ✅ **Release 工作流程**: 標籤驅動的自動 APK 生成
 
-### 🔧 **2024-10-11: 程式碼重構**
+### 🔧 **2025-10-11: 程式碼重構**
 - ✅ **響應式佈局**: 移除平台特定尺寸，改用 MediaQuery 相對尺寸
 - ✅ **移除 PlatformUtils**: 簡化程式碼，統一跨平台體驗
 - ✅ **移除 liquid_glass_renderer**: 解決 Android 渲染問題，改用標準 Flutter 組件
