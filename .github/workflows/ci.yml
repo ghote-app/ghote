@@ -19,11 +19,16 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Read FVM version
+        id: fvm
+        run: |
+          ver=$(jq -r '.flutterSdkVersion' .fvm/fvm_config.json)
+          echo "version=$ver" >> $GITHUB_OUTPUT
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          # Pin exact version to avoid channel resolution issues on CI
-          flutter-version: '3.24.0'
+          flutter-version: '${{ steps.fvm.outputs.version }}'
           cache: true
 
       - name: Install dependencies
@@ -50,10 +55,16 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Read FVM version
+        id: fvm
+        run: |
+          ver=$(jq -r '.flutterSdkVersion' .fvm/fvm_config.json)
+          echo "version=$ver" >> $GITHUB_OUTPUT
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
+          flutter-version: '${{ steps.fvm.outputs.version }}'
           cache: true
 
       - name: Install dependencies
