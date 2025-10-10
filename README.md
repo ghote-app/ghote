@@ -279,7 +279,7 @@ English
 
 ### 🚀 **2024-10-11: 團隊協作環境完善**
 - ✅ **分支保護規則**: 啟用 main 分支保護，要求 PR 審查和 CI 檢查
-- ✅ **Auto-merge 功能**: 當 CI 通過且 reviewer 批准時自動合併 PR
+- ✅ **Auto-merge 功能**: 當 CI 通過時自動合併 PR（無需 reviewer 批准）
 - ✅ **自動分支清理**: 合併後自動刪除功能分支
 - ✅ **CODEOWNERS**: 自動指派 @ghote-app @itsYoga @tina6662 @matthew930823 @wonogfsocry 為 reviewer
 - ✅ **PR 模板**: 提供中英雙語 PR 模板和合併指南
@@ -302,7 +302,7 @@ English
 5. Submit a pull request
 
 ### 協作流程 / Collaboration Workflow
-- **建立 PR** → 自動指派 reviewer → **CI 檢查** → **Review 批准** → **自動合併**
+- **建立 PR** → **CI 檢查** → **自動合併**（無需 reviewer 批准）
 - 詳細流程請參考 [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## License
