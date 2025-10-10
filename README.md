@@ -136,13 +136,6 @@ lib/
 
 - `google_fonts` - Custom typography
 
-## Changelog
-
-### 2025-10-09
-- Dashboard: 以 MediaQuery 改寫 `SliverAppBar` 的 `expandedHeight`，由固定值改為 `screenHeight * 0.25`，改善在多尺寸裝置的表現。
-- Dashboard: 將專案清單 Grid 由 `childAspectRatio` 改為 `mainAxisExtent`，以螢幕高度推導卡片高度並加上合理夾限，避免在不同寬高比裝置上溢位或留白不均。
-- Dashboard: 去除 `SliverAppBar.bottom` 與搜尋列底部間距的平臺分支，改為一致的相對/固定安全值，避免 Android/iOS 之間版面偏移。
- - 全面移除 `liquid_glass_renderer`，改以純 Flutter 實作（避免 Android 上渲染異常）。
 
 ## Team workflow
 
