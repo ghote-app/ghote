@@ -188,14 +188,18 @@ Assets（示意用）：
 </p>
 
 <p align="center">
-  <video width="320" controls>
-    <source src="assets/images/Ghote_opening_animation.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
+  <img src="assets/images/Ghote_icon_black_background.png" alt="Splash Preview" width="200" />
 </p>
 
 <p align="center">
-  <em>Splash Animation - 開場動畫</em>
+  <em>Splash Animation - 開場動畫</em><br>
+  <small>📱 完整動畫請下載 App 體驗</small>
+</p>
+
+<p align="center">
+  <a href="assets/images/Ghote_opening_animation.mp4" download>
+    <strong>📥 下載動畫預覽 (MP4)</strong>
+  </a>
 </p>
 
 English
