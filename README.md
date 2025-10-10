@@ -275,6 +275,24 @@ English
 ### Network Issues
 - Google Fonts 需要網路；離線時請改用本地字型
 
+## Recent Updates / 最近更新
+
+### 🚀 **2024-10-11: 團隊協作環境完善**
+- ✅ **分支保護規則**: 啟用 main 分支保護，要求 PR 審查和 CI 檢查
+- ✅ **Auto-merge 功能**: 當 CI 通過且 reviewer 批准時自動合併 PR
+- ✅ **自動分支清理**: 合併後自動刪除功能分支
+- ✅ **CODEOWNERS**: 自動指派 @ghote-app @itsYoga @tina6662 @matthew930823 @wonogfsocry 為 reviewer
+- ✅ **PR 模板**: 提供中英雙語 PR 模板和合併指南
+- ✅ **Issue 模板**: 標準化 bug 報告和功能請求模板
+- ✅ **自動標籤**: 根據檔案變更自動為 PR 添加標籤
+- ✅ **Release 工作流程**: 標籤驅動的自動 APK 生成
+
+### 🔧 **2024-10-11: 程式碼重構**
+- ✅ **響應式佈局**: 移除平台特定尺寸，改用 MediaQuery 相對尺寸
+- ✅ **移除 PlatformUtils**: 簡化程式碼，統一跨平台體驗
+- ✅ **移除 liquid_glass_renderer**: 解決 Android 渲染問題，改用標準 Flutter 組件
+- ✅ **Responsive 工具類**: 新增統一的響應式尺寸管理
+
 ## Contributing
 
 1. Fork the repository
@@ -282,6 +300,10 @@ English
 3. Make your changes
 4. Test on both iOS and Android
 5. Submit a pull request
+
+### 協作流程 / Collaboration Workflow
+- **建立 PR** → 自動指派 reviewer → **CI 檢查** → **Review 批准** → **自動合併**
+- 詳細流程請參考 [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## License
 
