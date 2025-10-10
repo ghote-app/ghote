@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Import for HapticFeedback
-// import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 import '../widgets/glass_button.dart';
-// import 'dart:math' as math;
 import 'dart:ui'; // Import for ImageFilter
-// import 'dart:io';
 import '../utils/responsive.dart';
 
 class LoginScreen extends StatefulWidget {

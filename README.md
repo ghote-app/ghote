@@ -135,8 +135,6 @@ lib/
 ## Dependencies
 
 - `google_fonts` - Custom typography
-- `video_player` - Splash screen animation
-- `flutter_launcher_icons` - App icon generation
 
 ## Changelog
 
@@ -174,12 +172,9 @@ lib/
    cd ghote
    ```
 3. 安裝依賴：`flutter pub get`
-4. 安裝並啟用 FVM（確保版本一致）：
+4. 確保 Flutter 版本一致（建議使用 3.35.6）：
    ```bash
-   dart pub global activate fvm
-   fvm install
-   fvm use
-   fvm flutter --version   # 應顯示與 .fvm/fvm_config.json 相同版本
+   flutter --version   # 確認版本
    ```
 
 ### 日常開發流程（Collaborator）
@@ -214,15 +209,15 @@ lib/
   ```bash
   git fetch origin pull/<PR_NUMBER>/head:pr/<PR_NUMBER>
   git switch pr/<PR_NUMBER>
-  fvm flutter pub get && fvm flutter run
+  flutter pub get && flutter run
   ```
 
 ### 環境一致性（Everyone）
-- Flutter 版本：以 `.fvm/fvm_config.json` 為準，使用 FVM（或 CI 同步）
+- Flutter 版本：建議使用 3.35.6（與 CI 同步）
 - Android：使用專案內 `gradle-wrapper`；JDK 版本為 17
 - iOS：使用 `Podfile.lock`；如需 CocoaPods，請以 `Gemfile` 釘住版本
 - 依賴鎖：提交 `pubspec.lock`（App 專案）
-- CI：GitHub Actions 會讀取 `.fvm/fvm_config.json` 的版本
+- CI：GitHub Actions 使用 Flutter 3.35.6
 
 ### 常見問題
 - PR 無法合併？請先同步最新 `main`：
@@ -230,7 +225,7 @@ lib/
   git fetch origin && git switch feature/<branch>
   git merge origin/main   # 或 git rebase origin/main
   ```
-- CI 版本不一致？請確認已執行 `fvm install && fvm use`，並使用 `fvm flutter ...` 指令。
+- CI 版本不一致？請確認使用 Flutter 3.35.6。
 
 ## Product intro / 產品介紹
 
