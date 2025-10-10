@@ -30,6 +30,7 @@ jobs:
         with:
           flutter-version: '${{ steps.fvm.outputs.version }}'
           cache: true
+          architecture: x64
 
       - name: Install dependencies
         run: flutter pub get
