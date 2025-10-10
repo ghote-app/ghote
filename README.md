@@ -164,6 +164,74 @@ lib/
 - 禁止直接 push 到 `main`
 - 啟用必須更新為最新 `main` 後才能合併（避免舊基礎合併）
 
+## Collaboration guide / 協作指南（Collaborators）
+
+### 加入專案（被加入 Collaborator 後）
+1. 接受邀請（Email 或 GitHub 通知）
+2. Clone 專案（建議用 SSH）：
+   ```bash
+   git clone git@github.com:ghote-app/ghote.git
+   cd ghote
+   ```
+3. 安裝依賴：`flutter pub get`
+4. 安裝並啟用 FVM（確保版本一致）：
+   ```bash
+   dart pub global activate fvm
+   fvm install
+   fvm use
+   fvm flutter --version   # 應顯示與 .fvm/fvm_config.json 相同版本
+   ```
+
+### 日常開發流程（Collaborator）
+1. 從最新 `main` 建立功能分支：
+   ```bash
+   git switch main && git pull
+   git switch -c feature/<your-feature>
+   ```
+2. 開發並提交（保持小步、明確訊息）：
+   ```bash
+   git add -A
+   git commit -m "feat: <summary>"
+   git push -u origin feature/<your-feature>
+   ```
+3. 建立 Pull Request：目標 `ghote-app/ghote` 的 `main`
+4. 等待 CI 綠燈（Actions 自動跑 analyze/build）
+5. 回應 Review 意見 → 修正 → push 更新 PR
+
+### Review 與合併（ghote-app / Reviewer）
+- 在 PR 介面檢查：
+  - 內容與需求一致、沒有無關檔案
+  - CI 綠燈（Analyze/Build 皆成功）
+  - 程式風格遵循本專案規範（analysis_options、Responsive 原則）
+- Approve 後合併策略：
+  - 建議使用「Squash and merge」維持乾淨歷史
+  - 合併後刪除分支
+- 若 PR 不合併：Close PR 並簡述原因
+
+### 其他成員如何幫忙 Review
+- 在 PR 頁面留言意見或使用 Review 功能（Comment/Approve/Request changes）
+- 本地試跑（可選）：
+  ```bash
+  git fetch origin pull/<PR_NUMBER>/head:pr/<PR_NUMBER>
+  git switch pr/<PR_NUMBER>
+  fvm flutter pub get && fvm flutter run
+  ```
+
+### 環境一致性（Everyone）
+- Flutter 版本：以 `.fvm/fvm_config.json` 為準，使用 FVM（或 CI 同步）
+- Android：使用專案內 `gradle-wrapper`；JDK 版本為 17
+- iOS：使用 `Podfile.lock`；如需 CocoaPods，請以 `Gemfile` 釘住版本
+- 依賴鎖：提交 `pubspec.lock`（App 專案）
+- CI：GitHub Actions 會讀取 `.fvm/fvm_config.json` 的版本
+
+### 常見問題
+- PR 無法合併？請先同步最新 `main`：
+  ```bash
+  git fetch origin && git switch feature/<branch>
+  git merge origin/main   # 或 git rebase origin/main
+  ```
+- CI 版本不一致？請確認已執行 `fvm install && fvm use`，並使用 `fvm flutter ...` 指令。
+
 ## Product intro / 產品介紹
 
 Ghote 是一個專注學習與知識整理的輕量工具：
