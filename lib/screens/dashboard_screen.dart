@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'dart:math' as math;
-// import 'dart:io';
-// import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 
 class ProjectItem {
   const ProjectItem({

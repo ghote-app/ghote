@@ -9,10 +9,10 @@
 - 由 Reviewer 進行 Code Review，必要時請補完整測試或說明
 
 > 補充：PR 建立時請參考 `.github/PULL_REQUEST_TEMPLATE.md` 檢查清單；
-> CI 會讀取 `.fvm/fvm_config.json` 安裝對應 Flutter 版本，請本地以 FVM 對齊。
+> CI 使用 Flutter 3.35.6，請本地版本保持一致。
 
 ## 環境 / Environment
-- Flutter：Stable（建議透過 FVM/asdf 釘住版本）
+- Flutter：3.35.6
 - Android：使用專案內 gradle wrapper
 - iOS：使用 `Podfile.lock`，如需 CocoaPods 請以 `Gemfile` 固定版本
 
@@ -37,10 +37,10 @@ Thank you for contributing to Ghote!
 - Reviewer will provide feedback. Add tests or docs as needed
 
 ## Environment
-- Flutter Stable (pin via FVM/asdf)
+- Flutter 3.35.6
 - Android via project Gradle wrapper
 - iOS via `Podfile.lock` (optional `Gemfile` to pin CocoaPods)
- - CI uses GitHub Actions reading `.fvm/fvm_config.json`
+ - CI uses GitHub Actions with Flutter 3.35.6
 
 ## Style
 - Keep lints at 0 (see `analysis_options.yaml`)

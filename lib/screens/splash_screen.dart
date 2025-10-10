@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
 import 'dart:async';
 
 class SplashScreen extends StatefulWidget {
@@ -12,25 +11,17 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
-  late VideoPlayerController _videoController;
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
+  late AnimationController _scaleController;
+  late Animation<double> _scaleAnimation;
   Timer? _timer;
 
   @override
   void initState() {
     super.initState();
-    _initializeVideo();
     _initializeAnimations();
     _startAnimation();
-  }
-
-  void _initializeVideo() {
-    _videoController = VideoPlayerController.asset('assets/images/Ghote_opening_animation.mp4');
-    _videoController.initialize().then((_) {
-      setState(() {});
-      _videoController.play();
-    });
   }
 
   void _initializeAnimations() {
@@ -45,21 +36,34 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       parent: _fadeController,
       curve: Curves.easeInOut,
     ));
+
+    _scaleController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _scaleController,
+      curve: Curves.elasticOut,
+    ));
   }
 
   void _startAnimation() {
     _fadeController.forward();
+    _scaleController.forward();
     
     // 設置定時器，在動畫播放完成後跳轉
-    _timer = Timer(const Duration(seconds: 5), () {
+    _timer = Timer(const Duration(seconds: 3), () {
       widget.onAnimationComplete();
     });
   }
 
   @override
   void dispose() {
-    _videoController.dispose();
     _fadeController.dispose();
+    _scaleController.dispose();
     _timer?.cancel();
     super.dispose();
   }
@@ -68,25 +72,40 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          // 黑色背景
-          Container(
-            color: Colors.black,
-          ),
-          
-          // 視頻動畫
-          if (_videoController.value.isInitialized)
-            Center(
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: AspectRatio(
-                  aspectRatio: _videoController.value.aspectRatio,
-                  child: VideoPlayer(_videoController),
+      body: Center(
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/images/Ghote_icon_white_background.png',
+                  width: 120,
+                  height: 120,
                 ),
-              ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Ghote',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Learning & Knowledge Organization',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
             ),
-        ],
+          ),
+        ),
       ),
     );
   }
