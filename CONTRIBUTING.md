@@ -8,6 +8,9 @@
 - 發送 Pull Request 到 `main`，CI 必須通過，請描述變更與影響
 - 由 Reviewer 進行 Code Review，必要時請補完整測試或說明
 
+> 補充：PR 建立時請參考 `.github/PULL_REQUEST_TEMPLATE.md` 檢查清單；
+> CI 會讀取 `.fvm/fvm_config.json` 安裝對應 Flutter 版本，請本地以 FVM 對齊。
+
 ## 環境 / Environment
 - Flutter：Stable（建議透過 FVM/asdf 釘住版本）
 - Android：使用專案內 gradle wrapper
@@ -37,6 +40,7 @@ Thank you for contributing to Ghote!
 - Flutter Stable (pin via FVM/asdf)
 - Android via project Gradle wrapper
 - iOS via `Podfile.lock` (optional `Gemfile` to pin CocoaPods)
+ - CI uses GitHub Actions reading `.fvm/fvm_config.json`
 
 ## Style
 - Keep lints at 0 (see `analysis_options.yaml`)
