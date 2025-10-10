@@ -1,5 +1,8 @@
 # Ghote
 
+hihihi猜猜我是誰
+
+
 Modern Flutter app with a clean, responsive UI and smooth animations.
 
 ## Features
