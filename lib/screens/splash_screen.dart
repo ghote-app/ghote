@@ -80,10 +80,12 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // GIF Animation
                 Image.asset(
-                  'assets/images/Ghote_icon_white_background.png',
-                  width: 120,
-                  height: 120,
+                  'assets/images/splash_animation.gif',
+                  width: 200,
+                  height: 200,
+                  fit: BoxFit.contain,
                 ),
                 const SizedBox(height: 24),
                 const Text(
