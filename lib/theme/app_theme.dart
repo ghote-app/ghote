@@ -29,7 +29,7 @@ ThemeData _base(ThemeData src, {required bool dark}) {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
       ),
-      shadowColor: Colors.black.withOpacity(dark ? 0.3 : 0.1),
+      shadowColor: Colors.black.withValues(alpha: dark ? 0.3 : 0.1),
     ),
     appBarTheme: src.appBarTheme.copyWith(
       elevation: 0,
@@ -38,18 +38,17 @@ ThemeData _base(ThemeData src, {required bool dark}) {
       titleTextStyle: textTheme.titleLarge?.copyWith(fontSize: 21, fontWeight: FontWeight.w600),
     ),
     scaffoldBackgroundColor: dark ? AppColors.bgDark : AppColors.bgLight,
-    useMaterial3: true,
     // Unified input decoration (responsive paddings handled in widgets)
     inputDecorationTheme: InputDecorationTheme(
       contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
+        borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3), width: 1),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: dark ? Colors.white.withOpacity(0.5) : AppColors.primary, width: 2),
+        borderSide: BorderSide(color: dark ? Colors.white.withValues(alpha: 0.5) : AppColors.primary, width: 2),
       ),
     ),
   );
