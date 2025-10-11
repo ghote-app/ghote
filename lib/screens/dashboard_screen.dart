@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ProjectItem {
   const ProjectItem({
@@ -200,7 +201,10 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 ),
                 child: IconButton(
                   icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 22),
-                  onPressed: widget.onLogout,
+                  onPressed: () async {
+                    await FirebaseAuth.instance.signOut();
+                    if (widget.onLogout != null) widget.onLogout!();
+                  },
                 ),
               ),
             ),
