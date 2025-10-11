@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1007172394951",
+    "project_id": "ghote-app",
+    "storage_bucket": "ghote-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1007172394951:android:8f8ebc2292e37bc50283e2",
+        "android_client_info": {
+          "package_name": "com.example.ghote"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBxuGlf6K4gOlemAZBO7TlFPwBvKNnkolA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
