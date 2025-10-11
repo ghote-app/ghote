@@ -74,9 +74,11 @@ class _LoginScreenState extends State<LoginScreen>
       }
     } on FirebaseAuthException catch (e) {
       // 這裡可以顯示錯誤訊息給使用者
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('登入失敗：${e.message}')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('登入失敗：${e.message}')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -102,9 +104,11 @@ class _LoginScreenState extends State<LoginScreen>
         );
       }
     } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('註冊失敗：${e.message}')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('註冊失敗：${e.message}')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
