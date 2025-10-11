@@ -85,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen>
               center: Alignment.topLeft,
               radius: 1.5,
               colors: [
-                Colors.grey.shade900.withOpacity(0.8),
+                Colors.grey.shade900.withValues(alpha: 0.8),
                 Colors.black,
               ],
             ),
@@ -185,9 +185,9 @@ class _LoginScreenState extends State<LoginScreen>
       children: [
         Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(50),
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
           ),
           child: Padding(
             padding: const EdgeInsets.all(4),
@@ -215,7 +215,7 @@ class _LoginScreenState extends State<LoginScreen>
         Text(
           'Sign in to your account to continue',
           style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
+            color: Colors.white.withValues(alpha: 0.7),
             fontSize: 16,
           ),
         ),
@@ -238,9 +238,9 @@ class _LoginScreenState extends State<LoginScreen>
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
           ),
           child: TextField(
             controller: controller,
@@ -252,7 +252,7 @@ class _LoginScreenState extends State<LoginScreen>
             ),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
               prefixIcon: prefixIcon,
               suffixIcon: suffixIcon,
               border: InputBorder.none,
@@ -270,7 +270,7 @@ class _LoginScreenState extends State<LoginScreen>
       child: TextButton(
         onPressed: () {},
         style: TextButton.styleFrom(
-          foregroundColor: Colors.white.withOpacity(0.7),
+          foregroundColor: Colors.white.withValues(alpha: 0.7),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -312,12 +312,12 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildDivider() {
     return Row(
       children: <Widget>[
-        Expanded(child: Container(height: 1, color: Colors.white.withOpacity(0.2))),
+        Expanded(child: Container(height: 1, color: Colors.white.withValues(alpha: 0.2))),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text('OR', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
+          child: Text('OR', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12)),
         ),
-        Expanded(child: Container(height: 1, color: Colors.white.withOpacity(0.2))),
+        Expanded(child: Container(height: 1, color: Colors.white.withValues(alpha: 0.2))),
       ],
     );
   }
@@ -331,7 +331,7 @@ class _LoginScreenState extends State<LoginScreen>
         onPressed: _isLoading
             ? null
             : () {
-                // TODO: Implement Google Sign In
+                // Google Sign In - placeholder implementation
                 _handleLogin();
               },
         borderRadius: 16,

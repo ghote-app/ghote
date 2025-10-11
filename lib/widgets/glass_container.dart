@@ -38,12 +38,12 @@ class GlassContainer extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadius),
         gradient: gradient,
-        color: (glassColor ?? Colors.white).withOpacity(0.08),
-        border: Border.all(color: (borderColor ?? Colors.white).withOpacity(0.18)),
+        color: (glassColor ?? Colors.white).withValues(alpha: 0.08),
+        border: Border.all(color: (borderColor ?? Colors.white).withValues(alpha: 0.18)),
         boxShadow: shadow
             ? <BoxShadow>[
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
+                  color: Colors.black.withValues(alpha: 0.2),
                   blurRadius: 18,
                   offset: const Offset(0, 8),
                 ),
@@ -84,12 +84,12 @@ class GlassCard extends StatelessWidget {
           padding: padding,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(borderRadius),
-            color: Colors.white.withOpacity(0.08),
-            border: Border.all(color: (borderColor ?? Colors.white).withOpacity(0.18)),
+            color: Colors.white.withValues(alpha: 0.08),
+            border: Border.all(color: (borderColor ?? Colors.white).withValues(alpha: 0.18)),
             boxShadow: shadow
                 ? <BoxShadow>[
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
+                      color: Colors.black.withValues(alpha: 0.15),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
