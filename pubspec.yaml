@@ -40,6 +40,8 @@ dependencies:
   
   # Google Fonts
   google_fonts: ^6.2.1
+  firebase_core: 
+  firebase_auth: 
   
 
 dev_dependencies:

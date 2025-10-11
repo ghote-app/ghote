@@ -3,6 +3,7 @@ import 'package:flutter/services.dart'; // Import for HapticFeedback
 import '../widgets/glass_button.dart';
 import 'dart:ui'; // Import for ImageFilter
 import '../utils/responsive.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, required this.onLogin});
@@ -55,28 +56,65 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> _handleLogin() async {
-    // Unfocus to hide keyboard
     FocusScope.of(context).unfocus();
     setState(() => _isLoading = true);
-    
-    // Haptic feedback for a more tactile feel
     HapticFeedback.lightImpact();
 
-    await Future<void>.delayed(const Duration(seconds: 2));
-    final String email = _emailController.text.trim().isEmpty
-        ? 'demo@ghote.app'
-        : _emailController.text.trim();
-    final String name =
-        email.split('@').first.isEmpty ? 'User' : email.split('@').first;
-    if (!mounted) return;
-    widget.onLogin(name, email);
-    // No need to set isLoading to false as we are navigating away
+    final String email = _emailController.text.trim();
+    final String password = _passwordController.text.trim();
+
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      final user = userCredential.user;
+      if (user != null && mounted) {
+        widget.onLogin(user.displayName ?? user.email ?? '', user.email ?? '');
+      }
+    } on FirebaseAuthException catch (e) {
+      // 這裡可以顯示錯誤訊息給使用者
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('登入失敗：${e.message}')),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+  Future<void> _handleSignUp() async {
+    FocusScope.of(context).unfocus();
+    setState(() => _isLoading = true);
+    HapticFeedback.lightImpact();
+
+    final String email = _emailController.text.trim();
+    final String password = _passwordController.text.trim();
+
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      final user = userCredential.user;
+      if (user != null && mounted) {
+        widget.onLogin(user.displayName ?? user.email ?? '', user.email ?? '');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('註冊成功，已自動登入')),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('註冊失敗：${e.message}')),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
+      resizeToAvoidBottomInset: true,
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Container(
@@ -290,7 +328,11 @@ class _LoginScreenState extends State<LoginScreen>
       width: double.infinity,
       child: GlassButton(
         enabled: !_isLoading,
-        onPressed: _isLoading ? null : _handleLogin,
+        onPressed: _isLoading
+          ? null
+          : _isSignUp
+              ? _handleSignUp // 註冊模式
+              : _handleLogin,  // 登入模式
         borderRadius: 16,
         child: _isLoading
             ? const SizedBox(
