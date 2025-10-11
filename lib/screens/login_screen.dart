@@ -134,88 +134,97 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           ),
           child: SafeArea(
-            child: Padding(
+            child: SingleChildScrollView(
               padding: Responsive.pagePadding(context),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  const Spacer(),
-                  // Animated Header
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: _buildHeader(),
-                    ),
-                  ),
-                  SizedBox(height: Responsive.spaceL(context)),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: MediaQuery.of(context).size.height - 
+                            MediaQuery.of(context).padding.top - 
+                            MediaQuery.of(context).padding.bottom,
+                ),
+                child: IntrinsicHeight(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      SizedBox(height: Responsive.spaceL(context)),
+                      // Animated Header
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: SlideTransition(
+                          position: _slideAnimation,
+                          child: _buildHeader(),
+                        ),
+                      ),
+                      SizedBox(height: Responsive.spaceL(context)),
 
-                  // Animated Form Fields
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: Column(
-                        children: [
-                          _buildInputField(
-                            controller: _emailController,
-                            hint: 'Enter your email',
-                            keyboardType: TextInputType.emailAddress,
-                            prefixIcon:
-                                const Icon(Icons.alternate_email, color: Colors.white70, size: 20),
-                          ),
-                          SizedBox(height: Responsive.spaceS(context)),
-                          _buildInputField(
-                            controller: _passwordController,
-                            hint: 'Enter your password',
-                            obscureText: !_showPassword,
-                            prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70, size: 20),
-                            suffixIcon: IconButton(
-                              onPressed: () =>
-                                  setState(() => _showPassword = !_showPassword),
-                              icon: Icon(
-                                _showPassword
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined,
-                                color: Colors.white70,
+                      // Animated Form Fields
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: SlideTransition(
+                          position: _slideAnimation,
+                          child: Column(
+                            children: [
+                              _buildInputField(
+                                controller: _emailController,
+                                hint: 'Enter your email',
+                                keyboardType: TextInputType.emailAddress,
+                                prefixIcon:
+                                    const Icon(Icons.alternate_email, color: Colors.white70, size: 20),
                               ),
-                            ),
+                              SizedBox(height: Responsive.spaceS(context)),
+                              _buildInputField(
+                                controller: _passwordController,
+                                hint: 'Enter your password',
+                                obscureText: !_showPassword,
+                                prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70, size: 20),
+                                suffixIcon: IconButton(
+                                  onPressed: () =>
+                                      setState(() => _showPassword = !_showPassword),
+                                  icon: Icon(
+                                    _showPassword
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
-                  SizedBox(height: Responsive.spaceS(context)),
-                  
-                  // Animated Forgot Password
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                        position: _slideAnimation,
-                        child: _buildForgotPasswordButton()),
-                  ),
-
-                  SizedBox(height: Responsive.spaceM(context)),
-
-                  // Animated Buttons
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: Column(
-                        children: [
-                            _buildSignInButton(),
-                            SizedBox(height: Responsive.spaceS(context)),
-                            _buildDivider(),
-                            SizedBox(height: Responsive.spaceS(context)),
-                          _buildGoogleSignInButton(),
-                          _buildToggleButton(),
-                        ],
+                      SizedBox(height: Responsive.spaceS(context)),
+                      
+                      // Animated Forgot Password
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: SlideTransition(
+                            position: _slideAnimation,
+                            child: _buildForgotPasswordButton()),
                       ),
-                    ),
+
+                      SizedBox(height: Responsive.spaceM(context)),
+
+                      // Animated Buttons
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: SlideTransition(
+                          position: _slideAnimation,
+                          child: Column(
+                            children: [
+                                _buildSignInButton(),
+                                SizedBox(height: Responsive.spaceS(context)),
+                                _buildDivider(),
+                                SizedBox(height: Responsive.spaceS(context)),
+                              _buildGoogleSignInButton(),
+                              _buildToggleButton(),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: Responsive.spaceL(context)),
+                    ],
                   ),
-                  const Spacer(),
-                ],
+                ),
               ),
             ),
           ),
