@@ -20,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen>
   final TextEditingController _passwordController = TextEditingController();
   bool _showPassword = false;
   bool _isLoading = false;
+  bool _isSignUp = false; // 新增：控制登入/註冊模式
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -166,6 +167,7 @@ class _LoginScreenState extends State<LoginScreen>
                             _buildDivider(),
                             SizedBox(height: Responsive.spaceS(context)),
                           _buildGoogleSignInButton(),
+                          _buildToggleButton(),
                         ],
                       ),
                     ),
@@ -203,8 +205,8 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         SizedBox(height: Responsive.spaceM(context)),
         Text(
-          'Welcome Back',
-          style: TextStyle(
+          _isSignUp ? 'Create Account' : 'Welcome Back',
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 28,
             fontWeight: FontWeight.bold,
@@ -213,7 +215,9 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         SizedBox(height: Responsive.spaceXS(context)),
         Text(
-          'Sign in to your account to continue',
+          _isSignUp 
+            ? 'Join us and start your learning journey'
+            : 'Sign in to your account to continue',
           style: TextStyle(
             color: Colors.white.withValues(alpha: 0.7),
             fontSize: 16,
@@ -297,9 +301,9 @@ class _LoginScreenState extends State<LoginScreen>
                   strokeWidth: 2.5,
                 ),
               )
-            : const Text(
-                'Sign In',
-                style: TextStyle(
+            : Text(
+                _isSignUp ? 'Sign Up' : 'Sign In',
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -354,6 +358,40 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildToggleButton() {
+    return Container(
+      margin: const EdgeInsets.only(top: 24),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            _isSignUp ? 'Already have an account? ' : "Don't have an account? ",
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 14,
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _isSignUp = !_isSignUp;
+              });
+            },
+            child: Text(
+              _isSignUp ? 'Sign In' : 'Sign Up',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
