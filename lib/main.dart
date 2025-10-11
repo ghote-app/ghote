@@ -5,10 +5,12 @@ import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/splash_screen.dart';
 import 'theme/app_theme.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+  await Firebase.initializeApp();
   // Set platform-specific system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
     SystemUiOverlayStyle(
@@ -48,18 +50,16 @@ class _RootNavigator extends StatefulWidget {
 }
 
 class _RootNavigatorState extends State<_RootNavigator> {
-  String? _userName;
+  User? _user;
   bool _showSplash = true;
 
-  void _onLogin(String name, String email) {
-    setState(() {
-      _userName = name;
-    });
-  }
-
-  void _onLogout() {
-    setState(() {
-      _userName = null;
+  @override
+  void initState() {
+    super.initState();
+    FirebaseAuth.instance.authStateChanges().listen((user) {
+      setState(() {
+        _user = user;
+      });
     });
   }
 
@@ -75,10 +75,15 @@ class _RootNavigatorState extends State<_RootNavigator> {
       return SplashScreen(onAnimationComplete: _onSplashComplete);
     }
 
-    if (_userName == null) {
-      return LoginScreen(onLogin: _onLogin);
+    if (_user == null) {
+      return LoginScreen(onLogin: (_, __) {});
     }
 
-    return DashboardScreen(userName: _userName!, onLogout: _onLogout);
+    return DashboardScreen(
+      userName: _user!.displayName ?? _user!.email ?? '',
+      onLogout: () async {
+        await FirebaseAuth.instance.signOut();
+      },
+    );
   }
 }
