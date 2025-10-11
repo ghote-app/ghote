@@ -33,9 +33,9 @@ class GlassButton extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 11),
             decoration: BoxDecoration(
-              color: (glassColor ?? Colors.white).withOpacity(0.08),
+              color: (glassColor ?? Colors.white).withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(borderRadius),
-              border: Border.all(color: (borderColor ?? Colors.white).withOpacity(0.18)),
+              border: Border.all(color: (borderColor ?? Colors.white).withValues(alpha: 0.18)),
               boxShadow: const <BoxShadow>[
                 BoxShadow(color: Color(0x24000000), blurRadius: 16, offset: Offset(0, 8)),
               ],
@@ -77,16 +77,16 @@ class GlassIconButton extends StatelessWidget {
         onTap: onPressed,
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.08),
+            color: Colors.white.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(borderRadius),
-            border: Border.all(color: Colors.white.withOpacity(0.18)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
             child: Icon(
               icon,
               size: size ?? 17,
-              color: iconColor ?? Colors.white.withOpacity(0.9),
+              color: iconColor ?? Colors.white.withValues(alpha: 0.9),
             ),
           ),
         ),

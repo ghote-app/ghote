@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'dart:math' as math;
 
 class ProjectItem {
@@ -143,9 +142,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           children: <Widget>[
             Container(
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.12),
+                color: Colors.white.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(50),
-                border: Border.all(color: Colors.white.withOpacity(0.15), width: 2),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 2),
               ),
               child: Container(
                 padding: const EdgeInsets.all(3),
@@ -170,7 +169,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                   Text(
                     'Welcome back,',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 14,
                       letterSpacing: 0.5,
                     ),
@@ -190,14 +189,14 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             ),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.12),
+                color: Colors.white.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(48),
-                border: Border.all(color: Colors.white.withOpacity(0.15), width: 1.5),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
               ),
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(48),
-                  border: Border.all(color: Colors.white.withOpacity(0.15), width: 1.5),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
                 ),
                 child: IconButton(
                   icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 22),
@@ -214,9 +213,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   Widget _buildSearchBar() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.14),
+        color: Colors.white.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
       ),
       child: Container(
         height: 48,
@@ -227,9 +226,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           style: const TextStyle(color: Colors.white, fontSize: 14),
           decoration: InputDecoration(
             hintText: 'Search projects, documents...',
-            hintStyle: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14),
-            prefixIcon: Icon(Icons.search_rounded, color: Colors.white.withOpacity(0.7), size: 20),
-            suffixIcon: Icon(Icons.tune_rounded, color: Colors.white.withOpacity(0.7), size: 20),
+            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14),
+            prefixIcon: Icon(Icons.search_rounded, color: Colors.white.withValues(alpha: 0.7), size: 20),
+            suffixIcon: Icon(Icons.tune_rounded, color: Colors.white.withValues(alpha: 0.7), size: 20),
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(vertical: 0),
             isDense: true,
@@ -261,9 +260,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   Widget _buildStatCard(String label, String value, IconData icon, Color color) {
     return Container(
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -286,7 +285,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             Text(
               label,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.6),
+                color: Colors.white.withValues(alpha: 0.6),
                 fontSize: 12,
                 letterSpacing: 0.3,
               ),
@@ -330,13 +329,13 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(30),
-            color: (isSelected ? Colors.white : Colors.white24).withOpacity(0.08),
-            border: Border.all(color: isSelected ? Colors.white.withOpacity(0.4) : Colors.white.withOpacity(0.15), width: 1.5),
+            color: (isSelected ? Colors.white : Colors.white24).withValues(alpha: 0.08),
+            border: Border.all(color: isSelected ? Colors.white.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.15), width: 1.5),
           ),
           child: Text(
             label,
             style: TextStyle(
-              color: isSelected ? Colors.white : Colors.white.withOpacity(0.7),
+              color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.7),
               fontSize: 14,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
             ),
@@ -382,13 +381,13 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               Icon(
                 Icons.search_off_rounded,
                 size: 64,
-                color: Colors.white.withOpacity(0.3),
+                color: Colors.white.withValues(alpha: 0.3),
               ),
               const SizedBox(height: 16),
               Text(
                 'No projects found',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
+                  color: Colors.white.withValues(alpha: 0.7),
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
                 ),
@@ -397,7 +396,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               Text(
                 'Try adjusting your search or filter',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
+                  color: Colors.white.withValues(alpha: 0.5),
                   fontSize: 14,
                 ),
               ),
@@ -447,14 +446,14 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   Widget _buildFloatingActionButton() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.14),
+        color: Colors.white.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(60),
-        border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
       ),
       child: Container(
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
         ),
         child: FloatingActionButton(
           backgroundColor: Colors.transparent,
@@ -501,14 +500,14 @@ class _ProjectCard extends StatelessWidget {
   Widget build(BuildContext context) {
         return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
+        color: Colors.white.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
       ),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
         ),
         child: Material(
           color: Colors.transparent,
@@ -525,10 +524,10 @@ class _ProjectCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: _getStatusColor().withOpacity(0.2),
+                          color: _getStatusColor().withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: _getStatusColor().withOpacity(0.4),
+                            color: _getStatusColor().withValues(alpha: 0.4),
                             width: 1.5,
                           ),
                         ),
@@ -543,10 +542,10 @@ class _ProjectCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: _getStatusColor().withOpacity(0.2),
+                          color: _getStatusColor().withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: _getStatusColor().withOpacity(0.4),
+                            color: _getStatusColor().withValues(alpha: 0.4),
                             width: 1,
                           ),
                         ),
@@ -584,7 +583,7 @@ class _ProjectCard extends StatelessWidget {
                   Text(
                     item.category,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.6),
+                      color: Colors.white.withValues(alpha: 0.6),
                       fontSize: 13,
                       letterSpacing: 0.3,
                     ),
@@ -594,7 +593,7 @@ class _ProjectCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                     child: LinearProgressIndicator(
                       value: item.progress,
-                      backgroundColor: Colors.white.withOpacity(0.1),
+                      backgroundColor: Colors.white.withValues(alpha: 0.1),
                       valueColor: AlwaysStoppedAnimation<Color>(_getStatusColor()),
                       minHeight: 6,
                     ),
@@ -602,22 +601,22 @@ class _ProjectCard extends StatelessWidget {
                   const SizedBox(height: 12),
                   Row(
                     children: <Widget>[
-                      Icon(Icons.description_outlined, color: Colors.white.withOpacity(0.6), size: 16),
+                      Icon(Icons.description_outlined, color: Colors.white.withValues(alpha: 0.6), size: 16),
                       const SizedBox(width: 6),
                       Text(
                         '${item.documentCount} docs',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.6),
+                          color: Colors.white.withValues(alpha: 0.6),
                           fontSize: 13,
                         ),
                       ),
                       const SizedBox(width: 16),
-                      Icon(Icons.access_time_rounded, color: Colors.white.withOpacity(0.6), size: 16),
+                      Icon(Icons.access_time_rounded, color: Colors.white.withValues(alpha: 0.6), size: 16),
                       const SizedBox(width: 6),
                       Text(
                         item.lastUpdated,
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.6),
+                          color: Colors.white.withValues(alpha: 0.6),
                           fontSize: 13,
                         ),
                       ),
