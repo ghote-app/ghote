@@ -121,8 +121,17 @@ class _LoginScreenState extends State<LoginScreen>
     HapticFeedback.lightImpact();
 
     try {
-      // 觸發 Google 登入流程
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      // 配置 Google Sign-In 以強制顯示帳戶選擇器
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        // 強制顯示帳戶選擇器，不記住上次選擇的帳戶
+        scopes: ['email', 'profile'],
+      );
+      
+      // 先登出，確保下次會顯示帳戶選擇器
+      await googleSignIn.signOut();
+      
+      // 觸發 Google 登入流程，會顯示帳戶選擇器
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
       
       if (googleUser == null) {
         // 使用者取消了登入
