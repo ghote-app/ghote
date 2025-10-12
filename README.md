@@ -233,8 +233,8 @@ Ghote 是一個專注學習與知識整理的智能學習輔助 App：
 
 ### 官方網站
 - 🌐 **網站**: https://ghote-app.github.io/ghote/
-- 📋 **服務條款**: https://ghote-app.github.io/ghote/terms
-- 🔒 **隱私政策**: https://ghote-app.github.io/ghote/privacy
+- 📋 **服務條款**: https://ghote-app.github.io/ghote/#/terms
+- 🔒 **隱私政策**: https://ghote-app.github.io/ghote/#/privacy
 
 Assets（示意用）：
 - App Icon：`assets/AppIcon/Ghote_icon_white_background_removed.png`
