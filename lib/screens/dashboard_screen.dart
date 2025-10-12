@@ -27,7 +27,7 @@ final List<ProjectItem> _sampleProjects = <ProjectItem>[
     status: 'Active',
     documentCount: 5,
     lastUpdated: '2 days ago',
-    image: 'assets/images/Ghote_icon_black_background.png',
+    image: 'assets/AppIcon/Ghote_icon_black_background.png',
     progress: 0.65,
     category: 'Technology',
   ),
@@ -36,7 +36,7 @@ final List<ProjectItem> _sampleProjects = <ProjectItem>[
     status: 'Active',
     documentCount: 3,
     lastUpdated: '1 week ago',
-    image: 'assets/images/Ghote_icon_black_background.png',
+    image: 'assets/AppIcon/Ghote_icon_black_background.png',
     progress: 0.45,
     category: 'Education',
   ),
@@ -45,7 +45,7 @@ final List<ProjectItem> _sampleProjects = <ProjectItem>[
     status: 'Completed',
     documentCount: 8,
     lastUpdated: '3 days ago',
-    image: 'assets/images/Ghote_icon_black_background.png',
+    image: 'assets/AppIcon/Ghote_icon_black_background.png',
     progress: 1.0,
     category: 'Science',
   ),
@@ -54,7 +54,7 @@ final List<ProjectItem> _sampleProjects = <ProjectItem>[
     status: 'Archived',
     documentCount: 12,
     lastUpdated: '1 month ago',
-    image: 'assets/images/Ghote_icon_black_background.png',
+    image: 'assets/AppIcon/Ghote_icon_black_background.png',
     progress: 0.85,
     category: 'Arts',
   ),
@@ -152,7 +152,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 decoration: const BoxDecoration(shape: BoxShape.circle),
                 child: ClipOval(
                   child: Image.asset(
-                    'assets/images/Ghote_icon_black_background.png',
+                    'assets/AppIcon/Ghote_icon_black_background.png',
                     width: 56,
                     height: 56,
                     fit: BoxFit.cover,
@@ -567,17 +567,19 @@ class _ProjectCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const Spacer(),
-                  Text(
-                    item.title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.5,
+                  const SizedBox(height: 12),
+                  Flexible(
+                    child: Text(
+                      item.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -603,21 +605,27 @@ class _ProjectCard extends StatelessWidget {
                     children: <Widget>[
                       Icon(Icons.description_outlined, color: Colors.white.withValues(alpha: 0.6), size: 16),
                       const SizedBox(width: 6),
-                      Text(
-                        '${item.documentCount} docs',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.6),
-                          fontSize: 13,
+                      Flexible(
+                        child: Text(
+                          '${item.documentCount} docs',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.6),
+                            fontSize: 13,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 16),
                       Icon(Icons.access_time_rounded, color: Colors.white.withValues(alpha: 0.6), size: 16),
                       const SizedBox(width: 6),
-                      Text(
-                        item.lastUpdated,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.6),
-                          fontSize: 13,
+                      Flexible(
+                        child: Text(
+                          item.lastUpdated,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.6),
+                            fontSize: 13,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],

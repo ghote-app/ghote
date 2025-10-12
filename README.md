@@ -229,23 +229,23 @@ Ghote 是一個專注學習與知識整理的輕量工具：
 - 現代化深色主題與流暢動畫，讓使用體驗更專注
 
 Assets（示意用）：
-- App Icon：`assets/images/Ghote_icon_black_background.png`
-- Splash 動畫：`assets/images/Ghote_opening_animation.mp4`
-  - 可將產品簡介 GIF/截圖放在 `assets/images/`，並在此 README 以連結的方式展示
+- App Icon：`assets/AppIcon/Ghote_icon_white_background-removebg-preview.png`
+- Splash 動畫：`assets/AppIcon/Ghote_opening_animation.mp4`
+  - 可將產品簡介 GIF/截圖放在 `assets/AppIcon/`，並在此 README 以連結的方式展示
 
 ## Screenshots / 產品截圖
 
 <p align="center">
-  <img src="assets/images/Ghote_icon_black_background.png" alt="App Icon" width="120" />
-  <img src="assets/images/Ghote_icon_white_background.png" alt="App Icon White" width="120" />
+  <img src="assets/AppIcon/Ghote_icon_white_background-removebg-preview.png" alt="App Icon" width="120" />
+  <img src="assets/AppIcon/Ghote_icon_black_background-removebg-preview.png" alt="App Icon Dark" width="120" />
 </p>
 
 <p align="center">
-  <em>App Icons - 深色與淺色版本</em>
+  <em>App Icons - 淺色與深色版本</em>
 </p>
 
 <p align="center">
-  <img src="assets/images/splash_animation.gif" alt="Splash Animation" width="320" />
+  <img src="assets/AppIcon/Ghote_opening_animation.mp4" alt="Splash Animation" width="320" />
 </p>
 
 <p align="center">
