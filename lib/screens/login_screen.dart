@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Import for HapticFeedback
+import 'package:flutter/gestures.dart';
 import '../widgets/glass_button.dart';
 import 'dart:ui'; // Import for ImageFilter
 import '../utils/responsive.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, required this.onLogin});
@@ -183,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen>
               center: Alignment.topLeft,
               radius: 1.5,
               colors: [
-                Colors.grey.shade900.withValues(alpha: 0.8),
+                Colors.grey.shade900.withOpacity(0.8),
                 Colors.black,
               ],
             ),
@@ -271,6 +273,8 @@ class _LoginScreenState extends State<LoginScreen>
                                 _buildDivider(),
                                 SizedBox(height: Responsive.spaceS(context)),
                               _buildGoogleSignInButton(),
+                              SizedBox(height: Responsive.spaceM(context)),
+                              _buildTermsAndConditions(),
                               _buildToggleButton(),
                             ],
                           ),
@@ -293,9 +297,9 @@ class _LoginScreenState extends State<LoginScreen>
       children: [
         Container(
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.1),
+            color: Colors.white.withOpacity(0.1),
             borderRadius: BorderRadius.circular(50),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
           ),
           child: Padding(
             padding: const EdgeInsets.all(4),
@@ -325,7 +329,7 @@ class _LoginScreenState extends State<LoginScreen>
             ? 'Join us and start your learning journey'
             : 'Sign in to your account to continue',
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.7),
+            color: Colors.white.withOpacity(0.7),
             fontSize: 16,
           ),
         ),
@@ -348,21 +352,21 @@ class _LoginScreenState extends State<LoginScreen>
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.1),
+            color: Colors.white.withOpacity(0.1),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
           ),
           child: TextField(
             controller: controller,
             keyboardType: keyboardType,
             obscureText: obscureText,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 16,
             ),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+              hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
               prefixIcon: prefixIcon,
               suffixIcon: suffixIcon,
               border: InputBorder.none,
@@ -380,7 +384,7 @@ class _LoginScreenState extends State<LoginScreen>
       child: TextButton(
         onPressed: () {},
         style: TextButton.styleFrom(
-          foregroundColor: Colors.white.withValues(alpha: 0.7),
+          foregroundColor: Colors.white.withOpacity(0.7),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -426,12 +430,12 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildDivider() {
     return Row(
       children: <Widget>[
-        Expanded(child: Container(height: 1, color: Colors.white.withValues(alpha: 0.2))),
+        Expanded(child: Container(height: 1, color: Colors.white.withOpacity(0.2))),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text('OR', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12)),
+          child: Text('OR', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
         ),
-        Expanded(child: Container(height: 1, color: Colors.white.withValues(alpha: 0.2))),
+        Expanded(child: Container(height: 1, color: Colors.white.withOpacity(0.2))),
       ],
     );
   }
@@ -455,6 +459,55 @@ class _LoginScreenState extends State<LoginScreen>
       ),
     );
   }
+  
+  Widget _buildTermsAndConditions() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16.0),
+      child: RichText(
+        textAlign: TextAlign.center,
+        text: TextSpan(
+          text: 'By continuing, you agree to Ghote\'s ',
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.5),
+            fontSize: 12,
+          ),
+          children: <TextSpan>[
+            TextSpan(
+              text: 'Terms of Service',
+              style: const TextStyle(
+                color: Colors.white,
+                decoration: TextDecoration.underline,
+              ),
+              recognizer: TapGestureRecognizer()
+                ..onTap = () async {
+                  // Launch website terms of service page
+                  final Uri url = Uri.parse('https://jesse.github.io/ghote/terms');
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  }
+                },
+            ),
+            const TextSpan(text: ' and '),
+            TextSpan(
+              text: 'Privacy Policy',
+              style: const TextStyle(
+                color: Colors.white,
+                decoration: TextDecoration.underline,
+              ),
+              recognizer: TapGestureRecognizer()
+                ..onTap = () async {
+                  // Launch website privacy policy page
+                  final Uri url = Uri.parse('https://jesse.github.io/ghote/privacy');
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  }
+                },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildToggleButton() {
     return Container(
@@ -465,7 +518,7 @@ class _LoginScreenState extends State<LoginScreen>
           Text(
             _isSignUp ? 'Already have an account? ' : "Don't have an account? ",
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.7),
+              color: Colors.white.withOpacity(0.7),
               fontSize: 14,
             ),
           ),
