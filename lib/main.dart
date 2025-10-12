@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/splash_screen.dart';
@@ -7,9 +8,18 @@ import 'theme/app_theme.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
+import 'website/main.dart' as website;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Check if running on web platform
+  if (kIsWeb) {
+    // Run website version
+    website.main();
+    return;
+  }
+  
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
