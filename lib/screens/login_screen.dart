@@ -481,7 +481,7 @@ class _LoginScreenState extends State<LoginScreen>
               recognizer: TapGestureRecognizer()
                 ..onTap = () async {
                   // Launch website terms of service page
-                  final Uri url = Uri.parse('https://jesse.github.io/ghote/terms');
+                  final Uri url = Uri.parse('https://ghote-app.github.io/ghote/terms');
                   if (await canLaunchUrl(url)) {
                     await launchUrl(url, mode: LaunchMode.externalApplication);
                   }
@@ -497,7 +497,7 @@ class _LoginScreenState extends State<LoginScreen>
               recognizer: TapGestureRecognizer()
                 ..onTap = () async {
                   // Launch website privacy policy page
-                  final Uri url = Uri.parse('https://jesse.github.io/ghote/privacy');
+                  final Uri url = Uri.parse('https://ghote-app.github.io/ghote/privacy');
                   if (await canLaunchUrl(url)) {
                     await launchUrl(url, mode: LaunchMode.externalApplication);
                   }
