@@ -9,7 +9,8 @@ Modern Flutter app with a clean, responsive UI and smooth animations.
 
 - 📱 **Responsive Layout**: Works across iOS/Android with proportional sizing
 - 🎬 **Splash Animation**: Video-based intro with fade-in
-- 🔐 **Modern Login**: Animated form with frosted-style visuals (pure Flutter)
+- 🔐 **Google Sign-In**: Secure authentication with Google accounts
+- 🔑 **Modern Login**: Animated form with frosted-style visuals (pure Flutter)
 - 📊 **Dashboard**: Sliver-based scrolling, filters, and animated cards
 - 🌙 **Dark Theme**: Polished dark palette (Material 3)
 
@@ -138,6 +139,10 @@ lib/
 ## Dependencies
 
 - `google_fonts` - Custom typography
+- `google_sign_in` - Google Sign-In authentication
+- `firebase_core` - Firebase core functionality
+- `firebase_auth` - Firebase authentication
+- `video_player` - Video playback for splash animation
 
 
 ## Team workflow
@@ -229,15 +234,15 @@ Ghote 是一個專注學習與知識整理的輕量工具：
 - 現代化深色主題與流暢動畫，讓使用體驗更專注
 
 Assets（示意用）：
-- App Icon：`assets/AppIcon/Ghote_icon_white_background-removebg-preview.png`
-- Splash 動畫：`assets/AppIcon/Ghote_opening_animation.mp4`
+- App Icon：`assets/AppIcon/Ghote_icon_white_background_removed.png`
+- Splash 動畫：`assets/AppIcon/splash_animation.gif`
   - 可將產品簡介 GIF/截圖放在 `assets/AppIcon/`，並在此 README 以連結的方式展示
 
 ## Screenshots / 產品截圖
 
 <p align="center">
-  <img src="assets/AppIcon/Ghote_icon_white_background-removebg-preview.png" alt="App Icon" width="120" />
-  <img src="assets/AppIcon/Ghote_icon_black_background-removebg-preview.png" alt="App Icon Dark" width="120" />
+  <img src="assets/AppIcon/Ghote_icon_white_background_removed.png" alt="App Icon" width="120" />
+  <img src="assets/AppIcon/Ghote_icon_black_background.png" alt="App Icon Dark" width="120" />
 </p>
 
 <p align="center">
@@ -245,7 +250,7 @@ Assets（示意用）：
 </p>
 
 <p align="center">
-  <img src="assets/AppIcon/Ghote_opening_animation.mp4" alt="Splash Animation" width="320" />
+  <img src="assets/AppIcon/splash_animation.gif" alt="Splash Animation" width="320" />
 </p>
 
 <p align="center">
@@ -274,6 +279,51 @@ English
 - Google Fonts 需要網路；離線時請改用本地字型
 
 ## Recent Updates / 最近更新
+
+### 🔐 **2025-10-12: Google 登入功能整合 (PR #13)**
+- ✅ **Google Sign-In**: 整合 Android 和 iOS 的 Google 登入功能
+- ✅ **Firebase 認證**: 配置 Google Services 和 Firebase Auth
+- ✅ **應用程式圖標更新**: 使用新的 Ghote 品牌圖標
+- ✅ **啟動畫面優化**: 使用 MP4 影片替換 GIF 動畫，提升效能
+- ✅ **UI 改進**: 修復文字溢位問題，改善響應式設計
+- ✅ **資源管理**: 重新組織 AppIcon 資源目錄結構
+
+### 🐛 **2025-10-12: 登入畫面修復 (PR #12)**
+- ✅ **鍵盤溢位修復**: 修復登入畫面鍵盤彈出時的溢位問題
+- ✅ **響應式設計**: 改善不同螢幕尺寸的顯示效果
+
+### 🔥 **2025-10-12: Firebase 整合 (PR #11)**
+- ✅ **Firebase 整合**: 將 Firebase 整合到 Android 專案中
+- ✅ **依賴管理**: 更新 Android 建置配置和依賴項目
+
+### 🔑 **2025-10-12: 身份驗證功能 (PR #10)**
+- ✅ **身份驗證**: 加入身份驗證功能
+- ✅ **iOS 建置修復**: 解決 Firebase Auth 的 iOS 建置問題
+- ✅ **部署目標更新**: 將 iOS 部署目標從 13.0 更新到 15.0
+
+### 📝 **2025-10-11: 註冊按鈕功能 (PR #9)**
+- ✅ **Sign Up 按鈕**: 加入註冊按鈕功能
+- ✅ **使用者體驗**: 改善登入流程
+
+### 🎬 **2025-10-11: 啟動畫面優化 (PR #8)**
+- ✅ **Splash GIF 改善**: 改善啟動畫面 GIF 動畫
+- ✅ **搜尋列樣式**: 優化搜尋列樣式設計
+
+### 🔧 **2025-10-11: 程式碼品質 (PR #7)**
+- ✅ **Linter 修復**: 解決所有 linter 警告
+- ✅ **程式碼品質**: 提升程式碼品質和一致性
+
+### 📚 **2025-10-11: 文檔更新 (PR #6)**
+- ✅ **README 最終更新**: 移除所有 reviewer 要求
+- ✅ **文檔完善**: 完善專案文檔
+
+### 🔄 **2025-10-11: 工作流程修復 (PR #5)**
+- ✅ **工作流程描述**: 最終修復工作流程描述
+- ✅ **自動化流程**: 反映無需 reviewer 要求的流程
+
+### 📖 **2025-10-11: 協作指南 (PR #4)**
+- ✅ **團隊協作設定**: 新增最近更新部分記錄團隊協作設定
+- ✅ **工作流程文檔**: 更新工作流程描述
 
 ### 🚀 **2025-10-11: 團隊協作環境完善**
 - ✅ **分支保護規則**: 啟用 main 分支保護，要求 PR 和 CI 檢查
