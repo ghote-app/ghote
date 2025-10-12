@@ -4,6 +4,7 @@ import '../widgets/glass_button.dart';
 import 'dart:ui'; // Import for ImageFilter
 import '../utils/responsive.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, required this.onLogin});
@@ -107,6 +108,51 @@ class _LoginScreenState extends State<LoginScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('註冊失敗：${e.message}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    FocusScope.of(context).unfocus();
+    setState(() => _isLoading = true);
+    HapticFeedback.lightImpact();
+
+    try {
+      // 觸發 Google 登入流程
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      
+      if (googleUser == null) {
+        // 使用者取消了登入
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
+
+      // 取得 Google 登入的認證詳細資訊
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      // 建立新的認證憑證
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // 使用憑證登入 Firebase
+      final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      final user = userCredential.user;
+      
+      if (user != null && mounted) {
+        widget.onLogin(user.displayName ?? user.email ?? '', user.email ?? '');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Google 登入成功')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Google 登入失敗：$e')),
         );
       }
     } finally {
@@ -246,7 +292,7 @@ class _LoginScreenState extends State<LoginScreen>
             padding: const EdgeInsets.all(4),
             child: ClipOval(
               child: Image.asset(
-                'assets/images/Ghote_icon_black_background.png',
+                'assets/AppIcon/Ghote_icon_black_background.png',
                 width: Responsive.avatarM(context),
                 height: Responsive.avatarM(context),
                 fit: BoxFit.cover,
@@ -387,31 +433,15 @@ class _LoginScreenState extends State<LoginScreen>
       width: double.infinity,
       child: GlassButton(
         enabled: !_isLoading,
-        onPressed: _isLoading
-            ? null
-            : () {
-                // Google Sign In - placeholder implementation
-                _handleLogin();
-              },
+        onPressed: _isLoading ? null : _handleGoogleSignIn,
         borderRadius: 16,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Icon(
-              Icons.login,
-              color: Colors.white,
-              size: 20,
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'Continue with Google',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
+        child: const Text(
+          'Continue with Google',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
