@@ -1,8 +1,5 @@
 # Ghote
 
-hihihi猜猜我是誰
-
-
 Modern Flutter app with a clean, responsive UI and smooth animations.
 
 ## Features
@@ -228,10 +225,16 @@ lib/
 
 ## Product intro / 產品介紹
 
-Ghote 是一個專注學習與知識整理的輕量工具：
-- 以專案為單位管理文件與進度條，快速掌握學習狀態
-- 內建搜尋與篩選（All/Active/Completed/Archived）
-- 現代化深色主題與流暢動畫，讓使用體驗更專注
+Ghote 是一個專注學習與知識整理的智能學習輔助 App：
+- **AI 智能分析**: 透過 AI 技術自動從學習資料中提取核心知識，生成重點筆記、選擇題、問答題及抽認卡
+- **專案管理**: 以專案為單位管理不同科目或主題的學習資料，快速掌握學習狀態
+- **智能搜尋**: 內建搜尋與篩選功能 (All/Active/Completed/Archived)，快速找到所需內容
+- **現代化設計**: 深色主題與流暢動畫，讓使用體驗更專注
+
+### 官方網站
+- 🌐 **網站**: https://ghote-app.github.io/ghote/
+- 📋 **服務條款**: https://ghote-app.github.io/ghote/terms
+- 🔒 **隱私政策**: https://ghote-app.github.io/ghote/privacy
 
 Assets（示意用）：
 - App Icon：`assets/AppIcon/Ghote_icon_white_background_removed.png`
@@ -279,6 +282,14 @@ English
 - Google Fonts 需要網路；離線時請改用本地字型
 
 ## Recent Updates / 最近更新
+
+### 🌐 **2025-10-12: 官方網站上線 (PR #18)**
+- ✅ **官方網站**: 使用 Flutter Web 建立的官方網站
+- ✅ **服務條款**: 完整的服務使用條款和法律文件
+- ✅ **隱私政策**: 詳細的隱私保護政策，符合 AI 學習輔助服務需求
+- ✅ **自動化部署**: GitHub Actions 自動部署到 GitHub Pages
+- ✅ **應用程式整合**: 登入畫面的法律文件連結直接開啟網站
+- ✅ **響應式設計**: 支援各種裝置尺寸的現代化 UI
 
 ### 🔐 **2025-10-12: Google 登入功能整合 (PR #13)**
 - ✅ **Google Sign-In**: 整合 Android 和 iOS 的 Google 登入功能

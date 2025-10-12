@@ -98,7 +98,7 @@ class HomePage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            '您的學習夥伴，讓知識觸手可及',
+            '智能學習輔助 App，讓 AI 為您的學習加速',
             style: GoogleFonts.inter(
               fontSize: 20,
               color: Colors.white70,
@@ -140,19 +140,19 @@ class HomePage extends StatelessWidget {
   Widget _buildFeaturesSection(BuildContext context) {
     final features = [
       {
-        'icon': Icons.school,
-        'title': '智能學習',
-        'description': 'AI 驅動的個性化學習體驗',
+        'icon': Icons.auto_awesome,
+        'title': 'AI 智能分析',
+        'description': '自動從學習資料中提取核心知識，生成重點筆記、選擇題、問答題及抽認卡',
       },
       {
-        'icon': Icons.trending_up,
-        'title': '進度追蹤',
-        'description': '實時監控您的學習進度',
+        'icon': Icons.folder_special,
+        'title': '專案管理',
+        'description': '以專案為單位管理不同科目或主題的學習資料，快速掌握學習狀態',
       },
       {
-        'icon': Icons.people,
-        'title': '社群互動',
-        'description': '與其他學習者交流分享',
+        'icon': Icons.search,
+        'title': '智能搜尋',
+        'description': '內建搜尋與篩選功能 (All/Active/Completed/Archived)，快速找到所需內容',
       },
     ];
 
