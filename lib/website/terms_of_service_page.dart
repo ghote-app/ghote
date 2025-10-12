@@ -40,7 +40,7 @@ class TermsOfServicePage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              '最後更新：2024年1月1日',
+              '最後更新：2025年10月10日',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 color: Colors.white60,
@@ -53,7 +53,7 @@ class TermsOfServicePage extends StatelessWidget {
             ),
             _buildSection(
               '2. 服務描述',
-              'Ghote 是一個學習平台，提供教育內容、互動功能和社群功能。我們致力於為用戶提供優質的學習體驗。',
+              'Ghote 是一個專注學習與知識整理的智能學習輔助 App，透過 AI 技術自動從學習資料中提取核心知識，並以多種形式呈現學習內容，包括重點筆記、選擇題、問答題及抽認卡。用戶可以建立 Project 管理不同科目或主題的學習資料，AI 會自動分析並生成各種學習材料。',
             ),
             _buildSection(
               '3. 用戶責任',
@@ -120,7 +120,7 @@ class TermsOfServicePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '電子郵件：support@ghote.app',
+                    '電子郵件：ghote.app@gmail.com',
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       color: Colors.white,
