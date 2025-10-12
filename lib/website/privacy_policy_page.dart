@@ -40,7 +40,7 @@ class PrivacyPolicyPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              '最後更新：2024年1月1日',
+              '最後更新：2025年10月10日',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 color: Colors.white60,
@@ -51,16 +51,18 @@ class PrivacyPolicyPage extends StatelessWidget {
               '1. 資訊收集',
               '我們收集以下類型的資訊：\n\n'
               '• 帳戶資訊：姓名、電子郵件地址\n'
-              '• 使用資料：應用程式使用情況、學習進度\n'
+              '• 學習資料：您上傳的 PDF/DOCX 文件、學習筆記\n'
+              '• 使用資料：應用程式使用情況、學習進度、AI 生成的內容\n'
               '• 裝置資訊：裝置類型、作業系統版本\n'
               '• 位置資訊：僅在您授權時收集',
             ),
             _buildSection(
               '2. 資訊使用',
               '我們使用收集的資訊來：\n\n'
-              '• 提供和改善我們的服務\n'
-              '• 個性化您的學習體驗\n'
-              '• 與您溝通重要更新\n'
+              '• 提供和改善我們的 AI 學習輔助服務\n'
+              '• 自動分析您的學習資料並生成學習材料\n'
+              '• 個性化您的學習體驗和進度追蹤\n'
+              '• 與您溝通重要更新和學習建議\n'
               '• 確保服務安全和品質',
             ),
             _buildSection(
@@ -91,7 +93,10 @@ class PrivacyPolicyPage extends StatelessWidget {
               '我們可能使用以下第三方服務：\n\n'
               '• Google Analytics：分析使用情況\n'
               '• Firebase：後端服務和認證\n'
-              '• 雲端儲存：安全儲存您的資料',
+              '• Google Gemini API：AI 內容生成\n'
+              '• Cloudflare R2：文件儲存 (PDF/DOCX)\n'
+              '• Neon PostgreSQL：資料庫服務\n'
+              '• Render：後端 API 部署',
             ),
             _buildSection(
               '7. 兒童隱私',
@@ -143,7 +148,7 @@ class PrivacyPolicyPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '電子郵件：privacy@ghote.app',
+                    '電子郵件：ghote.app@gmail.com',
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       color: Colors.white,
