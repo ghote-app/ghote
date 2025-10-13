@@ -1,25 +1,24 @@
-import 'dart:html' as html; // Web only
 import 'package:flutter/foundation.dart';
+// Conditional storage: web uses localStorage; other platforms use stubs
+import 'i18n_storage_stub.dart' if (dart.library.html) 'i18n_storage_web.dart' as storage;
 
 enum AppLocale { en, zh }
 
 class LocaleController extends ChangeNotifier {
-  static const String _storageKey = 'ghote_lang';
-
   AppLocale _locale = _detectInitialLocale();
   AppLocale get locale => _locale;
 
   static AppLocale _detectInitialLocale() {
-    final saved = html.window.localStorage[_storageKey];
+    final saved = storage.loadSaved();
     if (saved == 'en') return AppLocale.en;
     if (saved == 'zh') return AppLocale.zh;
-    final lang = html.window.navigator.language.toLowerCase();
+    final lang = (storage.browserLang() ?? '').toLowerCase();
     return lang.startsWith('zh') ? AppLocale.zh : AppLocale.en;
   }
 
   void setLocale(AppLocale locale) {
     _locale = locale;
-    html.window.localStorage[_storageKey] = locale == AppLocale.en ? 'en' : 'zh';
+    storage.save(locale == AppLocale.en ? 'en' : 'zh');
     notifyListeners();
   }
 }
