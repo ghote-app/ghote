@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'i18n.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -37,7 +38,7 @@ class HomePage extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'Ghote',
+                t('app.title'),
                 style: GoogleFonts.inter(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -48,10 +49,21 @@ class HomePage extends StatelessWidget {
           ),
           Row(
             children: [
+              // language toggle
+              PopupMenuButton<AppLocale>(
+                tooltip: 'Language',
+                icon: const Icon(Icons.language, color: Colors.white70),
+                onSelected: (v) => localeController.setLocale(v),
+                itemBuilder: (_) => [
+                  const PopupMenuItem(value: AppLocale.en, child: Text('English')),
+                  const PopupMenuItem(value: AppLocale.zh, child: Text('中文')),
+                ],
+              ),
+              const SizedBox(width: 8),
               TextButton(
                 onPressed: () => context.go('/terms'),
                 child: Text(
-                  '服務條款',
+                  t('nav.terms'),
                   style: GoogleFonts.inter(
                     color: Colors.white70,
                     fontSize: 14,
@@ -62,7 +74,7 @@ class HomePage extends StatelessWidget {
               TextButton(
                 onPressed: () => context.go('/privacy'),
                 child: Text(
-                  '隱私政策',
+                  t('nav.privacy'),
                   style: GoogleFonts.inter(
                     color: Colors.white70,
                     fontSize: 14,
@@ -88,7 +100,7 @@ class HomePage extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           Text(
-            '歡迎來到 Ghote',
+            t('hero.title'),
             style: GoogleFonts.inter(
               fontSize: 48,
               fontWeight: FontWeight.bold,
@@ -98,7 +110,7 @@ class HomePage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            '智能學習輔助 App，讓 AI 為您的學習加速',
+            t('hero.subtitle'),
             style: GoogleFonts.inter(
               fontSize: 20,
               color: Colors.white70,
@@ -123,7 +135,7 @@ class HomePage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               ),
               child: Text(
-                '下載應用程式',
+                t('nav.download'),
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -141,18 +153,18 @@ class HomePage extends StatelessWidget {
     final features = [
       {
         'icon': Icons.auto_awesome,
-        'title': 'AI 智能分析',
-        'description': '自動從學習資料中提取核心知識，生成重點筆記、選擇題、問答題及抽認卡',
+        'title': t('feature.ai.title'),
+        'description': t('feature.ai.desc'),
       },
       {
         'icon': Icons.folder_special,
-        'title': '專案管理',
-        'description': '以專案為單位管理不同科目或主題的學習資料，快速掌握學習狀態',
+        'title': t('feature.project.title'),
+        'description': t('feature.project.desc'),
       },
       {
         'icon': Icons.search,
-        'title': '智能搜尋',
-        'description': '內建搜尋與篩選功能 (All/Active/Completed/Archived)，快速找到所需內容',
+        'title': t('feature.search.title'),
+        'description': t('feature.search.desc'),
       },
     ];
 
@@ -161,7 +173,7 @@ class HomePage extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            '為什麼選擇 Ghote？',
+            t('features.title'),
             style: GoogleFonts.inter(
               fontSize: 36,
               fontWeight: FontWeight.bold,

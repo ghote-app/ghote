@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'i18n.dart';
 
 class PrivacyPolicyPage extends StatelessWidget {
   const PrivacyPolicyPage({super.key});
@@ -17,7 +18,7 @@ class PrivacyPolicyPage extends StatelessWidget {
           onPressed: () => context.go('/'),
         ),
         title: Text(
-          '隱私政策',
+          t('privacy.appbar'),
           style: GoogleFonts.inter(
             color: Colors.white,
             fontSize: 20,
@@ -31,7 +32,7 @@ class PrivacyPolicyPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Ghote 隱私政策',
+              t('privacy.title'),
               style: GoogleFonts.inter(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
@@ -166,7 +167,7 @@ class PrivacyPolicyPage extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 ),
                 child: Text(
-                  '返回首頁',
+                  t('common.backHome'),
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
