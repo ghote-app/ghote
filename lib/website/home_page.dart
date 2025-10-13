@@ -289,7 +289,7 @@ class HomePage extends StatelessWidget {
                   TextButton(
                     onPressed: () => context.go('/terms'),
                     child: Text(
-                      '服務條款',
+                      t('nav.terms'),
                       style: GoogleFonts.inter(
                         color: Colors.white70,
                         fontSize: 14,
@@ -300,7 +300,7 @@ class HomePage extends StatelessWidget {
                   TextButton(
                     onPressed: () => context.go('/privacy'),
                     child: Text(
-                      '隱私政策',
+                      t('nav.privacy'),
                       style: GoogleFonts.inter(
                         color: Colors.white70,
                         fontSize: 14,
@@ -313,7 +313,7 @@ class HomePage extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            '© 2025 Ghote. 版權所有。',
+            t('footer.copyright'),
             style: GoogleFonts.inter(
               color: Colors.white60,
               fontSize: 14,

@@ -43,8 +43,9 @@ class TermsOfServicePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
+            // '最後更新：2025年10月10日'
             Text(
-              '最後更新：2025年10月10日',
+              t('tos.updated'),
               style: GoogleFonts.inter(
                 fontSize: 14,
                 color: Colors.white60,
@@ -52,48 +53,54 @@ class TermsOfServicePage extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             _buildSection(
-              '1. 接受條款',
-              '通過使用 Ghote 應用程式，您同意受本服務條款的約束。如果您不同意這些條款，請不要使用我們的服務。',
+              // '1. 接受條款'
+              t('tos.section1.title'),
+              t('tos.section1.content'),
             ),
             _buildSection(
-              '2. 服務描述',
-              'Ghote 是一個專注學習與知識整理的智能學習輔助 App，透過 AI 技術自動從學習資料中提取核心知識，並以多種形式呈現學習內容，包括重點筆記、選擇題、問答題及抽認卡。用戶可以建立 Project 管理不同科目或主題的學習資料，AI 會自動分析並生成各種學習材料。',
+              // '2. 服務描述'
+              t('tos.section2.title'),
+              t('tos.section2.content'),
             ),
             _buildSection(
-              '3. 用戶責任',
-              '您同意：\n'
-              '• 提供準確的註冊資訊\n'
-              '• 維護帳戶安全\n'
-              '• 遵守所有適用的法律法規\n'
-              '• 不進行任何可能損害服務的行為',
+              // '3. 用戶責任'
+              t('tos.section3.title'),
+              t('tos.section3.content'),
             ),
             _buildSection(
-              '4. 隱私保護',
-              '我們重視您的隱私。請查看我們的隱私政策以了解我們如何收集、使用和保護您的個人資訊。',
+              // '4. 隱私保護'
+              t('tos.section4.title'),
+              t('tos.section4.content'),
             ),
             _buildSection(
-              '5. 智慧財產權',
-              'Ghote 及其內容受智慧財產權法保護。未經授權，您不得複製、分發或修改我們的內容。',
+              // '5. 智慧財產權'
+              t('tos.section5.title'),
+              t('tos.section5.content'),
             ),
             _buildSection(
-              '6. 服務變更',
-              '我們保留隨時修改或終止服務的權利。重大變更將提前通知用戶。',
+              // '6. 服務變更'
+              t('tos.section6.title'),
+              t('tos.section6.content'),
             ),
             _buildSection(
-              '7. 免責聲明',
-              '服務按「現狀」提供。我們不保證服務的連續性、準確性或無錯誤。',
+              // '7. 免責聲明'
+              t('tos.section7.title'),
+              t('tos.section7.content'),
             ),
             _buildSection(
-              '8. 責任限制',
-              '在法律允許的最大範圍內，Ghote 不對任何間接、偶然或後果性損害承擔責任。',
+              // '8. 責任限制'
+              t('tos.section8.title'),
+              t('tos.section8.content'),
             ),
             _buildSection(
-              '9. 爭議解決',
-              '任何爭議將通過友好協商解決。如無法協商，將提交至有管轄權的法院。',
+              // '9. 爭議解決'
+              t('tos.section9.title'),
+              t('tos.section9.content'),
             ),
             _buildSection(
-              '10. 條款修改',
-              '我們保留隨時修改本條款的權利。修改後的條款將在網站上公佈。',
+              // '10. 條款修改'
+              t('tos.section10.title'),
+              t('tos.section10.content'),
             ),
             const SizedBox(height: 48),
             Container(
@@ -106,8 +113,9 @@ class TermsOfServicePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // '聯絡我們'
                   Text(
-                    '聯絡我們',
+                    t('tos.contact.title'),
                     style: GoogleFonts.inter(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -116,7 +124,7 @@ class TermsOfServicePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '如果您對本服務條款有任何疑問，請透過以下方式聯絡我們：',
+                    t('tos.contact.intro'),
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       color: Colors.white70,
@@ -124,7 +132,7 @@ class TermsOfServicePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '電子郵件：ghote.app@gmail.com',
+                    t('tos.email'),
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       color: Colors.white,
