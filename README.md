@@ -1,15 +1,33 @@
 # Ghote
 
+## Product intro / 產品介紹
+
+Ghote is an AI-powered learning assistant that extracts key knowledge from your materials, organizes it, and helps you master it via active recall.
+
+Ghote 是一個由 AI 驅動的智能學習輔助 App，能從你的學習資料中提取核心知識、結構化整理，並透過主動回憶工具強化記憶。
+
 Modern Flutter app with a clean, responsive UI and smooth animations.
 
-## Features
+## Features / 功能特色
 
-- 📱 **Responsive Layout**: Works across iOS/Android with proportional sizing
-- 🎬 **Splash Animation**: Video-based intro with fade-in
-- 🔐 **Google Sign-In**: Secure authentication with Google accounts
-- 🔑 **Modern Login**: Animated form with frosted-style visuals (pure Flutter)
-- 📊 **Dashboard**: Sliver-based scrolling, filters, and animated cards
-- 🌙 **Dark Theme**: Polished dark palette (Material 3)
+- 🤖 AI Knowledge Extraction | AI 智能知識提取
+  - Upload PDFs/DOCX/notes; get distilled key points, MCQs, Q&A, and flashcards.
+  - 上傳 PDF/DOCX/筆記，AI 自動產出重點摘要、選擇題、問答題與抽認卡。
+- 🗂️ Project-based Organization | 專案式管理
+  - Manage subjects/topics as projects; track progress at a glance.
+  - 以 Project 管理不同科目/主題，掌握學習狀態。
+- 🔍 Fast Search & Filters | 智能搜尋與篩選
+  - Built-in All/Active/Completed/Archived filters to find content instantly.
+  - 內建 All/Active/Completed/Archived 篩選快速定位內容。
+- 🧠 Active Recall Tools | 主動回憶工具
+  - Practice with generated MCQs, Q&A, spaced-repetition flashcards.
+  - 練習模式：選擇題／問答題／間隔重複抽認卡。
+- 🔐 Authentication | 安全登入
+  - Firebase Authentication with Email/Password and Google Sign-In.
+  - 使用 Firebase Auth（Email/Password、Google 登入）。
+- 🖼️ Modern UI | 現代化介面
+  - Dark theme, glass morphism, smooth animations, fully responsive.
+  - 深色主題、玻璃擬態、流暢動畫、完整響應式。
 
 ## Prerequisites
 
@@ -17,6 +35,32 @@ Modern Flutter app with a clean, responsive UI and smooth animations.
 - Xcode (for iOS)
 - Android Studio (for Android)
 - macOS (for iOS simulator)
+
+### Firebase Google Sign-In（Android）SHA 設定
+為了讓 Android 上的 Google 登入正常運作，請在 Firebase Console 的 Android App 設定中加入 Debug/Release 的 SHA-1 與 SHA-256：
+
+1) 取得 Debug keystore 指紋（常用於本機開發）
+```bash
+# Android Studio/Gradle 產生的 debug keystore（最常見）
+./gradlew signingReport
+
+# 或使用 keytool（如需）：
+keytool -list -v -alias androiddebugkey -keystore ~/.android/debug.keystore -storepass android -keypass android
+```
+
+2) 取得 Release keystore 指紋（發版/測試用，若有設定簽章）
+```bash
+keytool -list -v -alias <your_release_alias> -keystore <path_to_your_release_keystore.jks>
+```
+
+3) 前往 Firebase Console → 專案設定 → 您的 Android App → 在「SHA 識別碼」中新增上述 SHA-1 與 SHA-256。
+
+4) 下載更新後的 `google-services.json`，放到 `android/app/google-services.json` 並重新執行：
+```bash
+flutter clean && flutter pub get
+```
+
+備註：iOS 不需要 SHA；若更換或新增 SHA，請務必重新下載 `google-services.json`。
 
 ### Recommended toolchain pinning
 - Flutter version manager: FVM or asdf（提交專案的版本檔，確保團隊一致）
@@ -133,6 +177,45 @@ lib/
     └── app_theme.dart       # App theming
 ```
 
+## Official Website / 官方網站
+
+本專案內含以 Flutter Web 建置的官方網站（首頁、服務條款、隱私政策），並透過 GitHub Pages 自動部署。
+
+### 網站功能特色
+- 🏠 首頁：展示 Ghote 應用程式的特色和功能
+- 📋 服務條款：完整的服務使用條款內容
+- 🔒 隱私政策：完整的隱私保護政策
+- 📱 響應式設計：支援各種裝置尺寸
+- 🎨 現代化 UI：玻璃擬態設計，深色主題
+
+### 本地開發（Website）
+```bash
+# 安裝依賴
+flutter pub get
+
+# 在 Chrome 中運行網站
+flutter run -d chrome --web-port 8080
+```
+開啟網址：`http://localhost:8080`
+
+### 部署到 GitHub Pages（Actions 自動部署）
+1. 確保儲存庫啟用 Pages，來源選擇「GitHub Actions」
+2. 推送到 `main` 分支後，Actions 會自動 build 並部署
+3. 部署完成後可於以下網址存取：
+   - `https://ghote-app.github.io/ghote/`
+
+手動部署可使用 `./deploy.sh` 生成 `build/web` 後，推送至 `gh-pages` 分支（若採用此流程）。
+
+### 網站檔案結構
+```
+lib/website/
+├── main.dart                  # 網站主程式
+├── router.dart                # 路由配置（/、/terms、/privacy）
+├── home_page.dart             # 首頁
+├── terms_of_service_page.dart # 服務條款
+└── privacy_policy_page.dart   # 隱私政策
+```
+
 ## Dependencies
 
 - `google_fonts` - Custom typography
@@ -222,19 +305,6 @@ lib/
   git merge origin/main   # 或 git rebase origin/main
   ```
 - CI 版本不一致？請確認使用 Flutter 3.35.6。
-
-## Product intro / 產品介紹
-
-Ghote 是一個專注學習與知識整理的智能學習輔助 App：
-- **AI 智能分析**: 透過 AI 技術自動從學習資料中提取核心知識，生成重點筆記、選擇題、問答題及抽認卡
-- **專案管理**: 以專案為單位管理不同科目或主題的學習資料，快速掌握學習狀態
-- **智能搜尋**: 內建搜尋與篩選功能 (All/Active/Completed/Archived)，快速找到所需內容
-- **現代化設計**: 深色主題與流暢動畫，讓使用體驗更專注
-
-### 官方網站
-- 🌐 **網站**: https://ghote-app.github.io/ghote/
-- 📋 **服務條款**: https://ghote-app.github.io/ghote/#/terms
-- 🔒 **隱私政策**: https://ghote-app.github.io/ghote/#/privacy
 
 Assets（示意用）：
 - App Icon：`assets/AppIcon/Ghote_icon_white_background_removed.png`
