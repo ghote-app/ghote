@@ -15,6 +15,7 @@ class GhoteWebsiteApp extends StatelessWidget {
       animation: localeController,
       builder: (context, _) {
         return MaterialApp.router(
+          key: ValueKey(localeController.locale),
           title: 'Ghote - 您的學習夥伴',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(

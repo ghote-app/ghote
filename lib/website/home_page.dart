@@ -8,18 +8,23 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildHeader(context),
-            _buildHeroSection(context),
-            _buildFeaturesSection(context),
-            _buildFooter(context),
-          ],
-        ),
-      ),
+    return AnimatedBuilder(
+      animation: localeController,
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: Colors.black,
+          body: SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildHeader(context),
+                _buildHeroSection(context),
+                _buildFeaturesSection(context),
+                _buildFooter(context),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
