@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'upgrade_screen.dart';
+import '../services/subscription_service.dart';
+import '../models/subscription.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -15,9 +18,19 @@ class SettingsScreen extends StatelessWidget {
         title: const Text('Settings', style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: ListView(
+      body: FutureBuilder<Subscription>(
+        future: SubscriptionService().getUserSubscription(user?.uid ?? ''),
+        builder: (context, snapshot) {
+          final sub = snapshot.data;
+          final planLabel = sub == null ? 'free' : sub.plan;
+          final storageText = sub == null || sub.isFree || sub.isPlus ? 'Limited cloud storage' : 'Unlimited cloud storage';
+          final aiText = sub == null || sub.usesGeminiFree ? 'Gemini Flash 2.5 (free)' : 'OpenAI/Claude (higher quality)';
+          return ListView(
         children: <Widget>[
           const SizedBox(height: 8),
+          _sectionTitle('Plan'),
+          _planTile(planLabel, storageText, aiText, context),
+          const Divider(color: Colors.white24, height: 1),
           _sectionTitle('Account'),
           _tile(
             context,
@@ -57,6 +70,8 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
         ],
+      );
+        },
       ),
     );
   }
@@ -67,6 +82,21 @@ class SettingsScreen extends StatelessWidget {
       child: Text(
         text,
         style: const TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1.0),
+      ),
+    );
+  }
+
+  Widget _planTile(String plan, String storage, String ai, BuildContext context) {
+    final color = plan == 'pro' ? Colors.amber : (plan == 'plus' ? Colors.blueAccent : Colors.white70);
+    return ListTile(
+      leading: Icon(Icons.workspace_premium_rounded, color: color),
+      title: Text('Current plan: ${plan.toUpperCase()}', style: const TextStyle(color: Colors.white)),
+      subtitle: Text('$storage • $ai', style: const TextStyle(color: Colors.white70)),
+      trailing: TextButton(
+        onPressed: () {
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const UpgradeScreen()));
+        },
+        child: const Text('Upgrade'),
       ),
     );
   }
