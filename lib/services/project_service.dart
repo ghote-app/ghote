@@ -43,6 +43,18 @@ class ProjectService {
     await _projectDoc(projectId).delete();
   }
 
+  /// Delete project and all file metadata under /projects/{projectId}/files
+  Future<void> deleteProjectDeep(String projectId) async {
+    // Delete files subcollection in batches
+    final filesSnap = await _filesCol(projectId).get();
+    final batch = _firestore.batch();
+    for (final doc in filesSnap.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+    await _projectDoc(projectId).delete();
+  }
+
   Stream<List<Project>> watchProjectsByOwner(String ownerId) {
     return _projectsCol
         .where('ownerId', isEqualTo: ownerId)
@@ -76,5 +88,6 @@ class ProjectService {
             .toList());
   }
 }
+
 
 
