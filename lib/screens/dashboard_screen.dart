@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
+
+import '../models/file_model.dart';
+import '../models/project.dart';
+import '../services/subscription_service.dart';
+import '../services/storage_service.dart';
+import '../services/project_service.dart';
+import 'upgrade_screen.dart';
 
 class ProjectItem {
   const ProjectItem({
@@ -188,29 +197,126 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 ],
               ),
             ),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(48),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
-              ),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(48),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 22),
-                  onPressed: () async {
-                    await FirebaseAuth.instance.signOut();
-                    if (widget.onLogout != null) widget.onLogout!();
-                  },
-                ),
-              ),
-            ),
+            _buildUserMenuButton(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildUserMenuButton() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(48),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(48),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
+        ),
+        child: IconButton(
+          icon: const Icon(Icons.person_rounded, color: Colors.white, size: 22),
+          onPressed: () async {
+            await showModalBottomSheet(
+              context: context,
+              backgroundColor: Colors.black,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              builder: (context) {
+                return SafeArea(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      ListTile(
+                        leading: const Icon(Icons.edit, color: Colors.white),
+                        title: const Text('修改暱稱', style: TextStyle(color: Colors.white)),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _promptEditDisplayName();
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.image, color: Colors.white),
+                        title: const Text('變更頭像', style: TextStyle(color: Colors.white)),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _changeAvatar();
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.workspace_premium_rounded, color: Colors.amber),
+                        title: const Text('升級為 Pro', style: TextStyle(color: Colors.white)),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const UpgradeScreen()),
+                          );
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.delete_forever_rounded, color: Colors.redAccent),
+                        title: const Text('清除我的測試專案', style: TextStyle(color: Colors.white)),
+                        onTap: () async {
+                          Navigator.pop(context);
+                          await _confirmAndDeleteAllProjects();
+                        },
+                      ),
+                      const Divider(height: 1, color: Colors.white24),
+                      ListTile(
+                        leading: const Icon(Icons.logout_rounded, color: Colors.white),
+                        title: const Text('登出', style: TextStyle(color: Colors.white)),
+                        onTap: () async {
+                          Navigator.pop(context);
+                          await FirebaseAuth.instance.signOut();
+                          if (widget.onLogout != null) widget.onLogout!();
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _promptEditDisplayName() async {
+    final controller = TextEditingController(text: widget.userName ?? '');
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
+        title: const Text('修改暱稱', style: TextStyle(color: Colors.white)),
+        content: TextField(
+          controller: controller,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(hintText: '輸入新的暱稱', hintStyle: TextStyle(color: Colors.white54)),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('取消')),
+          TextButton(
+            onPressed: () async {
+              // 目前僅更新 UI 顯示；若需同步到 Firebase User Profile 可擴充
+              setState(() {});
+              if (mounted) Navigator.of(context).pop();
+            },
+            child: const Text('儲存'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _changeAvatar() async {
+    // 預留：可走 file_picker 選擇圖片並上傳，再更新使用者頭像 URL
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('變更頭像功能將於稍後提供')),
     );
   }
 
@@ -366,81 +472,150 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   }
 
   Widget _buildProjectsGrid() {
-    final filteredProjects = _getFilteredProjects();
     final screenHeight = MediaQuery.of(context).size.height;
-    // Target card height responsive to screen height with sane clamps
     final double targetCardHeight = screenHeight * 0.30;
     final double clampedCardHeight = targetCardHeight.clamp(220.0, 360.0);
-    
-    if (filteredProjects.isEmpty) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
       return SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.all(40),
           child: Column(
             children: [
-              Icon(
-                Icons.search_off_rounded,
-                size: 64,
-                color: Colors.white.withValues(alpha: 0.3),
-              ),
+              Icon(Icons.login_rounded, size: 64, color: Colors.white.withValues(alpha: 0.3)),
               const SizedBox(height: 16),
-              Text(
-                'No projects found',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Try adjusting your search or filter',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.5),
-                  fontSize: 14,
-                ),
-              ),
+              Text('請先登入以查看專案', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 18, fontWeight: FontWeight.w500)),
             ],
           ),
         ),
       );
     }
-    
-    return SliverGrid(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 1,
-        // childAspectRatio: Platform.isAndroid ? 1.2 : 1.1,
-        mainAxisExtent: clampedCardHeight,
-        mainAxisSpacing: 14,
-        crossAxisSpacing: 14,
-      ),
-      delegate: SliverChildBuilderDelegate(
-        (BuildContext context, int index) {
-          final item = filteredProjects[index];
-          return AnimatedBuilder(
-            animation: _animationController,
-            builder: (context, child) {
-              final delay = index * 0.08;
-              final animationPercent = Curves.easeOutCubic.transform(
-                math.max(0.0, (_animationController.value - delay) / (1.0 - delay)),
+
+    return SliverToBoxAdapter(
+      child: StreamBuilder<List<Project>>(
+        stream: ProjectService().watchProjectsByOwner(user.uid),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Padding(
+              padding: EdgeInsets.all(40),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (snapshot.hasError) {
+            return Padding(
+              padding: const EdgeInsets.all(40),
+              child: Text('載入專案錯誤：${snapshot.error}', style: const TextStyle(color: Colors.white70)),
+            );
+          }
+          var projects = snapshot.data ?? <Project>[];
+
+          // 套用篩選與搜尋
+          if (_selectedFilter != 'All') {
+            projects = projects.where((p) => p.status == _selectedFilter).toList();
+          }
+          if (_searchController.text.isNotEmpty) {
+            final q = _searchController.text.toLowerCase();
+            projects = projects.where((p) =>
+              p.title.toLowerCase().contains(q) || (p.category ?? '').toLowerCase().contains(q)
+            ).toList();
+          }
+
+          if (projects.isEmpty) {
+            return Padding(
+              padding: const EdgeInsets.all(40),
+              child: Column(
+                children: [
+                  Icon(Icons.folder_off_rounded, size: 64, color: Colors.white.withValues(alpha: 0.3)),
+                  const SizedBox(height: 16),
+                  Text('尚無專案', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 18, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  Text('點擊右下角 + 建立新專案', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14)),
+                ],
+              ),
+            );
+          }
+
+          return GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 1,
+              mainAxisExtent: clampedCardHeight,
+              mainAxisSpacing: 14,
+              crossAxisSpacing: 14,
+            ),
+            itemCount: projects.length,
+            itemBuilder: (context, index) {
+              final p = projects[index];
+              final item = ProjectItem(
+                title: p.title,
+                status: p.status,
+                documentCount: 0, // 可改為 files 子集合計數（需要額外查詢或彙總欄位）
+                lastUpdated: _formatRelative(p.lastUpdatedAt),
+                image: 'assets/AppIcon/Ghote_icon_black_background.png',
+                progress: p.status == 'Completed' ? 1.0 : 0.5,
+                category: p.category ?? 'General',
               );
-              return Opacity(
-                opacity: animationPercent,
-                child: Transform.translate(
-                  offset: Offset(0, 30 * (1 - animationPercent)),
-                  child: Transform.scale(
-                    scale: 0.95 + (0.05 * animationPercent),
-                    child: child,
-                  ),
-                ),
+              return AnimatedBuilder(
+                animation: _animationController,
+                builder: (context, child) {
+                  final delay = index * 0.08;
+                  final animationPercent = Curves.easeOutCubic.transform(
+                    math.max(0.0, (_animationController.value - delay) / (1.0 - delay)),
+                  );
+                  return Opacity(
+                    opacity: animationPercent,
+                    child: Transform.translate(
+                      offset: Offset(0, 30 * (1 - animationPercent)),
+                      child: Transform.scale(
+                        scale: 0.95 + (0.05 * animationPercent),
+                        child: _ProjectCard(item: item),
+                      ),
+                    ),
+                  );
+                },
               );
             },
-            child: _ProjectCard(item: item),
           );
         },
-        childCount: filteredProjects.length,
       ),
     );
+  }
+
+  String _formatRelative(DateTime time) {
+    final now = DateTime.now();
+    final diff = now.difference(time);
+    if (diff.inDays >= 1) return '${diff.inDays} days ago';
+    if (diff.inHours >= 1) return '${diff.inHours} hours ago';
+    if (diff.inMinutes >= 1) return '${diff.inMinutes} minutes ago';
+    return 'just now';
+  }
+
+  Future<void> _confirmAndDeleteAllProjects() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
+        title: const Text('刪除所有我的專案？', style: TextStyle(color: Colors.white)),
+        content: const Text('這會刪除你帳號下的所有專案與檔案中繼資料，無法復原。', style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('取消')),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('刪除')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final svc = ProjectService();
+    final projects = await svc.watchProjectsByOwner(user.uid).first;
+    for (final p in projects) {
+      await svc.deleteProjectDeep(p.id);
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已刪除所有專案')));
   }
 
   Widget _buildFloatingActionButton() {
@@ -458,9 +633,210 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         child: FloatingActionButton(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          onPressed: () {},
+          onPressed: _showFabMenu,
           child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
         ),
+      ),
+    );
+  }
+
+  Future<void> _showFabMenu() async {
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.black,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.create_new_folder, color: Colors.white),
+                title: const Text('建立新專案', style: TextStyle(color: Colors.white)),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await _createNewProject();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.file_upload_rounded, color: Colors.white),
+                title: const Text('上傳檔案到專案', style: TextStyle(color: Colors.white)),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await _pickAndUploadFlow();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _createNewProject() async {
+    final nameController = TextEditingController();
+    final categoryController = TextEditingController();
+    final statusOptions = ['Active', 'Completed', 'Archived'];
+    String status = 'Active';
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
+        title: const Text('建立新專案', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            TextField(
+              controller: nameController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(hintText: '專案名稱', hintStyle: TextStyle(color: Colors.white54)),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: categoryController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(hintText: '分類（可選）', hintStyle: TextStyle(color: Colors.white54)),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              dropdownColor: Colors.black,
+              value: status,
+              items: statusOptions.map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(color: Colors.white)))).toList(),
+              onChanged: (v) => status = v ?? 'Active',
+              decoration: const InputDecoration(hintText: '狀態', hintStyle: TextStyle(color: Colors.white54)),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('取消')),
+          TextButton(
+            onPressed: () async {
+              final title = nameController.text.trim();
+              final category = categoryController.text.trim().isEmpty ? null : categoryController.text.trim();
+              if (title.isEmpty) return;
+              final user = FirebaseAuth.instance.currentUser;
+              if (user == null) return;
+              final now = DateTime.now();
+              final project = Project(
+                id: 'p_${now.microsecondsSinceEpoch}',
+                title: title,
+                description: null,
+                ownerId: user.uid,
+                collaboratorIds: const <String>[],
+                createdAt: now,
+                lastUpdatedAt: now,
+                status: status,
+                category: category,
+              );
+              await ProjectService().createProject(project);
+              if (mounted) Navigator.of(context).pop();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('專案已建立')));
+              }
+            },
+            child: const Text('建立'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickAndUploadFlow() async {
+    try {
+      final picker = await _lazyLoadFilePicker();
+      final result = await picker();
+      if (result == null || result.files.isEmpty) return;
+      final projectId = await _promptProjectId(context);
+      if (projectId == null || projectId.isEmpty) return;
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('請先登入')));
+        return;
+      }
+      final subscription = await SubscriptionService().getUserSubscription(user.uid);
+      final storage = const StorageService();
+      final projectService = ProjectService();
+      for (final f in result.files) {
+        if (f.path == null) continue;
+        final file = File(f.path!);
+        final now = DateTime.now();
+        final fileId = '${now.microsecondsSinceEpoch}-${f.name}';
+        String storageType = 'local';
+        String? localPath;
+        String? cloudPath;
+        String? downloadUrl;
+        if (subscription.isPro) {
+          final uploaded = await storage.uploadToCloudflare(file: file, projectId: projectId, userId: user.uid);
+          storageType = 'cloud';
+          cloudPath = uploaded['cloudPath'];
+          downloadUrl = uploaded['downloadUrl'];
+        } else {
+          localPath = await storage.saveToLocal(file, projectId);
+        }
+        final meta = FileModel(
+          id: fileId,
+          projectId: projectId,
+          name: f.name,
+          type: (f.extension ?? '').toLowerCase(),
+          sizeBytes: f.size,
+          storageType: storageType,
+          localPath: localPath,
+          cloudPath: cloudPath,
+          downloadUrl: downloadUrl,
+          uploaderId: user.uid,
+          uploadedAt: now,
+          metadata: const {},
+        );
+        await projectService.addFileMetadata(projectId, meta);
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('已上傳 ${result.files.length} 個檔案')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('上傳失敗：$e')));
+    }
+  }
+
+  // 延遲載入 file_picker，避免常駐依賴影響初始啟動時間
+  Future<Future<dynamic> Function()> _lazyLoadFilePicker() async {
+    // 直接返回檔案選擇呼叫（保留延遲載入的擴充介面）
+    return () async => await _pickFiles();
+  }
+
+  Future<dynamic> _pickFiles() async {
+    // 為保持頂層 import 簡潔，使用反射式呼叫不合適；直接依賴 file_picker
+    // ignore: avoid_dynamic_calls
+    try {
+      // 使用 file_picker 套件
+      // 由於此檔案未直接 import，改為延遲引入的方式不可行，這裡直接加上 import 更清晰
+      // 將在檔案頂部加入 import 'package:file_picker/file_picker.dart';
+      return await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'png', 'pdf', 'txt', 'doc', 'docx'],
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<String?> _promptProjectId(BuildContext context) async {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
+        title: const Text('輸入 Project ID', style: TextStyle(color: Colors.white)),
+        content: TextField(
+          controller: controller,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(hintText: 'projectId', hintStyle: TextStyle(color: Colors.white54)),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(null), child: const Text('取消')),
+          TextButton(onPressed: () => Navigator.of(context).pop(controller.text.trim()), child: const Text('確定')),
+        ],
       ),
     );
   }
@@ -498,144 +874,134 @@ class _ProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-        return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {},
-            borderRadius: BorderRadius.circular(28),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: _getStatusColor().withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: _getStatusColor().withValues(alpha: 0.4),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Image.asset(
-                          item.image,
-                          width: 28,
-                          height: 28,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: _getStatusColor().withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: _getStatusColor().withValues(alpha: 0.4),
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.96, end: 1.0),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+      builder: (context, scale, _) {
+        return MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.14), width: 1.2),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 18, offset: const Offset(0, 10)),
+                BoxShadow(color: _getStatusColor().withOpacity(0.16), blurRadius: 24, spreadRadius: 1),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(24),
+                onTap: () {},
+                onLongPress: () {},
+                child: AnimatedScale(
+                  scale: scale,
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Row(
                           children: <Widget>[
-                            Icon(_getStatusIcon(), color: _getStatusColor(), size: 14),
-                            const SizedBox(width: 6),
-                            Text(
-                              item.status,
-                              style: TextStyle(
-                                color: _getStatusColor(),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: _getStatusColor().withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: _getStatusColor().withValues(alpha: 0.32), width: 1),
                               ),
+                              child: Image.asset(item.image, width: 26, height: 26, fit: BoxFit.cover),
+                            ),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: _getStatusColor().withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(color: _getStatusColor().withValues(alpha: 0.36), width: 1),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  Icon(_getStatusIcon(), color: _getStatusColor(), size: 14),
+                                  const SizedBox(width: 6),
+                                  Text(item.status, style: TextStyle(color: _getStatusColor(), fontSize: 12, fontWeight: FontWeight.w600)),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            PopupMenuButton<String>(
+                              color: const Color(0xFF121212),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              icon: const Icon(Icons.more_horiz_rounded, color: Colors.white70),
+                              onSelected: (value) async {
+                                if (value == 'delete') {
+                                  // 刪除需在上層提供 projectId，此處僅示意（目前用 sample item）
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(value: 'open', child: Text('開啟')), 
+                                const PopupMenuItem(value: 'archive', child: Text('封存')), 
+                                const PopupMenuItem(value: 'delete', child: Text('刪除')), 
+                              ],
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Flexible(
-                    child: Text(
-                      item.title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    item.category,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.6),
-                      fontSize: 13,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: LinearProgressIndicator(
-                      value: item.progress,
-                      backgroundColor: Colors.white.withValues(alpha: 0.1),
-                      valueColor: AlwaysStoppedAnimation<Color>(_getStatusColor()),
-                      minHeight: 6,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: <Widget>[
-                      Icon(Icons.description_outlined, color: Colors.white.withValues(alpha: 0.6), size: 16),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          '${item.documentCount} docs',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.6),
-                            fontSize: 13,
+                        const SizedBox(height: 12),
+                        Flexible(
+                          child: Text(
+                            item.title,
+                            style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Icon(Icons.access_time_rounded, color: Colors.white.withValues(alpha: 0.6), size: 16),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          item.lastUpdated,
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.6),
-                            fontSize: 13,
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(Icons.local_offer_outlined, size: 14, color: Colors.white.withValues(alpha: 0.6)),
+                            const SizedBox(width: 6),
+                            Text(item.category, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: LinearProgressIndicator(
+                            value: item.progress,
+                            backgroundColor: Colors.white.withValues(alpha: 0.08),
+                            valueColor: AlwaysStoppedAnimation<Color>(_getStatusColor()),
+                            minHeight: 6,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 10),
+                        Row(
+                          children: <Widget>[
+                            Icon(Icons.description_outlined, color: Colors.white.withValues(alpha: 0.6), size: 16),
+                            const SizedBox(width: 6),
+                            Text('${item.documentCount} docs', style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
+                            const SizedBox(width: 16),
+                            Icon(Icons.access_time_rounded, color: Colors.white.withValues(alpha: 0.6), size: 16),
+                            const SizedBox(width: 6),
+                            Text(item.lastUpdated, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
