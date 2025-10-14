@@ -35,6 +35,12 @@ class SettingsScreen extends StatelessWidget {
             child: _planCompareCard(context),
           ),
           const Divider(color: Colors.white24, height: 1),
+          _sectionTitle('Usage'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _usageSection(sub),
+          ),
+          const Divider(color: Colors.white24, height: 1),
           _sectionTitle('Account'),
           _tile(
             context,
@@ -148,6 +154,55 @@ class SettingsScreen extends StatelessWidget {
           Text(desc, style: const TextStyle(color: Colors.white70, fontSize: 12)),
         ],
       ),
+    );
+  }
+
+  Widget _usageSection(Subscription? sub) {
+    final aiQuota = sub?.monthlyAiQuota ?? 50;
+    // Placeholder usage numbers – wire up real counters later
+    final usedAi = (aiQuota * 0.18).round();
+    final aiRatio = (usedAi / aiQuota).clamp(0.0, 1.0);
+
+    final hasUnlimited = sub?.hasUnlimitedCloudStorage ?? false;
+    final cloudLimitGb = hasUnlimited ? null : 10; // example cap for plus
+    final usedCloudGb = hasUnlimited ? 0.0 : 1.7; // placeholder
+    final cloudRatio = hasUnlimited ? 0.0 : (usedCloudGb / (cloudLimitGb ?? 1)).clamp(0.0, 1.0);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _usageLine('AI monthly quota', '$usedAi / $aiQuota', aiRatio, Colors.purple),
+        const SizedBox(height: 10),
+        hasUnlimited
+            ? _usageLine('Cloud storage', 'Unlimited', 0.0, Colors.blue)
+            : _usageLine('Cloud storage', '${usedCloudGb.toStringAsFixed(1)} GB / ${cloudLimitGb} GB', cloudRatio, Colors.blue),
+        const SizedBox(height: 6),
+        Text('Usage figures are placeholders; connect real counters later.', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12)),
+      ],
+    );
+  }
+
+  Widget _usageLine(String label, String value, double ratio, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: Text(label, style: const TextStyle(color: Colors.white))),
+            Text(value, style: const TextStyle(color: Colors.white70)),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: LinearProgressIndicator(
+            value: ratio,
+            backgroundColor: Colors.white.withOpacity(0.08),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+            minHeight: 6,
+          ),
+        ),
+      ],
     );
   }
 
