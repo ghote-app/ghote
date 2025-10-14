@@ -256,6 +256,14 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                           );
                         },
                       ),
+                      ListTile(
+                        leading: const Icon(Icons.delete_forever_rounded, color: Colors.redAccent),
+                        title: const Text('清除我的測試專案', style: TextStyle(color: Colors.white)),
+                        onTap: () async {
+                          Navigator.pop(context);
+                          await _confirmAndDeleteAllProjects();
+                        },
+                      ),
                       const Divider(height: 1, color: Colors.white24),
                       ListTile(
                         leading: const Icon(Icons.logout_rounded, color: Colors.white),
@@ -585,6 +593,31 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     return 'just now';
   }
 
+  Future<void> _confirmAndDeleteAllProjects() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
+        title: const Text('刪除所有我的專案？', style: TextStyle(color: Colors.white)),
+        content: const Text('這會刪除你帳號下的所有專案與檔案中繼資料，無法復原。', style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('取消')),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('刪除')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final svc = ProjectService();
+    final projects = await svc.watchProjectsByOwner(user.uid).first;
+    for (final p in projects) {
+      await svc.deleteProjectDeep(p.id);
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已刪除所有專案')));
+  }
+
   Widget _buildFloatingActionButton() {
     return Container(
       decoration: BoxDecoration(
@@ -841,144 +874,134 @@ class _ProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-        return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {},
-            borderRadius: BorderRadius.circular(28),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: _getStatusColor().withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: _getStatusColor().withValues(alpha: 0.4),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Image.asset(
-                          item.image,
-                          width: 28,
-                          height: 28,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: _getStatusColor().withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: _getStatusColor().withValues(alpha: 0.4),
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.96, end: 1.0),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+      builder: (context, scale, _) {
+        return MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.14), width: 1.2),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 18, offset: const Offset(0, 10)),
+                BoxShadow(color: _getStatusColor().withOpacity(0.16), blurRadius: 24, spreadRadius: 1),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(24),
+                onTap: () {},
+                onLongPress: () {},
+                child: AnimatedScale(
+                  scale: scale,
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Row(
                           children: <Widget>[
-                            Icon(_getStatusIcon(), color: _getStatusColor(), size: 14),
-                            const SizedBox(width: 6),
-                            Text(
-                              item.status,
-                              style: TextStyle(
-                                color: _getStatusColor(),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: _getStatusColor().withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: _getStatusColor().withValues(alpha: 0.32), width: 1),
                               ),
+                              child: Image.asset(item.image, width: 26, height: 26, fit: BoxFit.cover),
+                            ),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: _getStatusColor().withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(color: _getStatusColor().withValues(alpha: 0.36), width: 1),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  Icon(_getStatusIcon(), color: _getStatusColor(), size: 14),
+                                  const SizedBox(width: 6),
+                                  Text(item.status, style: TextStyle(color: _getStatusColor(), fontSize: 12, fontWeight: FontWeight.w600)),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            PopupMenuButton<String>(
+                              color: const Color(0xFF121212),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              icon: const Icon(Icons.more_horiz_rounded, color: Colors.white70),
+                              onSelected: (value) async {
+                                if (value == 'delete') {
+                                  // 刪除需在上層提供 projectId，此處僅示意（目前用 sample item）
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(value: 'open', child: Text('開啟')), 
+                                const PopupMenuItem(value: 'archive', child: Text('封存')), 
+                                const PopupMenuItem(value: 'delete', child: Text('刪除')), 
+                              ],
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Flexible(
-                    child: Text(
-                      item.title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    item.category,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.6),
-                      fontSize: 13,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: LinearProgressIndicator(
-                      value: item.progress,
-                      backgroundColor: Colors.white.withValues(alpha: 0.1),
-                      valueColor: AlwaysStoppedAnimation<Color>(_getStatusColor()),
-                      minHeight: 6,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: <Widget>[
-                      Icon(Icons.description_outlined, color: Colors.white.withValues(alpha: 0.6), size: 16),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          '${item.documentCount} docs',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.6),
-                            fontSize: 13,
+                        const SizedBox(height: 12),
+                        Flexible(
+                          child: Text(
+                            item.title,
+                            style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Icon(Icons.access_time_rounded, color: Colors.white.withValues(alpha: 0.6), size: 16),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          item.lastUpdated,
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.6),
-                            fontSize: 13,
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(Icons.local_offer_outlined, size: 14, color: Colors.white.withValues(alpha: 0.6)),
+                            const SizedBox(width: 6),
+                            Text(item.category, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: LinearProgressIndicator(
+                            value: item.progress,
+                            backgroundColor: Colors.white.withValues(alpha: 0.08),
+                            valueColor: AlwaysStoppedAnimation<Color>(_getStatusColor()),
+                            minHeight: 6,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 10),
+                        Row(
+                          children: <Widget>[
+                            Icon(Icons.description_outlined, color: Colors.white.withValues(alpha: 0.6), size: 16),
+                            const SizedBox(width: 6),
+                            Text('${item.documentCount} docs', style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
+                            const SizedBox(width: 16),
+                            Icon(Icons.access_time_rounded, color: Colors.white.withValues(alpha: 0.6), size: 16),
+                            const SizedBox(width: 6),
+                            Text(item.lastUpdated, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
