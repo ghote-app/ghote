@@ -31,44 +31,7 @@ class ProjectItem {
   final String category;
 }
 
-final List<ProjectItem> _sampleProjects = <ProjectItem>[
-  const ProjectItem(
-    title: 'Machine Learning',
-    status: 'Active',
-    documentCount: 5,
-    lastUpdated: '2 days ago',
-    image: 'assets/AppIcon/Ghote_icon_black_background.png',
-    progress: 0.65,
-    category: 'Technology',
-  ),
-  const ProjectItem(
-    title: 'History 101',
-    status: 'Active',
-    documentCount: 3,
-    lastUpdated: '1 week ago',
-    image: 'assets/AppIcon/Ghote_icon_black_background.png',
-    progress: 0.45,
-    category: 'Education',
-  ),
-  const ProjectItem(
-    title: 'Physics Advanced',
-    status: 'Completed',
-    documentCount: 8,
-    lastUpdated: '3 days ago',
-    image: 'assets/AppIcon/Ghote_icon_black_background.png',
-    progress: 1.0,
-    category: 'Science',
-  ),
-  const ProjectItem(
-    title: 'Creative Writing',
-    status: 'Archived',
-    documentCount: 12,
-    lastUpdated: '1 month ago',
-    image: 'assets/AppIcon/Ghote_icon_black_background.png',
-    progress: 0.85,
-    category: 'Arts',
-  ),
-];
+// sample projects removed; now binding to Firestore only
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, this.userName, this.onLogout});
@@ -242,20 +205,38 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   }
 
   Widget _buildStatsSection() {
-    final filteredProjects = _getFilteredProjects();
-    
+    final user = FirebaseAuth.instance.currentUser;
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-        child: Row(
-          children: <Widget>[
-            Expanded(child: _buildStatCard('Active', '${filteredProjects.where((p) => p.status == 'Active').length}', Icons.play_circle_outline_rounded, Colors.green)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildStatCard('Completed', '${filteredProjects.where((p) => p.status == 'Completed').length}', Icons.check_circle_outline_rounded, Colors.blue)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildStatCard('Total Docs', '${filteredProjects.fold(0, (sum, item) => sum + item.documentCount)}', Icons.description_outlined, Colors.purple)),
-          ],
-        ),
+        child: user == null
+            ? Row(
+                children: <Widget>[
+                  Expanded(child: _buildStatCard('Active', '0', Icons.play_circle_outline_rounded, Colors.green)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildStatCard('Completed', '0', Icons.check_circle_outline_rounded, Colors.blue)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildStatCard('Archived', '0', Icons.archive_outlined, Colors.grey)),
+                ],
+              )
+            : StreamBuilder<List<Project>>(
+                stream: ProjectService().watchProjectsByOwner(user.uid),
+                builder: (context, snapshot) {
+                  final projects = snapshot.data ?? <Project>[];
+                  final active = projects.where((p) => p.status == 'Active').length;
+                  final completed = projects.where((p) => p.status == 'Completed').length;
+                  final archived = projects.where((p) => p.status == 'Archived').length;
+                  return Row(
+                    children: <Widget>[
+                      Expanded(child: _buildStatCard('Active', '$active', Icons.play_circle_outline_rounded, Colors.green)),
+                      const SizedBox(width: 12),
+                      Expanded(child: _buildStatCard('Completed', '$completed', Icons.check_circle_outline_rounded, Colors.blue)),
+                      const SizedBox(width: 12),
+                      Expanded(child: _buildStatCard('Archived', '$archived', Icons.archive_outlined, Colors.grey)),
+                    ],
+                  );
+                },
+              ),
       ),
     );
   }
@@ -348,25 +329,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     );
   }
 
-  List<ProjectItem> _getFilteredProjects() {
-    List<ProjectItem> filtered = _sampleProjects;
-    
-    // Apply status filter
-    if (_selectedFilter != 'All') {
-      filtered = filtered.where((project) => project.status == _selectedFilter).toList();
-    }
-    
-    // Apply search filter
-    if (_searchController.text.isNotEmpty) {
-      final searchQuery = _searchController.text.toLowerCase();
-      filtered = filtered.where((project) {
-        return project.title.toLowerCase().contains(searchQuery) ||
-               project.category.toLowerCase().contains(searchQuery);
-      }).toList();
-    }
-    
-    return filtered;
-  }
+  // legacy sample filtering removed; now stats and grid bind to Firestore
 
   Widget _buildProjectsGrid() {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -382,7 +345,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             children: [
               Icon(Icons.login_rounded, size: 64, color: Colors.white.withValues(alpha: 0.3)),
               const SizedBox(height: 16),
-              Text('請先登入以查看專案', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 18, fontWeight: FontWeight.w500)),
+              Text('Please sign in to view your projects', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 18, fontWeight: FontWeight.w500)),
             ],
           ),
         ),
@@ -402,7 +365,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           if (snapshot.hasError) {
             return Padding(
               padding: const EdgeInsets.all(40),
-              child: Text('載入專案錯誤：${snapshot.error}', style: const TextStyle(color: Colors.white70)),
+              child: Text('Failed to load projects: ${snapshot.error}', style: const TextStyle(color: Colors.white70)),
             );
           }
           var projects = snapshot.data ?? <Project>[];
@@ -425,9 +388,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 children: [
                   Icon(Icons.folder_off_rounded, size: 64, color: Colors.white.withValues(alpha: 0.3)),
                   const SizedBox(height: 16),
-                  Text('尚無專案', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 18, fontWeight: FontWeight.w500)),
+                  Text('No projects yet', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 18, fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
-                  Text('點擊右下角 + 建立新專案', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14)),
+                  Text('Tap + to create your first project', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14)),
                 ],
               ),
             );
@@ -542,14 +505,14 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       child: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
                     ),
                     const SizedBox(width: 10),
-                    const Text('建立或新增', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                    const Text('Create or add', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
                   ],
                 ),
                 const SizedBox(height: 12),
                 _fabAction(
                   icon: Icons.create_new_folder_rounded,
-                  title: '建立新專案',
-                  subtitle: '為你的學習材料建立容器',
+                  title: 'Create project',
+                  subtitle: 'Create a container for your study materials',
                   color: Colors.blue,
                   onTap: () async {
                     Navigator.pop(context);
@@ -559,8 +522,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 const SizedBox(height: 10),
                 _fabAction(
                   icon: Icons.file_upload_rounded,
-                  title: '上傳檔案到專案',
-                  subtitle: '未來將自動偵測主題並命名',
+                  title: 'Upload files to project',
+                  subtitle: 'AI auto-naming by topic coming soon',
                   color: Colors.purple,
                   onTap: () async {
                     Navigator.pop(context);
@@ -633,20 +596,20 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.black,
-        title: const Text('建立新專案', style: TextStyle(color: Colors.white)),
+        title: const Text('Create project', style: TextStyle(color: Colors.white)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             TextField(
               controller: nameController,
               style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(hintText: '專案名稱', hintStyle: TextStyle(color: Colors.white54)),
+              decoration: const InputDecoration(hintText: 'Project title', hintStyle: TextStyle(color: Colors.white54)),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: categoryController,
               style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(hintText: '分類（可選）', hintStyle: TextStyle(color: Colors.white54)),
+              decoration: const InputDecoration(hintText: 'Category (optional)', hintStyle: TextStyle(color: Colors.white54)),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
@@ -654,12 +617,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               value: status,
               items: statusOptions.map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(color: Colors.white)))).toList(),
               onChanged: (v) => status = v ?? 'Active',
-              decoration: const InputDecoration(hintText: '狀態', hintStyle: TextStyle(color: Colors.white54)),
+              decoration: const InputDecoration(hintText: 'Status', hintStyle: TextStyle(color: Colors.white54)),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('取消')),
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
           TextButton(
             onPressed: () async {
               final title = nameController.text.trim();
@@ -682,10 +645,10 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               await ProjectService().createProject(project);
               if (mounted) Navigator.of(context).pop();
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('專案已建立')));
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Project created')));
               }
             },
-            child: const Text('建立'),
+            child: const Text('Create'),
           ),
         ],
       ),
@@ -702,7 +665,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('請先登入')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please sign in first')));
         return;
       }
       final subscription = await SubscriptionService().getUserSubscription(user.uid);
@@ -742,10 +705,10 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         await projectService.addFileMetadata(projectId, meta);
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('已上傳 ${result.files.length} 個檔案')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Uploaded ${result.files.length} file(s)')));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('上傳失敗：$e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
     }
   }
 
@@ -778,15 +741,15 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.black,
-        title: const Text('輸入 Project ID', style: TextStyle(color: Colors.white)),
+        title: const Text('Enter Project ID', style: TextStyle(color: Colors.white)),
         content: TextField(
           controller: controller,
           style: const TextStyle(color: Colors.white),
           decoration: const InputDecoration(hintText: 'projectId', hintStyle: TextStyle(color: Colors.white54)),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(null), child: const Text('取消')),
-          TextButton(onPressed: () => Navigator.of(context).pop(controller.text.trim()), child: const Text('確定')),
+          TextButton(onPressed: () => Navigator.of(context).pop(null), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(context).pop(controller.text.trim()), child: const Text('OK')),
         ],
       ),
     );
