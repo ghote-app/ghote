@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'upgrade_screen.dart';
+import '../services/subscription_service.dart';
+import '../models/subscription.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -15,9 +18,29 @@ class SettingsScreen extends StatelessWidget {
         title: const Text('Settings', style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: ListView(
+      body: FutureBuilder<Subscription>(
+        future: SubscriptionService().getUserSubscription(user?.uid ?? ''),
+        builder: (context, snapshot) {
+          final sub = snapshot.data;
+          final planLabel = sub == null ? 'free' : sub.plan;
+          final storageText = sub == null || sub.isFree || sub.isPlus ? 'Limited cloud storage' : 'Unlimited cloud storage';
+          final aiText = sub == null || sub.usesGeminiFree ? 'Gemini Flash 2.5 (free)' : 'OpenAI/Claude (higher quality)';
+          return ListView(
         children: <Widget>[
           const SizedBox(height: 8),
+          _sectionTitle('Plan'),
+          _planTile(planLabel, storageText, aiText, context),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: _planCompareCard(context),
+          ),
+          const Divider(color: Colors.white24, height: 1),
+          _sectionTitle('Usage'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _usageSection(sub),
+          ),
+          const Divider(color: Colors.white24, height: 1),
           _sectionTitle('Account'),
           _tile(
             context,
@@ -57,6 +80,8 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
         ],
+      );
+        },
       ),
     );
   }
@@ -68,6 +93,116 @@ class SettingsScreen extends StatelessWidget {
         text,
         style: const TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1.0),
       ),
+    );
+  }
+
+  Widget _planTile(String plan, String storage, String ai, BuildContext context) {
+    final color = plan == 'pro' ? Colors.amber : (plan == 'plus' ? Colors.blueAccent : Colors.white70);
+    return ListTile(
+      leading: Icon(Icons.workspace_premium_rounded, color: color),
+      title: Text('Current plan: ${plan.toUpperCase()}', style: const TextStyle(color: Colors.white)),
+      subtitle: Text('$storage • $ai', style: const TextStyle(color: Colors.white70)),
+      trailing: TextButton(
+        onPressed: () {
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const UpgradeScreen()));
+        },
+        child: const Text('Upgrade'),
+      ),
+    );
+  }
+
+  Widget _planCompareCard(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.12)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Plans', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            _planLine('Free / Plus', 'Limited cloud • Gemini 2.5 Flash'),
+            _planLine('Pro', 'Unlimited cloud • OpenAI/Claude'),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const UpgradeScreen()));
+                },
+                child: const Text('Change plan'),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _planLine(String title, String desc) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle_outline_rounded, color: Colors.white70, size: 18),
+          const SizedBox(width: 8),
+          Expanded(child: Text(title, style: const TextStyle(color: Colors.white))),
+          Text(desc, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
+  Widget _usageSection(Subscription? sub) {
+    final aiQuota = sub?.monthlyAiQuota ?? 50;
+    // Placeholder usage numbers – wire up real counters later
+    final usedAi = (aiQuota * 0.18).round();
+    final aiRatio = (usedAi / aiQuota).clamp(0.0, 1.0);
+
+    final hasUnlimited = sub?.hasUnlimitedCloudStorage ?? false;
+    final cloudLimitGb = hasUnlimited ? null : 10; // example cap for plus
+    final usedCloudGb = hasUnlimited ? 0.0 : 1.7; // placeholder
+    final cloudRatio = hasUnlimited ? 0.0 : (usedCloudGb / (cloudLimitGb ?? 1)).clamp(0.0, 1.0);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _usageLine('AI monthly quota', '$usedAi / $aiQuota', aiRatio, Colors.purple),
+        const SizedBox(height: 10),
+        hasUnlimited
+            ? _usageLine('Cloud storage', 'Unlimited', 0.0, Colors.blue)
+            : _usageLine('Cloud storage', '${usedCloudGb.toStringAsFixed(1)} GB / ${cloudLimitGb} GB', cloudRatio, Colors.blue),
+        const SizedBox(height: 6),
+        Text('Usage figures are placeholders; connect real counters later.', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12)),
+      ],
+    );
+  }
+
+  Widget _usageLine(String label, String value, double ratio, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: Text(label, style: const TextStyle(color: Colors.white))),
+            Text(value, style: const TextStyle(color: Colors.white70)),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: LinearProgressIndicator(
+            value: ratio,
+            backgroundColor: Colors.white.withOpacity(0.08),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+            minHeight: 6,
+          ),
+        ),
+      ],
     );
   }
 
@@ -88,10 +223,29 @@ class SettingsScreen extends StatelessWidget {
       builder: (context) => AlertDialog(
         backgroundColor: Colors.black,
         title: const Text('Change display name', style: TextStyle(color: Colors.white)),
-        content: TextField(
-          controller: controller,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(hintText: 'Enter new name', hintStyle: TextStyle(color: Colors.white54)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.12)),
+              ),
+              child: TextField(
+                controller: controller,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  hintText: 'Enter new name',
+                  hintStyle: TextStyle(color: Colors.white54),
+                  border: InputBorder.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text('3–30 characters. Letters, numbers, spaces.', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12)),
+          ],
         ),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
