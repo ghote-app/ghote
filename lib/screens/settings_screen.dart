@@ -1,0 +1,124 @@
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'upgrade_screen.dart';
+
+class SettingsScreen extends StatelessWidget {
+  const SettingsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: const Text('Settings', style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: ListView(
+        children: <Widget>[
+          const SizedBox(height: 8),
+          _sectionTitle('Account'),
+          _tile(
+            context,
+            icon: Icons.person_outline,
+            title: 'Change display name',
+            onTap: () => _changeDisplayName(context),
+          ),
+          _tile(
+            context,
+            icon: Icons.image_outlined,
+            title: 'Change avatar',
+            onTap: () => _changeAvatar(context),
+          ),
+          const Divider(color: Colors.white24, height: 1),
+          _sectionTitle('Ghote Pro'),
+          _tile(
+            context,
+            icon: Icons.workspace_premium_rounded,
+            title: 'Upgrade to Ghote Pro',
+            trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const UpgradeScreen()),
+              );
+            },
+          ),
+          const Divider(color: Colors.white24, height: 1),
+          _sectionTitle('Security'),
+          _tile(
+            context,
+            icon: Icons.logout_rounded,
+            title: 'Sign out',
+            onTap: () async {
+              await FirebaseAuth.instance.signOut();
+              if (context.mounted) Navigator.of(context).pop();
+            },
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionTitle(String text) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      child: Text(
+        text,
+        style: const TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1.0),
+      ),
+    );
+  }
+
+  Widget _tile(BuildContext context, {required IconData icon, required String title, Widget? trailing, required VoidCallback onTap}) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.white),
+      title: Text(title, style: const TextStyle(color: Colors.white)),
+      trailing: trailing,
+      onTap: onTap,
+    );
+  }
+
+  Future<void> _changeDisplayName(BuildContext context) async {
+    final user = FirebaseAuth.instance.currentUser;
+    final controller = TextEditingController(text: user?.displayName ?? '');
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
+        title: const Text('Change display name', style: TextStyle(color: Colors.white)),
+        content: TextField(
+          controller: controller,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(hintText: 'Enter new name', hintStyle: TextStyle(color: Colors.white54)),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () async {
+              try {
+                await user?.updateDisplayName(controller.text.trim());
+                if (context.mounted) Navigator.of(context).pop();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Name updated')));
+                }
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _changeAvatar(BuildContext context) async {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Avatar change will be available soon')));
+  }
+}
+
+
