@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:file_picker/file_picker.dart';
+import 'dart:io';
+
+import '../models/file_model.dart';
+import '../services/subscription_service.dart';
+import '../services/storage_service.dart';
+import '../services/project_service.dart';
 
 class ProjectItem {
   const ProjectItem({
@@ -468,9 +474,64 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               if (result == null || result.files.isEmpty) {
                 return;
               }
+              final projectId = await _promptProjectId(context);
+              if (projectId == null || projectId.isEmpty) return;
+
+              final user = FirebaseAuth.instance.currentUser;
+              if (user == null) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('請先登入')),
+                );
+                return;
+              }
+              final subscription = await SubscriptionService().getUserSubscription(user.uid);
+              final storage = const StorageService();
+              final projectService = ProjectService();
+
+              for (final f in result.files) {
+                if (f.path == null) continue;
+                final file = File(f.path!);
+                final now = DateTime.now();
+                final fileId = '${now.microsecondsSinceEpoch}-${f.name}';
+
+                String storageType = 'local';
+                String? localPath;
+                String? cloudPath;
+                String? downloadUrl;
+
+                if (subscription.isPro) {
+                  final uploaded = await storage.uploadToCloudflare(
+                    file: file,
+                    projectId: projectId,
+                    userId: user.uid,
+                  );
+                  storageType = 'cloud';
+                  cloudPath = uploaded['cloudPath'];
+                  downloadUrl = uploaded['downloadUrl'];
+                } else {
+                  localPath = await storage.saveToLocal(file, projectId);
+                }
+
+                final meta = FileModel(
+                  id: fileId,
+                  projectId: projectId,
+                  name: f.name,
+                  type: (f.extension ?? '').toLowerCase(),
+                  sizeBytes: f.size,
+                  storageType: storageType,
+                  localPath: localPath,
+                  cloudPath: cloudPath,
+                  downloadUrl: downloadUrl,
+                  uploaderId: user.uid,
+                  uploadedAt: now,
+                  metadata: const {},
+                );
+                await projectService.addFileMetadata(projectId, meta);
+              }
               if (!mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('已選取 ${result.files.length} 個檔案')),
+                SnackBar(content: Text('已上傳 ${result.files.length} 個檔案')),
               );
             } catch (e) {
               if (!mounted) return;
@@ -506,6 +567,26 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     } catch (e) {
       rethrow;
     }
+  }
+
+  Future<String?> _promptProjectId(BuildContext context) async {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
+        title: const Text('輸入 Project ID', style: TextStyle(color: Colors.white)),
+        content: TextField(
+          controller: controller,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(hintText: 'projectId', hintStyle: TextStyle(color: Colors.white54)),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(null), child: const Text('取消')),
+          TextButton(onPressed: () => Navigator.of(context).pop(controller.text.trim()), child: const Text('確定')),
+        ],
+      ),
+    );
   }
 }
 
