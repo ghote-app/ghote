@@ -47,6 +47,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   final TextEditingController _searchController = TextEditingController();
   late AnimationController _animationController;
   String _selectedFilter = 'All';
+  String? _displayName;
 
   @override
   void initState() {
@@ -56,6 +57,16 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       duration: const Duration(milliseconds: 900),
     );
     _animationController.forward();
+
+    // Keep welcome name in sync with FirebaseAuth displayName
+    _displayName = FirebaseAuth.instance.currentUser?.displayName;
+    FirebaseAuth.instance.userChanges().listen((user) {
+      if (mounted) {
+        setState(() {
+          _displayName = user?.displayName;
+        });
+      }
+    });
   }
 
   @override
@@ -160,7 +171,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    widget.userName ?? "User",
+                    _displayName?.isNotEmpty == true ? _displayName! : (widget.userName ?? "User"),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 24,
@@ -621,16 +632,40 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            TextField(
-              controller: nameController,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(hintText: 'Project title', hintStyle: TextStyle(color: Colors.white54)),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.12)),
+              ),
+              child: TextField(
+                controller: nameController,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  hintText: 'Project title',
+                  hintStyle: TextStyle(color: Colors.white54),
+                  border: InputBorder.none,
+                ),
+              ),
             ),
             const SizedBox(height: 12),
-            TextField(
-              controller: categoryController,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(hintText: 'Category (optional)', hintStyle: TextStyle(color: Colors.white54)),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.12)),
+              ),
+              child: TextField(
+                controller: categoryController,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  hintText: 'Category (optional)',
+                  hintStyle: TextStyle(color: Colors.white54),
+                  border: InputBorder.none,
+                ),
+              ),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
