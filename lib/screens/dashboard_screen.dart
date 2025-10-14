@@ -14,6 +14,7 @@ import 'settings_screen.dart';
 
 class ProjectItem {
   const ProjectItem({
+    required this.id,
     required this.title,
     required this.status,
     required this.documentCount,
@@ -22,6 +23,7 @@ class ProjectItem {
     required this.progress,
     required this.category,
   });
+  final String id;
   final String title;
   final String status;
   final int documentCount;
@@ -45,6 +47,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   final TextEditingController _searchController = TextEditingController();
   late AnimationController _animationController;
   String _selectedFilter = 'All';
+  String? _displayName;
 
   @override
   void initState() {
@@ -54,6 +57,16 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       duration: const Duration(milliseconds: 900),
     );
     _animationController.forward();
+
+    // Keep welcome name in sync with FirebaseAuth displayName
+    _displayName = FirebaseAuth.instance.currentUser?.displayName;
+    FirebaseAuth.instance.userChanges().listen((user) {
+      if (mounted) {
+        setState(() {
+          _displayName = user?.displayName;
+        });
+      }
+    });
   }
 
   @override
@@ -114,29 +127,21 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            InkWell(
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                );
-              },
-              borderRadius: BorderRadius.circular(50),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(50),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 2),
+              ),
               child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(50),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 2),
-                ),
-                child: Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: const BoxDecoration(shape: BoxShape.circle),
-                  child: ClipOval(
-                    child: Image.asset(
-                      'assets/AppIcon/Ghote_icon_black_background.png',
-                      width: 56,
-                      height: 56,
-                      fit: BoxFit.cover,
-                    ),
+                padding: const EdgeInsets.all(3),
+                decoration: const BoxDecoration(shape: BoxShape.circle),
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/AppIcon/Ghote_icon_black_background.png',
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
                   ),
                 ),
               ),
@@ -158,7 +163,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    widget.userName ?? "User",
+                    _displayName?.isNotEmpty == true ? _displayName! : (widget.userName ?? "User"),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 24,
@@ -169,7 +174,14 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 ],
               ),
             ),
-            const SizedBox.shrink(),
+            IconButton(
+              icon: const Icon(Icons.settings_rounded, color: Colors.white),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -410,6 +422,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             itemBuilder: (context, index) {
               final p = projects[index];
               final item = ProjectItem(
+                id: p.id,
                 title: p.title,
                 status: p.status,
                 documentCount: 0, // 可改為 files 子集合計數（需要額外查詢或彙總欄位）
@@ -431,7 +444,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       offset: Offset(0, 30 * (1 - animationPercent)),
                       child: Transform.scale(
                         scale: 0.95 + (0.05 * animationPercent),
-                        child: _ProjectCard(item: item),
+                        child: _ProjectCard(item: item, onDelete: () => _confirmDeleteProject(item.id)),
                       ),
                     ),
                   );
@@ -442,6 +455,24 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         },
       ),
     );
+  }
+  Future<void> _confirmDeleteProject(String projectId) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
+        title: const Text('Delete project?', style: TextStyle(color: Colors.white)),
+        content: const Text('This will delete the project and its files metadata. This action cannot be undone.', style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await ProjectService().deleteProjectDeep(projectId);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Project deleted')));
   }
 
   String _formatRelative(DateTime time) {
@@ -600,16 +631,40 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            TextField(
-              controller: nameController,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(hintText: 'Project title', hintStyle: TextStyle(color: Colors.white54)),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.12)),
+              ),
+              child: TextField(
+                controller: nameController,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  hintText: 'Project title',
+                  hintStyle: TextStyle(color: Colors.white54),
+                  border: InputBorder.none,
+                ),
+              ),
             ),
             const SizedBox(height: 12),
-            TextField(
-              controller: categoryController,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(hintText: 'Category (optional)', hintStyle: TextStyle(color: Colors.white54)),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.12)),
+              ),
+              child: TextField(
+                controller: categoryController,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  hintText: 'Category (optional)',
+                  hintStyle: TextStyle(color: Colors.white54),
+                  border: InputBorder.none,
+                ),
+              ),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
@@ -669,6 +724,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         return;
       }
       final subscription = await SubscriptionService().getUserSubscription(user.uid);
+      if (subscription.isFree || subscription.isPlus) {
+        // TODO: compute actual current usage if tracked; show soft notice before upload
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Using limited cloud storage (Free/Plus). Upgrade for unlimited.')),
+        );
+      }
       final storage = const StorageService();
       final projectService = ProjectService();
       for (final f in result.files) {
@@ -681,7 +742,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         String? cloudPath;
         String? downloadUrl;
         if (subscription.isPro) {
-          final uploaded = await storage.uploadToCloudflare(file: file, projectId: projectId, userId: user.uid);
+          final uploaded = await storage.uploadToCloudflare(file: file, projectId: projectId, userId: user.uid, subscription: subscription);
           storageType = 'cloud';
           cloudPath = uploaded['cloudPath'];
           downloadUrl = uploaded['downloadUrl'];
@@ -757,8 +818,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
 }
 
 class _ProjectCard extends StatelessWidget {
-  const _ProjectCard({required this.item});
+  const _ProjectCard({required this.item, required this.onDelete});
   final ProjectItem item;
+  final VoidCallback onDelete;
 
   Color _getStatusColor() {
     switch (item.status) {
@@ -856,14 +918,12 @@ class _ProjectCard extends StatelessWidget {
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               icon: const Icon(Icons.more_horiz_rounded, color: Colors.white70),
                               onSelected: (value) async {
-                                if (value == 'delete') {
-                                  // 刪除需在上層提供 projectId，此處僅示意（目前用 sample item）
-                                }
+                                if (value == 'delete') onDelete();
                               },
                               itemBuilder: (context) => [
-                                const PopupMenuItem(value: 'open', child: Text('開啟')), 
-                                const PopupMenuItem(value: 'archive', child: Text('封存')), 
-                                const PopupMenuItem(value: 'delete', child: Text('刪除')), 
+                                const PopupMenuItem(value: 'open', child: Text('Open')), 
+                                const PopupMenuItem(value: 'archive', child: Text('Archive')), 
+                                const PopupMenuItem(value: 'delete', child: Text('Delete')), 
                               ],
                             ),
                           ],
