@@ -5,9 +5,11 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 
 import '../models/file_model.dart';
+import '../models/project.dart';
 import '../services/subscription_service.dart';
 import '../services/storage_service.dart';
 import '../services/project_service.dart';
+import 'upgrade_screen.dart';
 
 class ProjectItem {
   const ProjectItem({
@@ -195,29 +197,118 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 ],
               ),
             ),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(48),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
-              ),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(48),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 22),
-                  onPressed: () async {
-                    await FirebaseAuth.instance.signOut();
-                    if (widget.onLogout != null) widget.onLogout!();
-                  },
-                ),
-              ),
-            ),
+            _buildUserMenuButton(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildUserMenuButton() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(48),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(48),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
+        ),
+        child: IconButton(
+          icon: const Icon(Icons.person_rounded, color: Colors.white, size: 22),
+          onPressed: () async {
+            await showModalBottomSheet(
+              context: context,
+              backgroundColor: Colors.black,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              builder: (context) {
+                return SafeArea(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      ListTile(
+                        leading: const Icon(Icons.edit, color: Colors.white),
+                        title: const Text('修改暱稱', style: TextStyle(color: Colors.white)),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _promptEditDisplayName();
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.image, color: Colors.white),
+                        title: const Text('變更頭像', style: TextStyle(color: Colors.white)),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _changeAvatar();
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.workspace_premium_rounded, color: Colors.amber),
+                        title: const Text('升級為 Pro', style: TextStyle(color: Colors.white)),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const UpgradeScreen()),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1, color: Colors.white24),
+                      ListTile(
+                        leading: const Icon(Icons.logout_rounded, color: Colors.white),
+                        title: const Text('登出', style: TextStyle(color: Colors.white)),
+                        onTap: () async {
+                          Navigator.pop(context);
+                          await FirebaseAuth.instance.signOut();
+                          if (widget.onLogout != null) widget.onLogout!();
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _promptEditDisplayName() async {
+    final controller = TextEditingController(text: widget.userName ?? '');
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
+        title: const Text('修改暱稱', style: TextStyle(color: Colors.white)),
+        content: TextField(
+          controller: controller,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(hintText: '輸入新的暱稱', hintStyle: TextStyle(color: Colors.white54)),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('取消')),
+          TextButton(
+            onPressed: () async {
+              // 目前僅更新 UI 顯示；若需同步到 Firebase User Profile 可擴充
+              setState(() {});
+              if (mounted) Navigator.of(context).pop();
+            },
+            child: const Text('儲存'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _changeAvatar() async {
+    // 預留：可走 file_picker 選擇圖片並上傳，再更新使用者頭像 URL
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('變更頭像功能將於稍後提供')),
     );
   }
 
@@ -465,85 +556,169 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         child: FloatingActionButton(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          onPressed: () async {
-            // 檔案選擇流程骨架：後續會加入 Subscription 檢查與實際儲存邏輯
-            try {
-              // 延遲載入，避免初始啟動時增加啟動時間
-              final picker = await _lazyLoadFilePicker();
-              final result = await picker();
-              if (result == null || result.files.isEmpty) {
-                return;
-              }
-              final projectId = await _promptProjectId(context);
-              if (projectId == null || projectId.isEmpty) return;
-
-              final user = FirebaseAuth.instance.currentUser;
-              if (user == null) {
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('請先登入')),
-                );
-                return;
-              }
-              final subscription = await SubscriptionService().getUserSubscription(user.uid);
-              final storage = const StorageService();
-              final projectService = ProjectService();
-
-              for (final f in result.files) {
-                if (f.path == null) continue;
-                final file = File(f.path!);
-                final now = DateTime.now();
-                final fileId = '${now.microsecondsSinceEpoch}-${f.name}';
-
-                String storageType = 'local';
-                String? localPath;
-                String? cloudPath;
-                String? downloadUrl;
-
-                if (subscription.isPro) {
-                  final uploaded = await storage.uploadToCloudflare(
-                    file: file,
-                    projectId: projectId,
-                    userId: user.uid,
-                  );
-                  storageType = 'cloud';
-                  cloudPath = uploaded['cloudPath'];
-                  downloadUrl = uploaded['downloadUrl'];
-                } else {
-                  localPath = await storage.saveToLocal(file, projectId);
-                }
-
-                final meta = FileModel(
-                  id: fileId,
-                  projectId: projectId,
-                  name: f.name,
-                  type: (f.extension ?? '').toLowerCase(),
-                  sizeBytes: f.size,
-                  storageType: storageType,
-                  localPath: localPath,
-                  cloudPath: cloudPath,
-                  downloadUrl: downloadUrl,
-                  uploaderId: user.uid,
-                  uploadedAt: now,
-                  metadata: const {},
-                );
-                await projectService.addFileMetadata(projectId, meta);
-              }
-              if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('已上傳 ${result.files.length} 個檔案')),
-              );
-            } catch (e) {
-              if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('選擇檔案失敗：$e')),
-              );
-            }
-          },
+          onPressed: _showFabMenu,
           child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
         ),
       ),
     );
+  }
+
+  Future<void> _showFabMenu() async {
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.black,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.create_new_folder, color: Colors.white),
+                title: const Text('建立新專案', style: TextStyle(color: Colors.white)),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await _createNewProject();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.file_upload_rounded, color: Colors.white),
+                title: const Text('上傳檔案到專案', style: TextStyle(color: Colors.white)),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await _pickAndUploadFlow();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _createNewProject() async {
+    final nameController = TextEditingController();
+    final categoryController = TextEditingController();
+    final statusOptions = ['Active', 'Completed', 'Archived'];
+    String status = 'Active';
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
+        title: const Text('建立新專案', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            TextField(
+              controller: nameController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(hintText: '專案名稱', hintStyle: TextStyle(color: Colors.white54)),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: categoryController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(hintText: '分類（可選）', hintStyle: TextStyle(color: Colors.white54)),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              dropdownColor: Colors.black,
+              value: status,
+              items: statusOptions.map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(color: Colors.white)))).toList(),
+              onChanged: (v) => status = v ?? 'Active',
+              decoration: const InputDecoration(hintText: '狀態', hintStyle: TextStyle(color: Colors.white54)),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('取消')),
+          TextButton(
+            onPressed: () async {
+              final title = nameController.text.trim();
+              final category = categoryController.text.trim().isEmpty ? null : categoryController.text.trim();
+              if (title.isEmpty) return;
+              final user = FirebaseAuth.instance.currentUser;
+              if (user == null) return;
+              final now = DateTime.now();
+              final project = Project(
+                id: 'p_${now.microsecondsSinceEpoch}',
+                title: title,
+                description: null,
+                ownerId: user.uid,
+                collaboratorIds: const <String>[],
+                createdAt: now,
+                lastUpdatedAt: now,
+                status: status,
+                category: category,
+              );
+              await ProjectService().createProject(project);
+              if (mounted) Navigator.of(context).pop();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('專案已建立')));
+              }
+            },
+            child: const Text('建立'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickAndUploadFlow() async {
+    try {
+      final picker = await _lazyLoadFilePicker();
+      final result = await picker();
+      if (result == null || result.files.isEmpty) return;
+      final projectId = await _promptProjectId(context);
+      if (projectId == null || projectId.isEmpty) return;
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('請先登入')));
+        return;
+      }
+      final subscription = await SubscriptionService().getUserSubscription(user.uid);
+      final storage = const StorageService();
+      final projectService = ProjectService();
+      for (final f in result.files) {
+        if (f.path == null) continue;
+        final file = File(f.path!);
+        final now = DateTime.now();
+        final fileId = '${now.microsecondsSinceEpoch}-${f.name}';
+        String storageType = 'local';
+        String? localPath;
+        String? cloudPath;
+        String? downloadUrl;
+        if (subscription.isPro) {
+          final uploaded = await storage.uploadToCloudflare(file: file, projectId: projectId, userId: user.uid);
+          storageType = 'cloud';
+          cloudPath = uploaded['cloudPath'];
+          downloadUrl = uploaded['downloadUrl'];
+        } else {
+          localPath = await storage.saveToLocal(file, projectId);
+        }
+        final meta = FileModel(
+          id: fileId,
+          projectId: projectId,
+          name: f.name,
+          type: (f.extension ?? '').toLowerCase(),
+          sizeBytes: f.size,
+          storageType: storageType,
+          localPath: localPath,
+          cloudPath: cloudPath,
+          downloadUrl: downloadUrl,
+          uploaderId: user.uid,
+          uploadedAt: now,
+          metadata: const {},
+        );
+        await projectService.addFileMetadata(projectId, meta);
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('已上傳 ${result.files.length} 個檔案')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('上傳失敗：$e')));
+    }
   }
 
   // 延遲載入 file_picker，避免常駐依賴影響初始啟動時間
