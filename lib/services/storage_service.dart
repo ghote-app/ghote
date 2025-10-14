@@ -3,7 +3,9 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../models/file_model.dart';
@@ -28,6 +30,17 @@ class StorageService {
     required String projectId,
     required String userId,
   }) async {
+    // Feature flag: dev uses Firebase Storage, release uses Cloudflare R2
+    if (!kReleaseMode) {
+      final ref = FirebaseStorage.instance.ref().child('files/$userId/$projectId/${file.path.split('/').last}');
+      final task = await ref.putFile(file);
+      final url = await task.ref.getDownloadURL();
+      return {
+        'cloudPath': ref.fullPath,
+        'downloadUrl': url,
+      };
+    }
+
     final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
     final response = await http.post(
       Uri.parse('https://your-api.example.com/api/upload/presigned-url'),
