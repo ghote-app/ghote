@@ -14,6 +14,7 @@ import 'settings_screen.dart';
 
 class ProjectItem {
   const ProjectItem({
+    required this.id,
     required this.title,
     required this.status,
     required this.documentCount,
@@ -22,6 +23,7 @@ class ProjectItem {
     required this.progress,
     required this.category,
   });
+  final String id;
   final String title;
   final String status;
   final int documentCount;
@@ -410,6 +412,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             itemBuilder: (context, index) {
               final p = projects[index];
               final item = ProjectItem(
+                id: p.id,
                 title: p.title,
                 status: p.status,
                 documentCount: 0, // 可改為 files 子集合計數（需要額外查詢或彙總欄位）
@@ -431,7 +434,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       offset: Offset(0, 30 * (1 - animationPercent)),
                       child: Transform.scale(
                         scale: 0.95 + (0.05 * animationPercent),
-                        child: _ProjectCard(item: item),
+                        child: _ProjectCard(item: item, onDelete: () => _confirmDeleteProject(item.id)),
                       ),
                     ),
                   );
@@ -442,6 +445,24 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         },
       ),
     );
+  }
+  Future<void> _confirmDeleteProject(String projectId) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
+        title: const Text('Delete project?', style: TextStyle(color: Colors.white)),
+        content: const Text('This will delete the project and its files metadata. This action cannot be undone.', style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await ProjectService().deleteProjectDeep(projectId);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Project deleted')));
   }
 
   String _formatRelative(DateTime time) {
@@ -757,8 +778,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
 }
 
 class _ProjectCard extends StatelessWidget {
-  const _ProjectCard({required this.item});
+  const _ProjectCard({required this.item, required this.onDelete});
   final ProjectItem item;
+  final VoidCallback onDelete;
 
   Color _getStatusColor() {
     switch (item.status) {
@@ -856,14 +878,12 @@ class _ProjectCard extends StatelessWidget {
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               icon: const Icon(Icons.more_horiz_rounded, color: Colors.white70),
                               onSelected: (value) async {
-                                if (value == 'delete') {
-                                  // 刪除需在上層提供 projectId，此處僅示意（目前用 sample item）
-                                }
+                                if (value == 'delete') onDelete();
                               },
                               itemBuilder: (context) => [
-                                const PopupMenuItem(value: 'open', child: Text('開啟')), 
-                                const PopupMenuItem(value: 'archive', child: Text('封存')), 
-                                const PopupMenuItem(value: 'delete', child: Text('刪除')), 
+                                const PopupMenuItem(value: 'open', child: Text('Open')), 
+                                const PopupMenuItem(value: 'archive', child: Text('Archive')), 
+                                const PopupMenuItem(value: 'delete', child: Text('Delete')), 
                               ],
                             ),
                           ],
