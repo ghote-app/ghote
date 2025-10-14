@@ -9,6 +9,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../models/file_model.dart';
+import '../models/subscription.dart';
 
 class StorageService {
   const StorageService();
@@ -29,9 +30,10 @@ class StorageService {
     required File file,
     required String projectId,
     required String userId,
+    Subscription? subscription,
   }) async {
-    // Feature flag: dev uses Firebase Storage, release uses Cloudflare R2
-    if (!kReleaseMode) {
+    // Plan-based routing: free/plus -> Firebase (limited); pro -> R2 (unlimited)
+    if (!kReleaseMode || (subscription != null && !subscription.isPro)) {
       final ref = FirebaseStorage.instance.ref().child('files/$userId/$projectId/${file.path.split('/').last}');
       final task = await ref.putFile(file);
       final url = await task.ref.getDownloadURL();

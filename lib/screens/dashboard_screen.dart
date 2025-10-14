@@ -127,29 +127,21 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            InkWell(
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                );
-              },
-              borderRadius: BorderRadius.circular(50),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(50),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 2),
+              ),
               child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(50),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 2),
-                ),
-                child: Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: const BoxDecoration(shape: BoxShape.circle),
-                  child: ClipOval(
-                    child: Image.asset(
-                      'assets/AppIcon/Ghote_icon_black_background.png',
-                      width: 56,
-                      height: 56,
-                      fit: BoxFit.cover,
-                    ),
+                padding: const EdgeInsets.all(3),
+                decoration: const BoxDecoration(shape: BoxShape.circle),
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/AppIcon/Ghote_icon_black_background.png',
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
                   ),
                 ),
               ),
@@ -182,7 +174,14 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 ],
               ),
             ),
-            const SizedBox.shrink(),
+            IconButton(
+              icon: const Icon(Icons.settings_rounded, color: Colors.white),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -737,7 +736,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         String? cloudPath;
         String? downloadUrl;
         if (subscription.isPro) {
-          final uploaded = await storage.uploadToCloudflare(file: file, projectId: projectId, userId: user.uid);
+          final uploaded = await storage.uploadToCloudflare(file: file, projectId: projectId, userId: user.uid, subscription: subscription);
           storageType = 'cloud';
           cloudPath = uploaded['cloudPath'];
           downloadUrl = uploaded['downloadUrl'];
