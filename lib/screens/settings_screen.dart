@@ -30,6 +30,10 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 8),
           _sectionTitle('Plan'),
           _planTile(planLabel, storageText, aiText, context),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: _planCompareCard(context),
+          ),
           const Divider(color: Colors.white24, height: 1),
           _sectionTitle('Account'),
           _tile(
@@ -97,6 +101,52 @@ class SettingsScreen extends StatelessWidget {
           Navigator.of(context).push(MaterialPageRoute(builder: (_) => const UpgradeScreen()));
         },
         child: const Text('Upgrade'),
+      ),
+    );
+  }
+
+  Widget _planCompareCard(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.12)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Plans', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            _planLine('Free / Plus', 'Limited cloud • Gemini 2.5 Flash'),
+            _planLine('Pro', 'Unlimited cloud • OpenAI/Claude'),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const UpgradeScreen()));
+                },
+                child: const Text('Change plan'),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _planLine(String title, String desc) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle_outline_rounded, color: Colors.white70, size: 18),
+          const SizedBox(width: 8),
+          Expanded(child: Text(title, style: const TextStyle(color: Colors.white))),
+          Text(desc, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        ],
       ),
     );
   }
