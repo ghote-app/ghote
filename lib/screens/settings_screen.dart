@@ -88,10 +88,29 @@ class SettingsScreen extends StatelessWidget {
       builder: (context) => AlertDialog(
         backgroundColor: Colors.black,
         title: const Text('Change display name', style: TextStyle(color: Colors.white)),
-        content: TextField(
-          controller: controller,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(hintText: 'Enter new name', hintStyle: TextStyle(color: Colors.white54)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.12)),
+              ),
+              child: TextField(
+                controller: controller,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  hintText: 'Enter new name',
+                  hintStyle: TextStyle(color: Colors.white54),
+                  border: InputBorder.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text('3–30 characters. Letters, numbers, spaces.', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12)),
+          ],
         ),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
