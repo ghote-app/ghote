@@ -464,81 +464,125 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   }
 
   Widget _buildProjectsGrid() {
-    final filteredProjects = _getFilteredProjects();
     final screenHeight = MediaQuery.of(context).size.height;
-    // Target card height responsive to screen height with sane clamps
     final double targetCardHeight = screenHeight * 0.30;
     final double clampedCardHeight = targetCardHeight.clamp(220.0, 360.0);
-    
-    if (filteredProjects.isEmpty) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
       return SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.all(40),
           child: Column(
             children: [
-              Icon(
-                Icons.search_off_rounded,
-                size: 64,
-                color: Colors.white.withValues(alpha: 0.3),
-              ),
+              Icon(Icons.login_rounded, size: 64, color: Colors.white.withValues(alpha: 0.3)),
               const SizedBox(height: 16),
-              Text(
-                'No projects found',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Try adjusting your search or filter',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.5),
-                  fontSize: 14,
-                ),
-              ),
+              Text('請先登入以查看專案', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 18, fontWeight: FontWeight.w500)),
             ],
           ),
         ),
       );
     }
-    
-    return SliverGrid(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 1,
-        // childAspectRatio: Platform.isAndroid ? 1.2 : 1.1,
-        mainAxisExtent: clampedCardHeight,
-        mainAxisSpacing: 14,
-        crossAxisSpacing: 14,
-      ),
-      delegate: SliverChildBuilderDelegate(
-        (BuildContext context, int index) {
-          final item = filteredProjects[index];
-          return AnimatedBuilder(
-            animation: _animationController,
-            builder: (context, child) {
-              final delay = index * 0.08;
-              final animationPercent = Curves.easeOutCubic.transform(
-                math.max(0.0, (_animationController.value - delay) / (1.0 - delay)),
+
+    return SliverToBoxAdapter(
+      child: StreamBuilder<List<Project>>(
+        stream: ProjectService().watchProjectsByOwner(user.uid),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Padding(
+              padding: EdgeInsets.all(40),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (snapshot.hasError) {
+            return Padding(
+              padding: const EdgeInsets.all(40),
+              child: Text('載入專案錯誤：${snapshot.error}', style: const TextStyle(color: Colors.white70)),
+            );
+          }
+          var projects = snapshot.data ?? <Project>[];
+
+          // 套用篩選與搜尋
+          if (_selectedFilter != 'All') {
+            projects = projects.where((p) => p.status == _selectedFilter).toList();
+          }
+          if (_searchController.text.isNotEmpty) {
+            final q = _searchController.text.toLowerCase();
+            projects = projects.where((p) =>
+              p.title.toLowerCase().contains(q) || (p.category ?? '').toLowerCase().contains(q)
+            ).toList();
+          }
+
+          if (projects.isEmpty) {
+            return Padding(
+              padding: const EdgeInsets.all(40),
+              child: Column(
+                children: [
+                  Icon(Icons.folder_off_rounded, size: 64, color: Colors.white.withValues(alpha: 0.3)),
+                  const SizedBox(height: 16),
+                  Text('尚無專案', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 18, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  Text('點擊右下角 + 建立新專案', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14)),
+                ],
+              ),
+            );
+          }
+
+          return GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 1,
+              mainAxisExtent: clampedCardHeight,
+              mainAxisSpacing: 14,
+              crossAxisSpacing: 14,
+            ),
+            itemCount: projects.length,
+            itemBuilder: (context, index) {
+              final p = projects[index];
+              final item = ProjectItem(
+                title: p.title,
+                status: p.status,
+                documentCount: 0, // 可改為 files 子集合計數（需要額外查詢或彙總欄位）
+                lastUpdated: _formatRelative(p.lastUpdatedAt),
+                image: 'assets/AppIcon/Ghote_icon_black_background.png',
+                progress: p.status == 'Completed' ? 1.0 : 0.5,
+                category: p.category ?? 'General',
               );
-              return Opacity(
-                opacity: animationPercent,
-                child: Transform.translate(
-                  offset: Offset(0, 30 * (1 - animationPercent)),
-                  child: Transform.scale(
-                    scale: 0.95 + (0.05 * animationPercent),
-                    child: child,
-                  ),
-                ),
+              return AnimatedBuilder(
+                animation: _animationController,
+                builder: (context, child) {
+                  final delay = index * 0.08;
+                  final animationPercent = Curves.easeOutCubic.transform(
+                    math.max(0.0, (_animationController.value - delay) / (1.0 - delay)),
+                  );
+                  return Opacity(
+                    opacity: animationPercent,
+                    child: Transform.translate(
+                      offset: Offset(0, 30 * (1 - animationPercent)),
+                      child: Transform.scale(
+                        scale: 0.95 + (0.05 * animationPercent),
+                        child: _ProjectCard(item: item),
+                      ),
+                    ),
+                  );
+                },
               );
             },
-            child: _ProjectCard(item: item),
           );
         },
-        childCount: filteredProjects.length,
       ),
     );
+  }
+
+  String _formatRelative(DateTime time) {
+    final now = DateTime.now();
+    final diff = now.difference(time);
+    if (diff.inDays >= 1) return '${diff.inDays} days ago';
+    if (diff.inHours >= 1) return '${diff.inHours} hours ago';
+    if (diff.inMinutes >= 1) return '${diff.inMinutes} minutes ago';
+    return 'just now';
   }
 
   Widget _buildFloatingActionButton() {
