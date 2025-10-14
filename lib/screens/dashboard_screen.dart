@@ -518,32 +518,109 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     await showModalBottomSheet(
       context: context,
       backgroundColor: Colors.black,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              ListTile(
-                leading: const Icon(Icons.create_new_folder, color: Colors.white),
-                title: const Text('建立新專案', style: TextStyle(color: Colors.white)),
-                onTap: () async {
-                  Navigator.pop(context);
-                  await _createNewProject();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.file_upload_rounded, color: Colors.white),
-                title: const Text('上傳檔案到專案', style: TextStyle(color: Colors.white)),
-                onTap: () async {
-                  Navigator.pop(context);
-                  await _pickAndUploadFlow();
-                },
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                      ),
+                      child: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                    ),
+                    const SizedBox(width: 10),
+                    const Text('建立或新增', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _fabAction(
+                  icon: Icons.create_new_folder_rounded,
+                  title: '建立新專案',
+                  subtitle: '為你的學習材料建立容器',
+                  color: Colors.blue,
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _createNewProject();
+                  },
+                ),
+                const SizedBox(height: 10),
+                _fabAction(
+                  icon: Icons.file_upload_rounded,
+                  title: '上傳檔案到專案',
+                  subtitle: '未來將自動偵測主題並命名',
+                  color: Colors.purple,
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _pickAndUploadFlow();
+                  },
+                ),
+                const SizedBox(height: 4),
+              ],
+            ),
           ),
         );
       },
+    );
+  }
+
+  Widget _fabAction({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Ink(
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.16),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: color.withOpacity(0.32)),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 4),
+                    Text(subtitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: Colors.white.withValues(alpha: 0.6)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
