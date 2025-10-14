@@ -724,6 +724,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         return;
       }
       final subscription = await SubscriptionService().getUserSubscription(user.uid);
+      if (subscription.isFree || subscription.isPlus) {
+        // TODO: compute actual current usage if tracked; show soft notice before upload
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Using limited cloud storage (Free/Plus). Upgrade for unlimited.')),
+        );
+      }
       final storage = const StorageService();
       final projectService = ProjectService();
       for (final f in result.files) {
