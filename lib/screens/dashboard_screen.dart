@@ -9,7 +9,8 @@ import '../models/project.dart';
 import '../services/subscription_service.dart';
 import '../services/storage_service.dart';
 import '../services/project_service.dart';
-import 'upgrade_screen.dart';
+// import 'upgrade_screen.dart';
+import 'settings_screen.dart';
 
 class ProjectItem {
   const ProjectItem({
@@ -150,21 +151,29 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(50),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 2),
-              ),
+            InkWell(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                );
+              },
+              borderRadius: BorderRadius.circular(50),
               child: Container(
-                padding: const EdgeInsets.all(3),
-                decoration: const BoxDecoration(shape: BoxShape.circle),
-                child: ClipOval(
-                  child: Image.asset(
-                    'assets/AppIcon/Ghote_icon_black_background.png',
-                    width: 56,
-                    height: 56,
-                    fit: BoxFit.cover,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(50),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 2),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: const BoxDecoration(shape: BoxShape.circle),
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/AppIcon/Ghote_icon_black_background.png',
+                      width: 56,
+                      height: 56,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
               ),
@@ -197,128 +206,16 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 ],
               ),
             ),
-            _buildUserMenuButton(),
+            const SizedBox.shrink(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildUserMenuButton() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(48),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(48),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
-        ),
-        child: IconButton(
-          icon: const Icon(Icons.person_rounded, color: Colors.white, size: 22),
-          onPressed: () async {
-            await showModalBottomSheet(
-              context: context,
-              backgroundColor: Colors.black,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-              ),
-              builder: (context) {
-                return SafeArea(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      ListTile(
-                        leading: const Icon(Icons.edit, color: Colors.white),
-                        title: const Text('修改暱稱', style: TextStyle(color: Colors.white)),
-                        onTap: () {
-                          Navigator.pop(context);
-                          _promptEditDisplayName();
-                        },
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.image, color: Colors.white),
-                        title: const Text('變更頭像', style: TextStyle(color: Colors.white)),
-                        onTap: () {
-                          Navigator.pop(context);
-                          _changeAvatar();
-                        },
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.workspace_premium_rounded, color: Colors.amber),
-                        title: const Text('升級為 Pro', style: TextStyle(color: Colors.white)),
-                        onTap: () {
-                          Navigator.pop(context);
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const UpgradeScreen()),
-                          );
-                        },
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.delete_forever_rounded, color: Colors.redAccent),
-                        title: const Text('清除我的測試專案', style: TextStyle(color: Colors.white)),
-                        onTap: () async {
-                          Navigator.pop(context);
-                          await _confirmAndDeleteAllProjects();
-                        },
-                      ),
-                      const Divider(height: 1, color: Colors.white24),
-                      ListTile(
-                        leading: const Icon(Icons.logout_rounded, color: Colors.white),
-                        title: const Text('登出', style: TextStyle(color: Colors.white)),
-                        onTap: () async {
-                          Navigator.pop(context);
-                          await FirebaseAuth.instance.signOut();
-                          if (widget.onLogout != null) widget.onLogout!();
-                        },
-                      ),
-                    ],
-                  ),
-                );
-              },
-            );
-          },
-        ),
-      ),
-    );
-  }
+  // user menu removed; settings now accessible by tapping the top-left avatar
 
-  Future<void> _promptEditDisplayName() async {
-    final controller = TextEditingController(text: widget.userName ?? '');
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.black,
-        title: const Text('修改暱稱', style: TextStyle(color: Colors.white)),
-        content: TextField(
-          controller: controller,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(hintText: '輸入新的暱稱', hintStyle: TextStyle(color: Colors.white54)),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('取消')),
-          TextButton(
-            onPressed: () async {
-              // 目前僅更新 UI 顯示；若需同步到 Firebase User Profile 可擴充
-              setState(() {});
-              if (mounted) Navigator.of(context).pop();
-            },
-            child: const Text('儲存'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _changeAvatar() async {
-    // 預留：可走 file_picker 選擇圖片並上傳，再更新使用者頭像 URL
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('變更頭像功能將於稍後提供')),
-    );
-  }
+  // settings moved to SettingsScreen
 
   Widget _buildSearchBar() {
     return Container(
@@ -593,30 +490,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     return 'just now';
   }
 
-  Future<void> _confirmAndDeleteAllProjects() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.black,
-        title: const Text('刪除所有我的專案？', style: TextStyle(color: Colors.white)),
-        content: const Text('這會刪除你帳號下的所有專案與檔案中繼資料，無法復原。', style: TextStyle(color: Colors.white70)),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('取消')),
-          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('刪除')),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    final svc = ProjectService();
-    final projects = await svc.watchProjectsByOwner(user.uid).first;
-    for (final p in projects) {
-      await svc.deleteProjectDeep(p.id);
-    }
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已刪除所有專案')));
-  }
+  // bulk delete moved to user menu previously; retained via SettingsScreen later if needed
 
   Widget _buildFloatingActionButton() {
     return Container(
