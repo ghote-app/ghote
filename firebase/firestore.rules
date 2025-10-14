@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // NOTE: Replace with your real subscription path and checks when implemented
+    function isPro(userId) {
+      // Placeholder rule: treat everyone as non-Pro by default
+      return false;
+    }
+
+    function isProjectMember(projectId) {
+      return isSignedIn() && (
+        request.auth.uid == get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId ||
+        request.auth.uid in get(/databases/$(database)/documents/projects/$(projectId)).data.collaboratorIds
+      );
+    }
+
+    match /projects/{projectId} {
+      allow create: if isSignedIn();
+      allow read: if isProjectMember(projectId);
+      allow update, delete: if request.auth.uid == resource.data.ownerId;
+
+      // Only Pro users can update collaborators list (example placeholder)
+      allow update: if isPro(request.auth.uid) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['collaboratorIds', 'lastUpdatedAt']);
+
+      match /files/{fileId} {
+        allow read, create: if isProjectMember(projectId);
+        allow delete: if request.auth.uid == resource.data.uploaderId ||
+          request.auth.uid == get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId;
+      }
+    }
+  }
+}
+
+
