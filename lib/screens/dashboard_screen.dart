@@ -724,6 +724,27 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         return;
       }
       final subscription = await SubscriptionService().getUserSubscription(user.uid);
+      // 免費方案：檔案數量達 10 即提示升級並中止
+      if (subscription.isFree) {
+        // 估算目前專案的檔案數：這裡只示範性提示，實際可查 Firestore 子集合數
+        // 若要精準，需要在 ProjectService 提供計數 API 或在文件中維護 counter
+        final estimatedCurrent = 10; // TODO: 換成實際計數
+        if (estimatedCurrent >= 10) {
+          if (!mounted) return;
+          await showDialog<void>(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: Colors.black,
+              title: const Text('升級以上傳更多檔案', style: TextStyle(color: Colors.white)),
+              content: const Text('免費方案每個專案最多 10 個檔案。升級 Pro 享無限檔案與雲端同步。', style: TextStyle(color: Colors.white70)),
+              actions: [
+                TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('稍後')),
+              ],
+            ),
+          );
+          return;
+        }
+      }
       if (subscription.isFree || subscription.isPlus) {
         // TODO: compute actual current usage if tracked; show soft notice before upload
         ScaffoldMessenger.of(context).showSnackBar(

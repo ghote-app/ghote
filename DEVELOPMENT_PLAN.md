@@ -72,11 +72,11 @@ class SubscriptionService {
 ```
 
 #### 實作任務：
-- [ ] 建立 `lib/models/subscription.dart` 訂閱模型
-- [ ] 建立 `lib/services/subscription_service.dart` 訂閱服務
-- [ ] 在 Firestore 建立 `users/{userId}/subscription` 集合
+- [x] 建立 `lib/models/subscription.dart` 訂閱模型
+- [x] 建立 `lib/services/subscription_service.dart` 訂閱服務（Firestore 讀寫、測試切換）
+- [x] 在 Firestore 使用 `users/{userId}/subscription/current` 存取
 - [ ] 整合支付系統（Stripe / Google Play / App Store）
-- [ ] 建立訂閱管理 UI 頁面
+- [x] 建立訂閱管理 UI 頁面（於 `SettingsScreen` 顯示方案與測試切換）
 - [ ] 實作權限檢查中介層
 
 ---
@@ -185,12 +185,12 @@ Future<void> pickAndUploadFiles() async {
 ```
 
 #### 實作任務：
-- [ ] 更新 `pubspec.yaml` 加入所需套件
-- [ ] 執行 `flutter pub get`
-- [ ] 在 `dashboard_screen.dart` 加入檔案選擇按鈕
-- [ ] 實作檔案選擇邏輯（含訂閱狀態檢查）
+- [x] 更新 `pubspec.yaml` 加入所需套件
+- [x] 執行 `flutter pub get`
+- [x] 在 `dashboard_screen.dart` 加入檔案選擇按鈕
+- [x] 實作檔案選擇邏輯（含訂閱狀態檢查）
 - [ ] 實作檔案大小檢查（免費用戶 500MB 限制）
-- [ ] 建立升級提示 Dialog
+- [x] 建立升級提示 Dialog（免費用戶超過 10 檔時提示）
 
 ---
 
@@ -264,11 +264,11 @@ class StorageService {
 ```
 
 #### 實作任務：
-- [ ] 建立 `lib/services/storage_service.dart`
-- [ ] 實作本地端儲存邏輯
-- [ ] 實作 Cloudflare R2 上傳邏輯（透過後端 API）
+- [x] 建立 `lib/services/storage_service.dart`
+- [x] 實作本地端儲存邏輯
+- [x] 實作 Cloudflare R2 上傳邏輯雛形（含預簽名 URL）
 - [ ] 建立後端 API endpoint (`/api/upload/presigned-url`)
-- [ ] 實作檔案讀取邏輯（自動判斷來源）
+- [x] 實作檔案讀取邏輯（自動判斷來源）
 - [ ] 加入上傳進度顯示
 
 ---

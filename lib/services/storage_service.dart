@@ -33,7 +33,8 @@ class StorageService {
     Subscription? subscription,
   }) async {
     // Plan-based routing: free/plus -> Firebase (limited); pro -> R2 (unlimited)
-    if (!kReleaseMode || (subscription != null && (subscription.isFree || subscription.isPlus))) {
+    // 在開發過程中允許 Pro 直接走 R2（即使是 Debug），便於驗證。
+    if (subscription == null || subscription.isFree || subscription.isPlus) {
       final ref = FirebaseStorage.instance.ref().child('files/$userId/$projectId/${file.path.split('/').last}');
       final task = await ref.putFile(file);
       final url = await task.ref.getDownloadURL();
