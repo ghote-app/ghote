@@ -23,7 +23,8 @@ class SubscriptionService {
 
   /// Whether the user can upload to cloud storage based on their plan.
   bool canUploadToCloud(Subscription subscription) {
-    return subscription.isPro;
+    // free/plus: limited cloud (handled by StorageService); pro: unlimited
+    return subscription.isPlus || subscription.isPro;
   }
 
   /// Whether the user can create another project.

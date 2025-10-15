@@ -3,7 +3,7 @@
 
 class Subscription {
   final String userId;
-  final String plan; // 'free' or 'pro'
+  final String plan; // 'free' | 'plus' | 'pro'
   final DateTime? proStartDate;
   final DateTime? proEndDate;
   final bool isActive;
@@ -19,7 +19,14 @@ class Subscription {
   });
 
   bool get isPro => plan == 'pro' && isActive;
-  bool get isFree => !isPro;
+  bool get isPlus => plan == 'plus' && isActive;
+  bool get isFree => plan == 'free' || !isActive;
+
+  // Capabilities
+  bool get hasUnlimitedCloudStorage => isPro;
+  bool get usesOpenAIOrClaude => isPro;
+  bool get usesGeminiFree => isFree || isPlus;
+  int get monthlyAiQuota => isPro ? 500 : 50;
 
   Subscription copyWith({
     String? userId,

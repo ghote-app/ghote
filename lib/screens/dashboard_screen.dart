@@ -9,10 +9,12 @@ import '../models/project.dart';
 import '../services/subscription_service.dart';
 import '../services/storage_service.dart';
 import '../services/project_service.dart';
-import 'upgrade_screen.dart';
+// import 'upgrade_screen.dart';
+import 'settings_screen.dart';
 
 class ProjectItem {
   const ProjectItem({
+    required this.id,
     required this.title,
     required this.status,
     required this.documentCount,
@@ -21,6 +23,7 @@ class ProjectItem {
     required this.progress,
     required this.category,
   });
+  final String id;
   final String title;
   final String status;
   final int documentCount;
@@ -30,44 +33,7 @@ class ProjectItem {
   final String category;
 }
 
-final List<ProjectItem> _sampleProjects = <ProjectItem>[
-  const ProjectItem(
-    title: 'Machine Learning',
-    status: 'Active',
-    documentCount: 5,
-    lastUpdated: '2 days ago',
-    image: 'assets/AppIcon/Ghote_icon_black_background.png',
-    progress: 0.65,
-    category: 'Technology',
-  ),
-  const ProjectItem(
-    title: 'History 101',
-    status: 'Active',
-    documentCount: 3,
-    lastUpdated: '1 week ago',
-    image: 'assets/AppIcon/Ghote_icon_black_background.png',
-    progress: 0.45,
-    category: 'Education',
-  ),
-  const ProjectItem(
-    title: 'Physics Advanced',
-    status: 'Completed',
-    documentCount: 8,
-    lastUpdated: '3 days ago',
-    image: 'assets/AppIcon/Ghote_icon_black_background.png',
-    progress: 1.0,
-    category: 'Science',
-  ),
-  const ProjectItem(
-    title: 'Creative Writing',
-    status: 'Archived',
-    documentCount: 12,
-    lastUpdated: '1 month ago',
-    image: 'assets/AppIcon/Ghote_icon_black_background.png',
-    progress: 0.85,
-    category: 'Arts',
-  ),
-];
+// sample projects removed; now binding to Firestore only
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, this.userName, this.onLogout});
@@ -81,6 +47,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   final TextEditingController _searchController = TextEditingController();
   late AnimationController _animationController;
   String _selectedFilter = 'All';
+  String? _displayName;
 
   @override
   void initState() {
@@ -90,6 +57,16 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       duration: const Duration(milliseconds: 900),
     );
     _animationController.forward();
+
+    // Keep welcome name in sync with FirebaseAuth displayName
+    _displayName = FirebaseAuth.instance.currentUser?.displayName;
+    FirebaseAuth.instance.userChanges().listen((user) {
+      if (mounted) {
+        setState(() {
+          _displayName = user?.displayName;
+        });
+      }
+    });
   }
 
   @override
@@ -186,7 +163,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    widget.userName ?? "User",
+                    _displayName?.isNotEmpty == true ? _displayName! : (widget.userName ?? "User"),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 24,
@@ -197,128 +174,23 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 ],
               ),
             ),
-            _buildUserMenuButton(),
+            IconButton(
+              icon: const Icon(Icons.settings_rounded, color: Colors.white),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                );
+              },
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildUserMenuButton() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(48),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(48),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
-        ),
-        child: IconButton(
-          icon: const Icon(Icons.person_rounded, color: Colors.white, size: 22),
-          onPressed: () async {
-            await showModalBottomSheet(
-              context: context,
-              backgroundColor: Colors.black,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-              ),
-              builder: (context) {
-                return SafeArea(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      ListTile(
-                        leading: const Icon(Icons.edit, color: Colors.white),
-                        title: const Text('修改暱稱', style: TextStyle(color: Colors.white)),
-                        onTap: () {
-                          Navigator.pop(context);
-                          _promptEditDisplayName();
-                        },
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.image, color: Colors.white),
-                        title: const Text('變更頭像', style: TextStyle(color: Colors.white)),
-                        onTap: () {
-                          Navigator.pop(context);
-                          _changeAvatar();
-                        },
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.workspace_premium_rounded, color: Colors.amber),
-                        title: const Text('升級為 Pro', style: TextStyle(color: Colors.white)),
-                        onTap: () {
-                          Navigator.pop(context);
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const UpgradeScreen()),
-                          );
-                        },
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.delete_forever_rounded, color: Colors.redAccent),
-                        title: const Text('清除我的測試專案', style: TextStyle(color: Colors.white)),
-                        onTap: () async {
-                          Navigator.pop(context);
-                          await _confirmAndDeleteAllProjects();
-                        },
-                      ),
-                      const Divider(height: 1, color: Colors.white24),
-                      ListTile(
-                        leading: const Icon(Icons.logout_rounded, color: Colors.white),
-                        title: const Text('登出', style: TextStyle(color: Colors.white)),
-                        onTap: () async {
-                          Navigator.pop(context);
-                          await FirebaseAuth.instance.signOut();
-                          if (widget.onLogout != null) widget.onLogout!();
-                        },
-                      ),
-                    ],
-                  ),
-                );
-              },
-            );
-          },
-        ),
-      ),
-    );
-  }
+  // user menu removed; settings now accessible by tapping the top-left avatar
 
-  Future<void> _promptEditDisplayName() async {
-    final controller = TextEditingController(text: widget.userName ?? '');
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.black,
-        title: const Text('修改暱稱', style: TextStyle(color: Colors.white)),
-        content: TextField(
-          controller: controller,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(hintText: '輸入新的暱稱', hintStyle: TextStyle(color: Colors.white54)),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('取消')),
-          TextButton(
-            onPressed: () async {
-              // 目前僅更新 UI 顯示；若需同步到 Firebase User Profile 可擴充
-              setState(() {});
-              if (mounted) Navigator.of(context).pop();
-            },
-            child: const Text('儲存'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _changeAvatar() async {
-    // 預留：可走 file_picker 選擇圖片並上傳，再更新使用者頭像 URL
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('變更頭像功能將於稍後提供')),
-    );
-  }
+  // settings moved to SettingsScreen
 
   Widget _buildSearchBar() {
     return Container(
@@ -345,20 +217,38 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   }
 
   Widget _buildStatsSection() {
-    final filteredProjects = _getFilteredProjects();
-    
+    final user = FirebaseAuth.instance.currentUser;
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-        child: Row(
-          children: <Widget>[
-            Expanded(child: _buildStatCard('Active', '${filteredProjects.where((p) => p.status == 'Active').length}', Icons.play_circle_outline_rounded, Colors.green)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildStatCard('Completed', '${filteredProjects.where((p) => p.status == 'Completed').length}', Icons.check_circle_outline_rounded, Colors.blue)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildStatCard('Total Docs', '${filteredProjects.fold(0, (sum, item) => sum + item.documentCount)}', Icons.description_outlined, Colors.purple)),
-          ],
-        ),
+        child: user == null
+            ? Row(
+                children: <Widget>[
+                  Expanded(child: _buildStatCard('Active', '0', Icons.play_circle_outline_rounded, Colors.green)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildStatCard('Completed', '0', Icons.check_circle_outline_rounded, Colors.blue)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildStatCard('Archived', '0', Icons.archive_outlined, Colors.grey)),
+                ],
+              )
+            : StreamBuilder<List<Project>>(
+                stream: ProjectService().watchProjectsByOwner(user.uid),
+                builder: (context, snapshot) {
+                  final projects = snapshot.data ?? <Project>[];
+                  final active = projects.where((p) => p.status == 'Active').length;
+                  final completed = projects.where((p) => p.status == 'Completed').length;
+                  final archived = projects.where((p) => p.status == 'Archived').length;
+                  return Row(
+                    children: <Widget>[
+                      Expanded(child: _buildStatCard('Active', '$active', Icons.play_circle_outline_rounded, Colors.green)),
+                      const SizedBox(width: 12),
+                      Expanded(child: _buildStatCard('Completed', '$completed', Icons.check_circle_outline_rounded, Colors.blue)),
+                      const SizedBox(width: 12),
+                      Expanded(child: _buildStatCard('Archived', '$archived', Icons.archive_outlined, Colors.grey)),
+                    ],
+                  );
+                },
+              ),
       ),
     );
   }
@@ -451,25 +341,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     );
   }
 
-  List<ProjectItem> _getFilteredProjects() {
-    List<ProjectItem> filtered = _sampleProjects;
-    
-    // Apply status filter
-    if (_selectedFilter != 'All') {
-      filtered = filtered.where((project) => project.status == _selectedFilter).toList();
-    }
-    
-    // Apply search filter
-    if (_searchController.text.isNotEmpty) {
-      final searchQuery = _searchController.text.toLowerCase();
-      filtered = filtered.where((project) {
-        return project.title.toLowerCase().contains(searchQuery) ||
-               project.category.toLowerCase().contains(searchQuery);
-      }).toList();
-    }
-    
-    return filtered;
-  }
+  // legacy sample filtering removed; now stats and grid bind to Firestore
 
   Widget _buildProjectsGrid() {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -485,7 +357,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             children: [
               Icon(Icons.login_rounded, size: 64, color: Colors.white.withValues(alpha: 0.3)),
               const SizedBox(height: 16),
-              Text('請先登入以查看專案', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 18, fontWeight: FontWeight.w500)),
+              Text('Please sign in to view your projects', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 18, fontWeight: FontWeight.w500)),
             ],
           ),
         ),
@@ -505,7 +377,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           if (snapshot.hasError) {
             return Padding(
               padding: const EdgeInsets.all(40),
-              child: Text('載入專案錯誤：${snapshot.error}', style: const TextStyle(color: Colors.white70)),
+              child: Text('Failed to load projects: ${snapshot.error}', style: const TextStyle(color: Colors.white70)),
             );
           }
           var projects = snapshot.data ?? <Project>[];
@@ -528,9 +400,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 children: [
                   Icon(Icons.folder_off_rounded, size: 64, color: Colors.white.withValues(alpha: 0.3)),
                   const SizedBox(height: 16),
-                  Text('尚無專案', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 18, fontWeight: FontWeight.w500)),
+                  Text('No projects yet', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 18, fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
-                  Text('點擊右下角 + 建立新專案', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14)),
+                  Text('Tap + to create your first project', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14)),
                 ],
               ),
             );
@@ -550,6 +422,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             itemBuilder: (context, index) {
               final p = projects[index];
               final item = ProjectItem(
+                id: p.id,
                 title: p.title,
                 status: p.status,
                 documentCount: 0, // 可改為 files 子集合計數（需要額外查詢或彙總欄位）
@@ -571,7 +444,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       offset: Offset(0, 30 * (1 - animationPercent)),
                       child: Transform.scale(
                         scale: 0.95 + (0.05 * animationPercent),
-                        child: _ProjectCard(item: item),
+                        child: _ProjectCard(item: item, onDelete: () => _confirmDeleteProject(item.id)),
                       ),
                     ),
                   );
@@ -583,6 +456,24 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       ),
     );
   }
+  Future<void> _confirmDeleteProject(String projectId) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
+        title: const Text('Delete project?', style: TextStyle(color: Colors.white)),
+        content: const Text('This will delete the project and its files metadata. This action cannot be undone.', style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await ProjectService().deleteProjectDeep(projectId);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Project deleted')));
+  }
 
   String _formatRelative(DateTime time) {
     final now = DateTime.now();
@@ -593,30 +484,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     return 'just now';
   }
 
-  Future<void> _confirmAndDeleteAllProjects() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.black,
-        title: const Text('刪除所有我的專案？', style: TextStyle(color: Colors.white)),
-        content: const Text('這會刪除你帳號下的所有專案與檔案中繼資料，無法復原。', style: TextStyle(color: Colors.white70)),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('取消')),
-          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('刪除')),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    final svc = ProjectService();
-    final projects = await svc.watchProjectsByOwner(user.uid).first;
-    for (final p in projects) {
-      await svc.deleteProjectDeep(p.id);
-    }
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已刪除所有專案')));
-  }
+  // bulk delete moved to user menu previously; retained via SettingsScreen later if needed
 
   Widget _buildFloatingActionButton() {
     return Container(
@@ -644,32 +512,109 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     await showModalBottomSheet(
       context: context,
       backgroundColor: Colors.black,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              ListTile(
-                leading: const Icon(Icons.create_new_folder, color: Colors.white),
-                title: const Text('建立新專案', style: TextStyle(color: Colors.white)),
-                onTap: () async {
-                  Navigator.pop(context);
-                  await _createNewProject();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.file_upload_rounded, color: Colors.white),
-                title: const Text('上傳檔案到專案', style: TextStyle(color: Colors.white)),
-                onTap: () async {
-                  Navigator.pop(context);
-                  await _pickAndUploadFlow();
-                },
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                      ),
+                      child: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                    ),
+                    const SizedBox(width: 10),
+                    const Text('Create or add', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _fabAction(
+                  icon: Icons.create_new_folder_rounded,
+                  title: 'Create project',
+                  subtitle: 'Create a container for your study materials',
+                  color: Colors.blue,
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _createNewProject();
+                  },
+                ),
+                const SizedBox(height: 10),
+                _fabAction(
+                  icon: Icons.file_upload_rounded,
+                  title: 'Upload files to project',
+                  subtitle: 'AI auto-naming by topic coming soon',
+                  color: Colors.purple,
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _pickAndUploadFlow();
+                  },
+                ),
+                const SizedBox(height: 4),
+              ],
+            ),
           ),
         );
       },
+    );
+  }
+
+  Widget _fabAction({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Ink(
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.16),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: color.withOpacity(0.32)),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 4),
+                    Text(subtitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: Colors.white.withValues(alpha: 0.6)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -682,20 +627,44 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.black,
-        title: const Text('建立新專案', style: TextStyle(color: Colors.white)),
+        title: const Text('Create project', style: TextStyle(color: Colors.white)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            TextField(
-              controller: nameController,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(hintText: '專案名稱', hintStyle: TextStyle(color: Colors.white54)),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.12)),
+              ),
+              child: TextField(
+                controller: nameController,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  hintText: 'Project title',
+                  hintStyle: TextStyle(color: Colors.white54),
+                  border: InputBorder.none,
+                ),
+              ),
             ),
             const SizedBox(height: 12),
-            TextField(
-              controller: categoryController,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(hintText: '分類（可選）', hintStyle: TextStyle(color: Colors.white54)),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.12)),
+              ),
+              child: TextField(
+                controller: categoryController,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  hintText: 'Category (optional)',
+                  hintStyle: TextStyle(color: Colors.white54),
+                  border: InputBorder.none,
+                ),
+              ),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
@@ -703,12 +672,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               value: status,
               items: statusOptions.map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(color: Colors.white)))).toList(),
               onChanged: (v) => status = v ?? 'Active',
-              decoration: const InputDecoration(hintText: '狀態', hintStyle: TextStyle(color: Colors.white54)),
+              decoration: const InputDecoration(hintText: 'Status', hintStyle: TextStyle(color: Colors.white54)),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('取消')),
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
           TextButton(
             onPressed: () async {
               final title = nameController.text.trim();
@@ -731,10 +700,10 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               await ProjectService().createProject(project);
               if (mounted) Navigator.of(context).pop();
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('專案已建立')));
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Project created')));
               }
             },
-            child: const Text('建立'),
+            child: const Text('Create'),
           ),
         ],
       ),
@@ -751,10 +720,16 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('請先登入')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please sign in first')));
         return;
       }
       final subscription = await SubscriptionService().getUserSubscription(user.uid);
+      if (subscription.isFree || subscription.isPlus) {
+        // TODO: compute actual current usage if tracked; show soft notice before upload
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Using limited cloud storage (Free/Plus). Upgrade for unlimited.')),
+        );
+      }
       final storage = const StorageService();
       final projectService = ProjectService();
       for (final f in result.files) {
@@ -767,7 +742,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         String? cloudPath;
         String? downloadUrl;
         if (subscription.isPro) {
-          final uploaded = await storage.uploadToCloudflare(file: file, projectId: projectId, userId: user.uid);
+          final uploaded = await storage.uploadToCloudflare(file: file, projectId: projectId, userId: user.uid, subscription: subscription);
           storageType = 'cloud';
           cloudPath = uploaded['cloudPath'];
           downloadUrl = uploaded['downloadUrl'];
@@ -791,10 +766,10 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         await projectService.addFileMetadata(projectId, meta);
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('已上傳 ${result.files.length} 個檔案')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Uploaded ${result.files.length} file(s)')));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('上傳失敗：$e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
     }
   }
 
@@ -827,15 +802,15 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.black,
-        title: const Text('輸入 Project ID', style: TextStyle(color: Colors.white)),
+        title: const Text('Enter Project ID', style: TextStyle(color: Colors.white)),
         content: TextField(
           controller: controller,
           style: const TextStyle(color: Colors.white),
           decoration: const InputDecoration(hintText: 'projectId', hintStyle: TextStyle(color: Colors.white54)),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(null), child: const Text('取消')),
-          TextButton(onPressed: () => Navigator.of(context).pop(controller.text.trim()), child: const Text('確定')),
+          TextButton(onPressed: () => Navigator.of(context).pop(null), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(context).pop(controller.text.trim()), child: const Text('OK')),
         ],
       ),
     );
@@ -843,8 +818,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
 }
 
 class _ProjectCard extends StatelessWidget {
-  const _ProjectCard({required this.item});
+  const _ProjectCard({required this.item, required this.onDelete});
   final ProjectItem item;
+  final VoidCallback onDelete;
 
   Color _getStatusColor() {
     switch (item.status) {
@@ -942,14 +918,12 @@ class _ProjectCard extends StatelessWidget {
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               icon: const Icon(Icons.more_horiz_rounded, color: Colors.white70),
                               onSelected: (value) async {
-                                if (value == 'delete') {
-                                  // 刪除需在上層提供 projectId，此處僅示意（目前用 sample item）
-                                }
+                                if (value == 'delete') onDelete();
                               },
                               itemBuilder: (context) => [
-                                const PopupMenuItem(value: 'open', child: Text('開啟')), 
-                                const PopupMenuItem(value: 'archive', child: Text('封存')), 
-                                const PopupMenuItem(value: 'delete', child: Text('刪除')), 
+                                const PopupMenuItem(value: 'open', child: Text('Open')), 
+                                const PopupMenuItem(value: 'archive', child: Text('Archive')), 
+                                const PopupMenuItem(value: 'delete', child: Text('Delete')), 
                               ],
                             ),
                           ],
