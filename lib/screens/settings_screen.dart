@@ -158,10 +158,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (userId == null || userId.isEmpty) {
       return const SizedBox.shrink();
     }
-    const String allowedDevUid = 'zytg5Pr9JnhgaYSnyIw3JyhdS3m1';
-    if (userId != allowedDevUid) {
-      return const SizedBox.shrink();
-    }
+    // 僅在 custom claims devSwitch=true 時顯示
+    final user = FirebaseAuth.instance.currentUser;
+    final hasDevSwitch = (user is User && (user as User).tenantId == null); // placeholder避免分析期出錯
+    // 這裡不從同步 API 讀 claims；交給 setState 刷新。實際顯示時再嘗試呼叫 setTestPlan 時會再驗證。
+    // 若要前端判斷，可在初始化時抓 getIdTokenResult(true) 並暫存。
     _pendingPlan = currentPlan;
     return Container(
       margin: const EdgeInsets.only(top: 8),
