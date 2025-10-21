@@ -62,11 +62,12 @@ class SubscriptionService {
   /// 設定測試方案（free/plus/pro）到 users/{uid}/subscription/current
   Future<void> setTestPlan({required String userId, required String plan}) async {
     assert(plan == 'free' || plan == 'plus' || plan == 'pro');
-    // 僅允許特定開發者 UID 觸發此方法，且只能改自己的訂閱文件
-    const String allowedDevUid = 'zytg5Pr9JnhgaYSnyIw3JyhdS3m1';
-    final String? currentUid = FirebaseAuth.instance.currentUser?.uid;
-    if (currentUid != allowedDevUid || userId != allowedDevUid) {
-      throw StateError('Permission denied: developer switch is restricted.');
+    // 僅允許有 custom claims devSwitch=true 的開發者切換，且只能改自己的訂閱
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final claims = await currentUser?.getIdTokenResult(true);
+    final bool allowed = (claims?.claims?['devSwitch'] == true) && currentUser?.uid == userId;
+    if (!allowed) {
+      throw StateError('Permission denied: developer switch requires devSwitch=true claims.');
     }
     final now = DateTime.now();
     final data = {

@@ -5,7 +5,7 @@ service cloud.firestore {
     match /users/{userId}/subscription/{docId} {
       allow read: if isSignedIn() && request.auth.uid == userId;
       allow write: if isSignedIn() && request.auth.uid == userId &&
-        request.auth.uid == 'zytg5Pr9JnhgaYSnyIw3JyhdS3m1' && docId == 'current';
+        request.auth.token.devSwitch == true && docId == 'current';
     }
     function isSignedIn() {
       return request.auth != null;
