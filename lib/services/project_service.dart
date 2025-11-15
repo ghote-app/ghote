@@ -87,6 +87,12 @@ class ProjectService {
             .map((doc) => FileModel.fromJson(doc.data()))
             .toList());
   }
+
+  /// Get the count of files in a project
+  Future<int> getProjectFileCount(String projectId) async {
+    final snap = await _filesCol(projectId).count().get();
+    return snap.count ?? 0;
+  }
 }
 
 

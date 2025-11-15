@@ -6,11 +6,13 @@ import 'dart:io';
 
 import '../models/file_model.dart';
 import '../models/project.dart';
+import '../models/subscription.dart';
 import '../services/subscription_service.dart';
 import '../services/storage_service.dart';
 import '../services/project_service.dart';
 // import 'upgrade_screen.dart';
 import 'settings_screen.dart';
+import 'project_details_screen.dart';
 
 class ProjectItem {
   const ProjectItem({
@@ -421,32 +423,46 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             itemCount: projects.length,
             itemBuilder: (context, index) {
               final p = projects[index];
-              final item = ProjectItem(
-                id: p.id,
-                title: p.title,
-                status: p.status,
-                documentCount: 0, // 可改為 files 子集合計數（需要額外查詢或彙總欄位）
-                lastUpdated: _formatRelative(p.lastUpdatedAt),
-                image: 'assets/AppIcon/Ghote_icon_black_background.png',
-                progress: p.status == 'Completed' ? 1.0 : 0.5,
-                category: p.category ?? 'General',
-              );
-              return AnimatedBuilder(
-                animation: _animationController,
-                builder: (context, child) {
-                  final delay = index * 0.08;
-                  final animationPercent = Curves.easeOutCubic.transform(
-                    math.max(0.0, (_animationController.value - delay) / (1.0 - delay)),
+              
+              // 使用 StreamBuilder 獲取實時文件數量
+              return StreamBuilder<List<FileModel>>(
+                stream: ProjectService().watchFiles(p.id),
+                builder: (context, fileSnapshot) {
+                  final fileCount = fileSnapshot.hasData ? fileSnapshot.data!.length : 0;
+                  
+                  final item = ProjectItem(
+                    id: p.id,
+                    title: p.title,
+                    status: p.status,
+                    documentCount: fileCount,
+                    lastUpdated: _formatRelative(p.lastUpdatedAt),
+                    image: 'assets/AppIcon/Ghote_icon_black_background.png',
+                    progress: p.status == 'Completed' ? 1.0 : 0.5,
+                    category: p.category ?? 'General',
                   );
-                  return Opacity(
-                    opacity: animationPercent,
-                    child: Transform.translate(
-                      offset: Offset(0, 30 * (1 - animationPercent)),
-                      child: Transform.scale(
-                        scale: 0.95 + (0.05 * animationPercent),
-                        child: _ProjectCard(item: item, onDelete: () => _confirmDeleteProject(item.id)),
-                      ),
-                    ),
+                  
+                  return AnimatedBuilder(
+                    animation: _animationController,
+                    builder: (context, child) {
+                      final delay = index * 0.08;
+                      final animationPercent = Curves.easeOutCubic.transform(
+                        math.max(0.0, (_animationController.value - delay) / (1.0 - delay)),
+                      );
+                      return Opacity(
+                        opacity: animationPercent,
+                        child: Transform.translate(
+                          offset: Offset(0, 30 * (1 - animationPercent)),
+                          child: Transform.scale(
+                            scale: 0.95 + (0.05 * animationPercent),
+                            child: _ProjectCard(
+                              item: item,
+                              onDelete: () => _confirmDeleteProject(item.id),
+                              onTap: () => _navigateToProjectDetails(item),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   );
                 },
               );
@@ -456,6 +472,17 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       ),
     );
   }
+  void _navigateToProjectDetails(ProjectItem item) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ProjectDetailsScreen(
+          projectId: item.id,
+          title: item.title,
+        ),
+      ),
+    );
+  }
+
   Future<void> _confirmDeleteProject(String projectId) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -482,6 +509,87 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     if (diff.inHours >= 1) return '${diff.inHours} hours ago';
     if (diff.inMinutes >= 1) return '${diff.inMinutes} minutes ago';
     return 'just now';
+  }
+
+  /// Get current project count and user subscription status
+  Future<({int count, Subscription sub})> _getUserProjectCountAndSubscription() async {
+    final user = FirebaseAuth.instance.currentUser;
+    final sub = await SubscriptionService().getUserSubscription(user?.uid ?? '');
+    final projects = await ProjectService().watchProjectsByOwner(user!.uid).first;
+    return (count: projects.length, sub: sub);
+  }
+
+  /// Show dialog for user to select a project
+  Future<Project?> _promptProjectSelection(BuildContext context, List<Project> projects) async {
+    if (projects.isEmpty) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: Colors.black,
+          title: const Text('No Projects', style: TextStyle(color: Colors.white)),
+          content: const Text(
+            '請先建立一個 Project',
+            style: TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return null;
+    }
+
+    return showDialog<Project>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
+        title: const Text('Select Project', style: TextStyle(color: Colors.white)),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: projects.length,
+            itemBuilder: (context, index) {
+              final project = projects[index];
+              return ListTile(
+                title: Text(
+                  project.title,
+                  style: const TextStyle(color: Colors.white),
+                ),
+                subtitle: Text(
+                  project.category ?? 'General',
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+                ),
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    project.status,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                onTap: () => Navigator.of(context).pop(project),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(null),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
   }
 
   // bulk delete moved to user menu previously; retained via SettingsScreen later if needed
@@ -619,6 +727,37 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   }
 
   Future<void> _createNewProject() async {
+    // Check project count limit before creating
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in first')),
+      );
+      return;
+    }
+
+    final data = await _getUserProjectCountAndSubscription();
+    if ((data.sub.isFree || data.sub.isPlus) && data.count >= 3) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: Colors.black,
+          title: const Text('Project Limit Reached', style: TextStyle(color: Colors.white)),
+          content: const Text(
+            '免費/Plus 方案最多建立 3 個專案。請升級到 Ghote Pro 享受無限專案。',
+            style: TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     final nameController = TextEditingController();
     final categoryController = TextEditingController();
     final statusOptions = ['Active', 'Completed', 'Archived'];
@@ -683,8 +822,6 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               final title = nameController.text.trim();
               final category = categoryController.text.trim().isEmpty ? null : categoryController.text.trim();
               if (title.isEmpty) return;
-              final user = FirebaseAuth.instance.currentUser;
-              if (user == null) return;
               final now = DateTime.now();
               final project = Project(
                 id: 'p_${now.microsecondsSinceEpoch}',
@@ -712,24 +849,74 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
 
   Future<void> _pickAndUploadFlow() async {
     try {
-      final picker = await _lazyLoadFilePicker();
-      final result = await picker();
-      if (result == null || result.files.isEmpty) return;
-      final projectId = await _promptProjectId(context);
-      if (projectId == null || projectId.isEmpty) return;
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please sign in first')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please sign in first')));
         return;
       }
+
+      // Get user's projects
+      final projects = await ProjectService().watchProjectsByOwner(user.uid).first;
+      
+      // Let user select a project
+      final selectedProject = await _promptProjectSelection(context, projects);
+      if (selectedProject == null) return;
+
+      // Pick files
+      final picker = await _lazyLoadFilePicker();
+      final result = await picker();
+      if (result == null || result.files.isEmpty) return;
+
+      // Check single file size limit (10MB)
+      const maxFileSize = 10 * 1024 * 1024; // 10MB
+      for (final f in result.files) {
+        if (f.size > maxFileSize) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('檔案大小超過 10MB 上限，已取消上傳。')),
+          );
+          return;
+        }
+      }
+
+      // Get subscription and current file count
       final subscription = await SubscriptionService().getUserSubscription(user.uid);
+      final currentFileCount = await ProjectService().getProjectFileCount(selectedProject.id);
+
+      // Check file count limit for Free/Plus users (10 files per project)
       if (subscription.isFree || subscription.isPlus) {
-        // TODO: compute actual current usage if tracked; show soft notice before upload
+        if (currentFileCount + result.files.length > 10) {
+          if (!mounted) return;
+          await showDialog<void>(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: Colors.black,
+              title: const Text('File Limit Reached', style: TextStyle(color: Colors.white)),
+              content: const Text(
+                '免費/Plus 方案每個專案最多 10 個文件。請升級到 Ghote Pro 享受無限文件上傳。',
+                style: TextStyle(color: Colors.white70),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+          return;
+        }
+      }
+
+      // Show storage limit notice for Free/Plus users
+      if (subscription.isFree || subscription.isPlus) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Using limited cloud storage (Free/Plus). Upgrade for unlimited.')),
         );
       }
+
+      // Upload files
       final storage = const StorageService();
       final projectService = ProjectService();
       for (final f in result.files) {
@@ -742,16 +929,21 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         String? cloudPath;
         String? downloadUrl;
         if (subscription.isPro) {
-          final uploaded = await storage.uploadToCloudflare(file: file, projectId: projectId, userId: user.uid, subscription: subscription);
+          final uploaded = await storage.uploadToCloudflare(
+            file: file,
+            projectId: selectedProject.id,
+            userId: user.uid,
+            subscription: subscription,
+          );
           storageType = 'cloud';
           cloudPath = uploaded['cloudPath'];
           downloadUrl = uploaded['downloadUrl'];
         } else {
-          localPath = await storage.saveToLocal(file, projectId);
+          localPath = await storage.saveToLocal(file, selectedProject.id);
         }
         final meta = FileModel(
           id: fileId,
-          projectId: projectId,
+          projectId: selectedProject.id,
           name: f.name,
           type: (f.extension ?? '').toLowerCase(),
           sizeBytes: f.size,
@@ -763,7 +955,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           uploadedAt: now,
           metadata: const {},
         );
-        await projectService.addFileMetadata(projectId, meta);
+        await projectService.addFileMetadata(selectedProject.id, meta);
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Uploaded ${result.files.length} file(s)')));
@@ -795,32 +987,17 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       rethrow;
     }
   }
-
-  Future<String?> _promptProjectId(BuildContext context) async {
-    final controller = TextEditingController();
-    return showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.black,
-        title: const Text('Enter Project ID', style: TextStyle(color: Colors.white)),
-        content: TextField(
-          controller: controller,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(hintText: 'projectId', hintStyle: TextStyle(color: Colors.white54)),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(null), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.of(context).pop(controller.text.trim()), child: const Text('OK')),
-        ],
-      ),
-    );
-  }
 }
 
 class _ProjectCard extends StatelessWidget {
-  const _ProjectCard({required this.item, required this.onDelete});
+  const _ProjectCard({
+    required this.item,
+    required this.onDelete,
+    required this.onTap,
+  });
   final ProjectItem item;
   final VoidCallback onDelete;
+  final VoidCallback onTap;
 
   Color _getStatusColor() {
     switch (item.status) {
@@ -873,7 +1050,7 @@ class _ProjectCard extends StatelessWidget {
               color: Colors.transparent,
               child: InkWell(
                 borderRadius: BorderRadius.circular(24),
-                onTap: () {},
+                onTap: onTap,
                 onLongPress: () {},
                 child: AnimatedScale(
                   scale: scale,
