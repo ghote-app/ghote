@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/subscription.dart';
 
@@ -6,19 +8,81 @@ import '../models/subscription.dart';
 /// a user's subscription status. Implementation will be added later
 /// (e.g., backed by Firestore and server-side verification).
 class SubscriptionService {
-  /// Fetch the latest subscription for the given user.
+  SubscriptionService({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
+  /// 讀取使用者訂閱：users/{uid}/subscription/current
   Future<Subscription> getUserSubscription(String userId) async {
-    // Placeholder: integrate with Firestore or a backend endpoint.
-    // Returning a default free plan for now to unblock UI integration.
-    debugPrint('getUserSubscription called for userId=$userId');
-    return Subscription(
-      userId: userId,
-      plan: 'free',
-      proStartDate: null,
-      proEndDate: null,
-      isActive: true,
-      paymentProvider: null,
-    );
+    try {
+      if (userId.isEmpty) {
+        return const Subscription(
+          userId: '',
+          plan: 'free',
+          proStartDate: null,
+          proEndDate: null,
+          isActive: true,
+        );
+      }
+      final doc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('subscription')
+          .doc('current')
+          .get();
+      if (!doc.exists) {
+        return Subscription(
+          userId: userId,
+          plan: 'free',
+          proStartDate: null,
+          proEndDate: null,
+          isActive: true,
+          paymentProvider: null,
+        );
+      }
+      final data = doc.data()!;
+      return Subscription.fromJson({
+        'userId': userId,
+        ...data,
+      });
+    } catch (e) {
+      debugPrint('getUserSubscription error: $e');
+      return Subscription(
+        userId: userId,
+        plan: 'free',
+        proStartDate: null,
+        proEndDate: null,
+        isActive: true,
+        paymentProvider: null,
+      );
+    }
+  }
+
+  /// 設定測試方案（free/plus/pro）到 users/{uid}/subscription/current
+  Future<void> setTestPlan({required String userId, required String plan}) async {
+    assert(plan == 'free' || plan == 'plus' || plan == 'pro');
+    // 僅允許有 custom claims devSwitch=true 的開發者切換，且只能改自己的訂閱
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final claims = await currentUser?.getIdTokenResult(true);
+    final bool allowed = (claims?.claims?['devSwitch'] == true) && currentUser?.uid == userId;
+    if (!allowed) {
+      throw StateError('Permission denied: developer switch requires devSwitch=true claims.');
+    }
+    final now = DateTime.now();
+    final data = {
+      'plan': plan,
+      'isActive': true,
+      'proStartDate': plan == 'pro' ? now.toIso8601String() : null,
+      'proEndDate': null,
+      'paymentProvider': 'test',
+    };
+    await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('subscription')
+        .doc('current')
+        .set(data, SetOptions(merge: true));
   }
 
   /// Whether the user can upload to cloud storage based on their plan.
