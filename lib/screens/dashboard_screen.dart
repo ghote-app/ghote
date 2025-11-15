@@ -882,6 +882,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
 
       // Get subscription and current file count
       final subscription = await SubscriptionService().getUserSubscription(user.uid);
+
       final currentFileCount = await ProjectService().getProjectFileCount(selectedProject.id);
 
       // Check file count limit for Free/Plus users (10 files per project)

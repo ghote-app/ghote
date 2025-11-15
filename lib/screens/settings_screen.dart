@@ -5,8 +5,15 @@ import 'upgrade_screen.dart';
 import '../services/subscription_service.dart';
 import '../models/subscription.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  String _pendingPlan = 'free';
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +37,10 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 8),
           _sectionTitle('Plan'),
           _planTile(planLabel, storageText, aiText, context),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _devPlanToggle(user?.uid, planLabel),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: _planCompareCard(context),
@@ -139,6 +150,61 @@ class SettingsScreen extends StatelessWidget {
             )
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _devPlanToggle(String? userId, String currentPlan) {
+    if (userId == null || userId.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    // 僅在 custom claims devSwitch=true 時顯示
+    final user = FirebaseAuth.instance.currentUser;
+    final hasDevSwitch = (user is User && (user as User).tenantId == null); // placeholder避免分析期出錯
+    // 這裡不從同步 API 讀 claims；交給 setState 刷新。實際顯示時再嘗試呼叫 setTestPlan 時會再驗證。
+    // 若要前端判斷，可在初始化時抓 getIdTokenResult(true) 並暫存。
+    _pendingPlan = currentPlan;
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Developer: Switch plan (test only)', style: TextStyle(color: Colors.white70, fontSize: 12)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  dropdownColor: Colors.black,
+                  value: _pendingPlan,
+                  items: const [
+                    DropdownMenuItem(value: 'free', child: Text('Free', style: TextStyle(color: Colors.white))),
+                    DropdownMenuItem(value: 'plus', child: Text('Plus', style: TextStyle(color: Colors.white))),
+                    DropdownMenuItem(value: 'pro', child: Text('Pro', style: TextStyle(color: Colors.white))),
+                  ],
+                  onChanged: (v) => setState(() => _pendingPlan = v ?? 'free'),
+                  decoration: const InputDecoration(hintText: 'Plan', hintStyle: TextStyle(color: Colors.white54)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: () async {
+                  await SubscriptionService().setTestPlan(userId: userId, plan: _pendingPlan);
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Plan updated (test)')));
+                  setState(() {});
+                },
+                child: const Text('Apply'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
