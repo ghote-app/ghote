@@ -1,5 +1,4 @@
 # Ghote
-#楊紅利萬歲
 
 ## Product intro / 產品介紹
 
@@ -11,22 +10,22 @@ Modern Flutter app with a clean, responsive UI and smooth animations.
 
 ## Features / 功能特色
 
-- 🤖 AI Knowledge Extraction | AI 智能知識提取
+- AI Knowledge Extraction | AI 智能知識提取
   - Upload PDFs/DOCX/notes; get distilled key points, MCQs, Q&A, and flashcards.
   - 上傳 PDF/DOCX/筆記，AI 自動產出重點摘要、選擇題、問答題與抽認卡。
-- 🗂️ Project-based Organization | 專案式管理
+- Project-based Organization | 專案式管理
   - Manage subjects/topics as projects; track progress at a glance.
   - 以 Project 管理不同科目/主題，掌握學習狀態。
-- 🔍 Fast Search & Filters | 智能搜尋與篩選
+- Fast Search & Filters | 智能搜尋與篩選
   - Built-in All/Active/Completed/Archived filters to find content instantly.
   - 內建 All/Active/Completed/Archived 篩選快速定位內容。
-- 🧠 Active Recall Tools | 主動回憶工具
+- Active Recall Tools | 主動回憶工具
   - Practice with generated MCQs, Q&A, spaced-repetition flashcards.
   - 練習模式：選擇題／問答題／間隔重複抽認卡。
-- 🔐 Authentication | 安全登入
+- Authentication | 安全登入
   - Firebase Authentication with Email/Password and Google Sign-In.
   - 使用 Firebase Auth（Email/Password、Google 登入）。
-- 🖼️ Modern UI | 現代化介面
+- Modern UI | 現代化介面
   - Dark theme, glass morphism, smooth animations, fully responsive.
   - 深色主題、玻璃擬態、流暢動畫、完整響應式。
 
@@ -183,11 +182,11 @@ lib/
 本專案內含以 Flutter Web 建置的官方網站（首頁、服務條款、隱私政策），並透過 GitHub Pages 自動部署。
 
 ### 網站功能特色
-- 🏠 首頁：展示 Ghote 應用程式的特色和功能
-- 📋 服務條款：完整的服務使用條款內容
-- 🔒 隱私政策：完整的隱私保護政策
-- 📱 響應式設計：支援各種裝置尺寸
-- 🎨 現代化 UI：玻璃擬態設計，深色主題
+- 首頁：展示 Ghote 應用程式的特色和功能
+- 服務條款：完整的服務使用條款內容
+- 隱私政策：完整的隱私保護政策
+- 響應式設計：支援各種裝置尺寸
+- 現代化 UI：玻璃擬態設計，深色主題
 
 ### 本地開發（Website）
 ```bash
@@ -307,10 +306,9 @@ lib/website/
   ```
 - CI 版本不一致？請確認使用 Flutter 3.35.6。
 
-Assets（示意用）：
+Assets：
 - App Icon：`assets/AppIcon/Ghote_icon_white_background_removed.png`
 - Splash 動畫：`assets/AppIcon/splash_animation.gif`
-  - 可將產品簡介 GIF/截圖放在 `assets/AppIcon/`，並在此 README 以連結的方式展示
 
 ## Screenshots / 產品截圖
 
@@ -331,12 +329,6 @@ Assets（示意用）：
   <em>Splash Animation - 開場動畫</em>
 </p>
 
-English
-- Ghote is a lightweight tool for learning and knowledge organization.
-- Project-based progress tracking with search and filters.
-- Modern dark theme with smooth animations.
-- Put screenshots/GIFs under `assets/images/` and reference them here for showcase.
-
 ## Troubleshooting
 
 ### iOS Issues
@@ -354,79 +346,47 @@ English
 
 ## Recent Updates / 最近更新
 
-### 📝 2025-10-13: Website 法務頁面 i18n 完成
-- **i18n**: 新增隱私政策與服務條款之完整英文/中文鍵於 `lib/website/i18n.dart`
-- **頁面**: `privacy_policy_page.dart`、`terms_of_service_page.dart` 改為使用 `t('...')` 取得文案（以註解保留原硬編碼）
-- **效果**: 切換語言（英文/中文）時，法務頁面內容將自動對應顯示
+### 2025-10-13: Website 法務頁面 i18n 完成
+- 新增隱私政策與服務條款之完整英文/中文鍵於 `lib/website/i18n.dart`
+- 頁面改為使用 `t('...')` 取得文案
+- 切換語言時，法務頁面內容將自動對應顯示
 
-### 🌐 **2025-10-12: 官方網站上線 (PR #18)**
-- ✅ **官方網站**: 使用 Flutter Web 建立的官方網站
-- ✅ **服務條款**: 完整的服務使用條款和法律文件
-- ✅ **隱私政策**: 詳細的隱私保護政策，符合 AI 學習輔助服務需求
-- ✅ **自動化部署**: GitHub Actions 自動部署到 GitHub Pages
-- ✅ **應用程式整合**: 登入畫面的法律文件連結直接開啟網站
-- ✅ **響應式設計**: 支援各種裝置尺寸的現代化 UI
+### 2025-10-12: 官方網站上線 (PR #18)
+- 使用 Flutter Web 建立的官方網站
+- 完整的服務條款和隱私政策
+- GitHub Actions 自動部署到 GitHub Pages
+- 響應式設計，支援各種裝置尺寸
 
-### 🔐 **2025-10-12: Google 登入功能整合 (PR #13)**
-- ✅ **Google Sign-In**: 整合 Android 和 iOS 的 Google 登入功能
-- ✅ **Firebase 認證**: 配置 Google Services 和 Firebase Auth
-- ✅ **應用程式圖標更新**: 使用新的 Ghote 品牌圖標
-- ✅ **啟動畫面優化**: 使用 MP4 影片替換 GIF 動畫，提升效能
-- ✅ **UI 改進**: 修復文字溢位問題，改善響應式設計
-- ✅ **資源管理**: 重新組織 AppIcon 資源目錄結構
+### 2025-10-12: Google 登入功能整合 (PR #13)
+- 整合 Android 和 iOS 的 Google 登入功能
+- 配置 Google Services 和 Firebase Auth
+- 應用程式圖標更新和啟動畫面優化
+- UI 改進和資源管理優化
 
-### 🐛 **2025-10-12: 登入畫面修復 (PR #12)**
-- ✅ **鍵盤溢位修復**: 修復登入畫面鍵盤彈出時的溢位問題
-- ✅ **響應式設計**: 改善不同螢幕尺寸的顯示效果
+### 2025-10-12: 登入畫面修復 (PR #12)
+- 修復登入畫面鍵盤彈出時的溢位問題
+- 改善不同螢幕尺寸的顯示效果
 
-### 🔥 **2025-10-12: Firebase 整合 (PR #11)**
-- ✅ **Firebase 整合**: 將 Firebase 整合到 Android 專案中
-- ✅ **依賴管理**: 更新 Android 建置配置和依賴項目
+### 2025-10-12: Firebase 整合 (PR #11)
+- 將 Firebase 整合到 Android 專案中
+- 更新 Android 建置配置和依賴項目
 
-### 🔑 **2025-10-12: 身份驗證功能 (PR #10)**
-- ✅ **身份驗證**: 加入身份驗證功能
-- ✅ **iOS 建置修復**: 解決 Firebase Auth 的 iOS 建置問題
-- ✅ **部署目標更新**: 將 iOS 部署目標從 13.0 更新到 15.0
+### 2025-10-12: 身份驗證功能 (PR #10)
+- 加入身份驗證功能
+- 解決 Firebase Auth 的 iOS 建置問題
+- 將 iOS 部署目標從 13.0 更新到 15.0
 
-### 📝 **2025-10-11: 註冊按鈕功能 (PR #9)**
-- ✅ **Sign Up 按鈕**: 加入註冊按鈕功能
-- ✅ **使用者體驗**: 改善登入流程
+### 2025-10-11: 團隊協作環境完善
+- 啟用 main 分支保護，要求 PR 和 CI 檢查
+- 當 CI 通過時自動合併 PR
+- 合併後自動刪除功能分支
+- 提供 PR 模板、Issue 模板和自動標籤功能
 
-### 🎬 **2025-10-11: 啟動畫面優化 (PR #8)**
-- ✅ **Splash GIF 改善**: 改善啟動畫面 GIF 動畫
-- ✅ **搜尋列樣式**: 優化搜尋列樣式設計
-
-### 🔧 **2025-10-11: 程式碼品質 (PR #7)**
-- ✅ **Linter 修復**: 解決所有 linter 警告
-- ✅ **程式碼品質**: 提升程式碼品質和一致性
-
-### 📚 **2025-10-11: 文檔更新 (PR #6)**
-- ✅ **README 最終更新**: 移除所有 reviewer 要求
-- ✅ **文檔完善**: 完善專案文檔
-
-### 🔄 **2025-10-11: 工作流程修復 (PR #5)**
-- ✅ **工作流程描述**: 最終修復工作流程描述
-- ✅ **自動化流程**: 反映無需 reviewer 要求的流程
-
-### 📖 **2025-10-11: 協作指南 (PR #4)**
-- ✅ **團隊協作設定**: 新增最近更新部分記錄團隊協作設定
-- ✅ **工作流程文檔**: 更新工作流程描述
-
-### 🚀 **2025-10-11: 團隊協作環境完善**
-- ✅ **分支保護規則**: 啟用 main 分支保護，要求 PR 和 CI 檢查
-- ✅ **Auto-merge 功能**: 當 CI 通過時自動合併 PR（無需 reviewer 批准）
-- ✅ **自動分支清理**: 合併後自動刪除功能分支
-- ✅ **CODEOWNERS**: 自動指派 @ghote-app @itsYoga @tina6662 @matthew930823 @wonogfsocry 為 reviewer
-- ✅ **PR 模板**: 提供中英雙語 PR 模板和合併指南
-- ✅ **Issue 模板**: 標準化 bug 報告和功能請求模板
-- ✅ **自動標籤**: 根據檔案變更自動為 PR 添加標籤
-- ✅ **Release 工作流程**: 標籤驅動的自動 APK 生成
-
-### 🔧 **2025-10-11: 程式碼重構**
-- ✅ **響應式佈局**: 移除平台特定尺寸，改用 MediaQuery 相對尺寸
-- ✅ **移除 PlatformUtils**: 簡化程式碼，統一跨平台體驗
-- ✅ **移除 liquid_glass_renderer**: 解決 Android 渲染問題，改用標準 Flutter 組件
-- ✅ **Responsive 工具類**: 新增統一的響應式尺寸管理
+### 2025-10-11: 程式碼重構
+- 移除平台特定尺寸，改用 MediaQuery 相對尺寸
+- 移除 PlatformUtils，簡化程式碼
+- 移除 liquid_glass_renderer，改用標準 Flutter 組件
+- 新增統一的響應式尺寸管理
 
 ## Contributing
 
