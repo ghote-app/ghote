@@ -181,12 +181,14 @@ lib/
 
 本專案內含以 Flutter Web 建置的官方網站（首頁、服務條款、隱私政策），並透過 GitHub Pages 自動部署。
 
+🌐 **網站連結：** [https://ghote-app.github.io/ghote/](https://ghote-app.github.io/ghote/)
+
 ### 網站功能特色
 - 首頁：展示 Ghote 應用程式的特色和功能
 - 服務條款：完整的服務使用條款內容
 - 隱私政策：完整的隱私保護政策
 - 響應式設計：支援各種裝置尺寸
-- 現代化 UI：玻璃擬態設計，深色主題
+- 現代化 UI：玻璃擬態設計，深色主題，流暢動畫效果
 
 ### 本地開發（Website）
 ```bash
@@ -202,7 +204,7 @@ flutter run -d chrome --web-port 8080
 1. 確保儲存庫啟用 Pages，來源選擇「GitHub Actions」
 2. 推送到 `main` 分支後，Actions 會自動 build 並部署
 3. 部署完成後可於以下網址存取：
-   - `https://ghote-app.github.io/ghote/`
+   - [https://ghote-app.github.io/ghote/](https://ghote-app.github.io/ghote/)
 
 手動部署可使用 `./deploy.sh` 生成 `build/web` 後，推送至 `gh-pages` 分支（若採用此流程）。
 
