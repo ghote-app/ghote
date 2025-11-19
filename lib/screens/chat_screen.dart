@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
 
 import '../models/chat_message.dart';
 import '../services/chat_service.dart';
@@ -50,15 +49,11 @@ class _ChatScreenState extends State<ChatScreen> {
       _messageController.clear();
     });
 
-    String currentResponse = '';
     try {
-      await for (final chunk in _chatService.sendMessage(
+      await for (final _ in _chatService.sendMessage(
         projectId: widget.projectId,
         userMessage: message,
       )) {
-        setState(() {
-          currentResponse += chunk;
-        });
         _scrollToBottom();
       }
     } catch (e) {
