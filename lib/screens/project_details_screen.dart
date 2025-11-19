@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:open_filex/open_filex.dart';
 
@@ -203,46 +204,51 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         }
       }
 
-      // 顯示上傳進度
+      // 顯示上傳進度對話框
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('正在上傳 ${result.files.length} 個檔案...'),
-          duration: const Duration(seconds: 2),
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => PopScope(
+          canPop: false,
+          child: AlertDialog(
+            backgroundColor: Colors.black87,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  '正在上傳 ${result.files.length} 個檔案...',
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
         ),
       );
 
-      // 上傳檔案
+      // 上傳檔案到本地儲存
       final storage = const StorageService();
       final projectService = ProjectService();
       int successCount = 0;
+      int failCount = 0;
 
       for (final f in result.files) {
-        if (f.path == null) continue;
+        if (f.path == null) {
+          failCount++;
+          continue;
+        }
         
         try {
           final file = File(f.path!);
           final now = DateTime.now();
           final fileId = '${now.microsecondsSinceEpoch}-${f.name}';
           
-          String storageType = 'local';
-          String? localPath;
-          String? cloudPath;
-          String? downloadUrl;
-
-          if (subscription.isPro) {
-            final uploaded = await storage.uploadToCloudflare(
-              file: file,
-              projectId: widget.projectId,
-              userId: user.uid,
-              subscription: subscription,
-            );
-            storageType = 'cloud';
-            cloudPath = uploaded['cloudPath'];
-            downloadUrl = uploaded['downloadUrl'];
-          } else {
-            localPath = await storage.saveToLocal(file, widget.projectId);
-          }
+          // 一律儲存到本地
+          final localPath = await storage.saveToLocal(file, widget.projectId);
 
           final meta = FileModel(
             id: fileId,
@@ -250,10 +256,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             name: f.name,
             type: (f.extension ?? '').toLowerCase(),
             sizeBytes: f.size,
-            storageType: storageType,
+            storageType: 'local',
             localPath: localPath,
-            cloudPath: cloudPath,
-            downloadUrl: downloadUrl,
+            cloudPath: null,
+            downloadUrl: null,
             uploaderId: user.uid,
             uploadedAt: now,
             metadata: const {},
@@ -263,21 +269,33 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           successCount++;
         } catch (e) {
           print('上傳檔案 ${f.name} 失敗: $e');
+          failCount++;
         }
       }
 
+      // 關閉進度對話框
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
       if (!mounted) return;
-      final storageInfo = subscription.isPro 
-          ? '已上傳到雲端儲存 (Cloudflare R2)' 
-          : '已儲存到本地裝置';
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('✅ 成功上傳 $successCount 個檔案\n$storageInfo'),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+      if (failCount > 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ 成功上傳 $successCount 個檔案\n❌ $failCount 個檔案上傳失敗'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ 成功上傳 $successCount 個檔案到本地儲存'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -290,6 +308,193 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   }
 
   // 開啟檔案
+  // 預覽文件
+  Future<void> _previewFile(BuildContext context, FileModel file) async {
+    try {
+      // 檢查是否為可預覽的文件類型
+      final previewableTypes = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'txt'];
+      final fileType = file.type.toLowerCase();
+      
+      if (!previewableTypes.contains(fileType)) {
+        // 如果不是可預覽類型，直接打開文件
+        await _openFile(context, file);
+        return;
+      }
+
+      // 獲取文件內容
+      final storage = const StorageService();
+      Uint8List fileBytes;
+      
+      if (file.storageType == 'local' && file.localPath != null) {
+        final localFile = File(file.localPath!);
+        if (await localFile.exists()) {
+          fileBytes = await localFile.readAsBytes();
+        } else {
+          throw Exception('檔案不存在');
+        }
+      } else if (file.storageType == 'cloud' && file.downloadUrl != null) {
+        fileBytes = await storage.getFileContent(file);
+      } else {
+        throw Exception('無法讀取檔案');
+      }
+
+      if (!context.mounted) return;
+
+      // 顯示預覽對話框
+      await showDialog(
+        context: context,
+        builder: (context) => Dialog(
+          backgroundColor: Colors.black,
+          insetPadding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 標題欄
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        file.name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+              ),
+              // 預覽內容
+              Flexible(
+                child: Container(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.7,
+                  ),
+                  child: _buildFilePreview(fileType, fileBytes, file.name),
+                ),
+              ),
+              // 操作按鈕
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton.icon(
+                      icon: const Icon(Icons.open_in_new, color: Colors.white),
+                      label: const Text('用其他應用開啟', style: TextStyle(color: Colors.white)),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        _openFile(context, file);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('預覽失敗: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // 構建文件預覽組件
+  Widget _buildFilePreview(String fileType, Uint8List fileBytes, String fileName) {
+    if (fileType == 'pdf') {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.picture_as_pdf, color: Colors.red, size: 64),
+            const SizedBox(height: 16),
+            const Text(
+              'PDF 預覽功能需要額外的套件',
+              style: TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '檔案大小: ${(fileBytes.length / 1024).toStringAsFixed(2)} KB',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+            ),
+          ],
+        ),
+      );
+    } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].contains(fileType)) {
+      return InteractiveViewer(
+        child: Center(
+          child: Image.memory(
+            fileBytes,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              return const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.broken_image, color: Colors.grey, size: 64),
+                    SizedBox(height: 16),
+                    Text(
+                      '無法顯示圖片',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      );
+    } else if (fileType == 'txt') {
+      final text = String.fromCharCodes(fileBytes);
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: SelectableText(
+          text,
+          style: const TextStyle(color: Colors.white, fontSize: 14),
+        ),
+      );
+    } else {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(_getFileIcon(fileType), color: Colors.grey, size: 64),
+            const SizedBox(height: 16),
+            Text(
+              '此檔案類型不支援預覽',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   Future<void> _openFile(BuildContext context, FileModel file) async {
     try {
       if (file.storageType == 'cloud') {
@@ -729,7 +934,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => _openFile(context, file),
+          onTap: () => _previewFile(context, file),
           onLongPress: () => _showFileOptions(context, file),
           child: Padding(
             padding: const EdgeInsets.all(16),
