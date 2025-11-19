@@ -43,7 +43,6 @@ class PrivacyPolicyPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            // '最後更新：2025年10月10日'
             Text(
               t('privacy.updated'),
               style: GoogleFonts.inter(
@@ -53,53 +52,42 @@ class PrivacyPolicyPage extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             _buildSection(
-              // '1. 資訊收集'
               t('privacy.section1.title'),
-              // 上方為舊字串
               t('privacy.section1.content'),
             ),
             _buildSection(
-              // '2. 資訊使用'
               t('privacy.section2.title'),
               t('privacy.section2.content'),
             ),
             _buildSection(
-              // '3. 資訊分享'
               t('privacy.section3.title'),
               t('privacy.section3.content'),
             ),
             _buildSection(
-              // '4. 資料安全'
               t('privacy.section4.title'),
               t('privacy.section4.content'),
             ),
             _buildSection(
-              // '5. Cookie 和追蹤'
               t('privacy.section5.title'),
               t('privacy.section5.content'),
             ),
             _buildSection(
-              // '6. 第三方服務'
               t('privacy.section6.title'),
               t('privacy.section6.content'),
             ),
             _buildSection(
-              // '7. 兒童隱私'
               t('privacy.section7.title'),
               t('privacy.section7.content'),
             ),
             _buildSection(
-              // '8. 您的權利'
               t('privacy.section8.title'),
               t('privacy.section8.content'),
             ),
             _buildSection(
-              // '9. 國際傳輸'
               t('privacy.section9.title'),
               t('privacy.section9.content'),
             ),
             _buildSection(
-              // '10. 政策更新'
               t('privacy.section10.title'),
               t('privacy.section10.content'),
             ),
@@ -114,7 +102,6 @@ class PrivacyPolicyPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // '您的隱私很重要'
                   Text(
                     t('privacy.cta.title'),
                     style: GoogleFonts.inter(

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-// Tech icon widget that loads SVG from simple-icons or uses fallback
-// To use SVG icons, add SVG files to assets/icons/ directory
-// and uncomment the flutter_svg import and SVG loading code
+/// Tech icon widget that displays technology icons with clickable links.
 class TechIcon extends StatelessWidget {
   final String name;
   final String url;
@@ -35,17 +33,21 @@ class TechIcon extends StatelessWidget {
   }
 
   Widget _buildIcon(BuildContext context) {
-    // Use better icons that match the tech stack
     final iconData = _getIconData(name);
-    // Use bright white color for maximum visibility on dark background
     final iconColor = color ?? Colors.white;
 
-    // Ensure icon is visible with explicit color and size
-    return Icon(
-      iconData,
-      size: size,
-      color: iconColor,
-      semanticLabel: name, // Add semantic label for accessibility
+    return Container(
+      constraints: BoxConstraints(
+        minWidth: size,
+        minHeight: size,
+      ),
+      alignment: Alignment.center,
+      child: Icon(
+        iconData,
+        size: size,
+        color: iconColor,
+        semanticLabel: name,
+      ),
     );
   }
 

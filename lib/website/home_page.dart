@@ -13,34 +13,11 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
+class _HomePageState extends State<HomePage> {
   final ScrollController _scrollController = ScrollController();
 
   @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
-      vsync: this,
-    );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
-    _animationController.forward();
-  }
-
-  @override
   void dispose() {
-    _animationController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -54,11 +31,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           backgroundColor: Colors.black,
           body: Stack(
             children: [
-              // Dot grid background
-              Positioned.fill(
+              // Background layer
+              const Positioned.fill(
                 child: DotGridBackground(),
               ),
-              // Content
+              // Content layer
               SingleChildScrollView(
                 controller: _scrollController,
                 child: Column(
@@ -105,7 +82,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.language,
                     color: Colors.white,
                     size: 18,
@@ -197,6 +174,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Widget _buildHeader(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -221,7 +199,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           ),
           Row(
             children: [
-              // language toggle - improved UI
               _buildLanguageSelector(context),
               const SizedBox(width: 8),
               TextButton(
@@ -254,136 +231,77 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Widget _buildHeroSection(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    return SizedBox(
+    return Container(
+      width: double.infinity,
       height: screenHeight,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 120),
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: SlideTransition(
-            position: _slideAnimation,
-            child: Column(
-            children: [
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 800),
-                curve: Curves.easeOut,
-                builder: (context, value, child) {
-                  return Transform.scale(
-                    scale: 0.5 + (value * 0.5),
-                    child: Opacity(opacity: value, child: child),
-                  );
-                },
-                child: Image.asset(
-                  'assets/AppIcon/Ghote_icon_black_background.png',
-                  width: 140,
-                  height: 140,
-                ),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 60),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset(
+            'assets/AppIcon/Ghote_icon_black_background.png',
+            width: 140,
+            height: 140,
+          ),
+          const SizedBox(height: 48),
+          Text(
+            t('hero.title'),
+            style: GoogleFonts.inter(
+              fontSize: 64,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              letterSpacing: -1,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          Text(
+            t('hero.subtitle'),
+            style: GoogleFonts.inter(
+              fontSize: 22,
+              color: Colors.white70,
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 64),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.blue.shade600, Colors.purple.shade600],
               ),
-              const SizedBox(height: 48),
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 1000),
-                curve: Curves.easeOut,
-                builder: (context, value, child) {
-                  return Opacity(
-                    opacity: value,
-                    child: Transform.translate(
-                      offset: Offset(0, 20 * (1 - value)),
-                      child: child,
-                    ),
-                  );
-                },
-                child: Text(
-                  t('hero.title'),
-                  style: GoogleFonts.inter(
-                    fontSize: 64,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: -1,
-                  ),
-                  textAlign: TextAlign.center,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.blue.withValues(alpha: 0.4),
+                  blurRadius: 20,
+                  spreadRadius: 0,
                 ),
-              ),
-              const SizedBox(height: 24),
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 1000),
-                curve: Curves.easeOut,
-                builder: (context, value, child) {
-                  return Opacity(
-                    opacity: value,
-                    child: Transform.translate(
-                      offset: Offset(0, 20 * (1 - value)),
-                      child: child,
-                    ),
-                  );
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  // Navigate to app store
                 },
-                child: Text(
-                  t('hero.subtitle'),
-                  style: GoogleFonts.inter(
-                    fontSize: 22,
-                    color: Colors.white70,
-                    height: 1.5,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              const SizedBox(height: 64),
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 1200),
-                curve: Curves.easeOut,
-                builder: (context, value, child) {
-                  return Opacity(
-                    opacity: value,
-                    child: Transform.scale(
-                      scale: 0.8 + (value * 0.2),
-                      child: child,
-                    ),
-                  );
-                },
+                borderRadius: BorderRadius.circular(16),
                 child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.blue.shade600, Colors.purple.shade600],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.blue.withValues(alpha: 0.4),
-                        blurRadius: 20,
-                        spreadRadius: 0,
-                      ),
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        // 這裡可以導向到 App Store 或 Google Play
-                      },
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
-                        child: Text(
-                          t('nav.download'),
-                          style: GoogleFonts.inter(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+                  child: Text(
+                    t('nav.download'),
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
               ),
-            ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -393,23 +311,33 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     final screenHeight = MediaQuery.of(context).size.height;
     final isMobile = screenWidth < 768;
     
+    final textHeight = isMobile 
+        ? screenHeight * 0.4 
+        : (screenHeight * 0.5).clamp(300.0, 600.0);
+    
+    final fontSize = isMobile 
+        ? 60.0 
+        : (screenWidth < 1024 ? 120.0 : (screenWidth < 1920 ? 200.0 : 250.0));
+    
     return Container(
+      width: double.infinity,
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 16 : 24,
-        vertical: isMobile ? 60 : 100,
+        vertical: isMobile ? 40 : 60,
       ),
       child: Column(
         children: [
           SizedBox(
-            height: isMobile ? screenHeight * 0.6 : screenHeight * 0.8,
+            height: textHeight,
             child: ScrollTextAnimation(
               scrollController: _scrollController,
               text: localeController.locale == AppLocale.en
                   ? 'TECH STACK'
                   : '技術棧',
-              fontSize: isMobile ? 60 : (screenWidth < 1024 ? 120 : 200),
+              fontSize: fontSize,
             ),
           ),
+          const SizedBox(height: 40),
           const TechStackSection(),
         ],
       ),
@@ -436,137 +364,88 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     ];
 
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 100),
       child: Column(
         children: [
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0.0, end: 1.0),
-            duration: const Duration(milliseconds: 1000),
-            curve: Curves.easeOut,
-            builder: (context, value, child) {
-              return Opacity(
-                opacity: value,
-                child: Transform.translate(
-                  offset: Offset(0, 20 * (1 - value)),
-                  child: child,
-                ),
-              );
-            },
-            child: Text(
-              t('features.title'),
-              style: GoogleFonts.inter(
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                letterSpacing: -1,
-              ),
-              textAlign: TextAlign.center,
+          Text(
+            t('features.title'),
+            style: GoogleFonts.inter(
+              fontSize: 48,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              letterSpacing: -1,
             ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 64),
-          ...features.asMap().entries.map((entry) => _buildFeatureCard(
-            context,
-            entry.value['icon'] as IconData,
-            entry.value['title'] as String,
-            entry.value['description'] as String,
-            entry.key,
+          ...features.map((feature) => Container(
+            margin: const EdgeInsets.only(bottom: 32),
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.15),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.blue.withValues(alpha: 0.3),
+                        Colors.purple.withValues(alpha: 0.2),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    feature['icon'] as IconData,
+                    color: Colors.blue.shade300,
+                    size: 36,
+                  ),
+                ),
+                const SizedBox(width: 28),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        feature['title'] as String,
+                        style: GoogleFonts.inter(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        feature['description'] as String,
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          color: Colors.white70,
+                          height: 1.6,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           )),
         ],
       ),
     );
   }
 
-  Widget _buildFeatureCard(
-    BuildContext context,
-    IconData icon,
-    String title,
-    String description,
-    int index,
-  ) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: Duration(milliseconds: 800 + (index * 100)),
-      curve: Curves.easeOut,
-      builder: (context, value, child) {
-        return Opacity(
-          opacity: value,
-          child: Transform.translate(
-            offset: Offset(0, 30 * (1 - value)),
-            child: child,
-          ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 32),
-        padding: const EdgeInsets.all(28),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.15),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
-              blurRadius: 20,
-              spreadRadius: 0,
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.blue.withValues(alpha: 0.3),
-                    Colors.purple.withValues(alpha: 0.2),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(
-                icon,
-                color: Colors.blue.shade300,
-                size: 36,
-              ),
-            ),
-            const SizedBox(width: 28),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: GoogleFonts.inter(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    description,
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      color: Colors.white70,
-                      height: 1.6,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildFooter(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
       decoration: BoxDecoration(
         color: Colors.grey.shade900.withValues(alpha: 0.5),

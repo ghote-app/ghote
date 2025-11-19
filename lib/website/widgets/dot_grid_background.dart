@@ -7,7 +7,7 @@ class DotGridBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomPaint(
       painter: DotGridPainter(),
-      child: Container(),
+      child: const SizedBox.expand(),
     );
   }
 }
@@ -18,19 +18,21 @@ class DotGridPainter extends CustomPainter {
     const dotSize = 1.0;
     const spacing = 16.0;
 
-    // Create radial gradient mask effect
+    // Use the actual size passed in, don't hardcode 10000
+    final maxHeight = size.height; 
+    
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width * 0.7;
+    // Make radius slightly larger to cover corners
+    final radius = size.width * 0.8; 
 
     for (double x = 0; x < size.width; x += spacing) {
-      for (double y = 0; y < size.height; y += spacing) {
+      for (double y = 0; y < maxHeight; y += spacing) {
         final point = Offset(x, y);
         final distance = (point - center).distance;
         
-        // Fade out dots near edges (radial gradient effect)
         final opacity = 1.0 - (distance / radius).clamp(0.0, 1.0);
         
-        if (opacity > 0) {
+        if (opacity > 0.05) { // Optimization: Don't paint invisible dots
           final dotPaint = Paint()
             ..color = Colors.white.withValues(alpha: 0.1 * opacity)
             ..style = PaintingStyle.fill;

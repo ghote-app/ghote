@@ -32,6 +32,12 @@ class _ScrollTextAnimationState extends State<ScrollTextAnimation> {
     }
     // Listen to scroll changes
     widget.scrollController.addListener(_onScroll);
+    
+    // --- FIX START: Trigger calculation immediately after first layout ---
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _onScroll(); 
+    });
+    // --- FIX END ---
   }
 
   @override
@@ -46,35 +52,43 @@ class _ScrollTextAnimationState extends State<ScrollTextAnimation> {
   }
 
   void _updateScrollProgress() {
-    final RenderBox? renderBox = _key.currentContext?.findRenderObject() as RenderBox?;
-    if (renderBox == null || !mounted) return;
+    // Check if the context and renderObject are actually ready
+    final context = _key.currentContext;
+    if (context == null) return;
+    
+    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null || !renderBox.attached) return;
 
     final position = renderBox.localToGlobal(Offset.zero);
     final screenHeight = MediaQuery.of(context).size.height;
     final widgetTop = position.dy;
     final widgetHeight = renderBox.size.height;
     
-    // Calculate scroll progress based on widget position
-    // Animation triggers when widget enters viewport (40% to 60% of screen)
-    final viewportTop = screenHeight * 0.4;
-    final viewportBottom = screenHeight * 0.6;
+    // Relax the viewport logic slightly to ensure it triggers
+    final viewportTop = screenHeight * 0.2; // Trigger earlier (was 0.4)
     
-    // Check if widget is in the animation zone
     final widgetBottom = widgetTop + widgetHeight;
-    final isInViewport = widgetBottom > viewportTop && widgetTop < viewportBottom;
     
-    if (isInViewport) {
-      // Calculate progress: 0 when widget top is at viewport bottom, 1 when widget bottom is at viewport top
-      final animationRange = viewportBottom - viewportTop + widgetHeight;
-      final progress = ((viewportBottom - widgetTop) / animationRange).clamp(0.0, 1.0);
-      
+    // Logic to determine visibility
+    // We calculate visibility regardless of whether it's "entering" or "exiting" 
+    // to ensure it renders if it lands right in the middle on load.
+    if (widgetBottom > 0 && widgetTop < screenHeight) {
+       // Calculate a normalized progress 0.0 -> 1.0
+       // 0.0 = widget is at bottom of screen
+       // 1.0 = widget is at top of screen
+       final progress = 1.0 - (widgetTop / (screenHeight * 0.6));
+
       if (mounted) {
         setState(() {
           for (int i = 0; i < widget.text.length; i++) {
-            // Smaller delay for faster animation
-            final delay = (i % 3) * 0.02;
-            final adjustedProgress = ((progress - delay).clamp(0.0, 1.0) * 100).clamp(0.0, 100.0);
-            _letterOffsets[i] = adjustedProgress;
+            final delay = (i % 3) * 0.05;
+            // Ensure progress forces full visibility if we are well past the trigger point
+            double finalVal = ((progress - delay) * 100).clamp(0.0, 100.0);
+            
+            // If the user has scrolled past this section, keep it fully visible
+            if (widgetTop < viewportTop) finalVal = 100.0;
+            
+            _letterOffsets[i] = finalVal;
           }
         });
       }
@@ -85,18 +99,15 @@ class _ScrollTextAnimationState extends State<ScrollTextAnimation> {
   Widget build(BuildContext context) {
     return SizedBox(
       key: _key,
-      height: MediaQuery.of(context).size.height * 0.8,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Wrap(
-            alignment: WrapAlignment.center,
-            children: List.generate(
-              widget.text.length,
-              (index) => _buildLetter(widget.text[index], index),
-            ),
+      height: MediaQuery.of(context).size.height * 0.5,
+      child: Center(
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          children: List.generate(
+            widget.text.length,
+            (index) => _buildLetter(widget.text[index], index),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -108,7 +119,7 @@ class _ScrollTextAnimationState extends State<ScrollTextAnimation> {
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: _letterOffsets[index] ?? 0.0),
-      duration: const Duration(milliseconds: 50), // Faster animation
+      duration: const Duration(milliseconds: 300), // Increased slightly for smoothness
       curve: Curves.easeOut,
       builder: (context, value, child) {
         return ClipRect(
