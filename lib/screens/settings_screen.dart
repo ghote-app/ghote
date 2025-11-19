@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'upgrade_screen.dart';
 import '../services/subscription_service.dart';
+import '../services/api_key_service.dart';
 import '../models/subscription.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -77,6 +78,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 MaterialPageRoute(builder: (_) => const UpgradeScreen()),
               );
             },
+          ),
+          const Divider(color: Colors.white24, height: 1),
+          _sectionTitle('AI Settings'),
+          _tile(
+            context,
+            icon: Icons.key_rounded,
+            title: 'Gemini API Key',
+            trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+            onTap: () => _manageGeminiApiKey(context),
           ),
           const Divider(color: Colors.white24, height: 1),
           _sectionTitle('Security'),
@@ -338,6 +348,119 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _changeAvatar(BuildContext context) async {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Avatar change will be available soon')));
+  }
+
+  Future<void> _manageGeminiApiKey(BuildContext context) async {
+    final apiKeyService = ApiKeyService();
+    final currentKey = await apiKeyService.getGeminiApiKey();
+    final controller = TextEditingController(text: currentKey ?? '');
+    final isObscured = ValueNotifier<bool>(true);
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        title: const Text(
+          'Gemini API Key',
+          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '輸入您的 Gemini API 金鑰。您可以從 Google AI Studio 獲取：',
+              style: TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'https://aistudio.google.com/app/apikey',
+              style: TextStyle(color: Colors.blue, fontSize: 12),
+            ),
+            const SizedBox(height: 16),
+            ValueListenableBuilder<bool>(
+              valueListenable: isObscured,
+              builder: (context, obscured, _) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
+                  ),
+                  child: TextField(
+                    controller: controller,
+                    obscureText: obscured,
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      hintText: '輸入 API 金鑰',
+                      hintStyle: const TextStyle(color: Colors.white54),
+                      border: InputBorder.none,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          obscured ? Icons.visibility_off : Icons.visibility,
+                          color: Colors.white54,
+                          size: 20,
+                        ),
+                        onPressed: () => isObscured.value = !isObscured.value,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white70,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+            child: const Text('取消', style: TextStyle(fontSize: 16)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final apiKey = controller.text.trim();
+              if (apiKey.isEmpty) {
+                await apiKeyService.clearGeminiApiKey();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('API 金鑰已清除')),
+                  );
+                }
+              } else {
+                await apiKeyService.setGeminiApiKey(apiKey);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('✅ API 金鑰已保存'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              }
+              if (context.mounted) Navigator.of(context).pop();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
+            ),
+            child: const Text('保存', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
   }
 }
 

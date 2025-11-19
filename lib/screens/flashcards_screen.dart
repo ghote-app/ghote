@@ -1,0 +1,340 @@
+import 'package:flutter/material.dart';
+
+import '../models/flashcard.dart';
+import '../services/flashcard_service.dart';
+
+class FlashcardsScreen extends StatefulWidget {
+  final String projectId;
+
+  const FlashcardsScreen({
+    super.key,
+    required this.projectId,
+  });
+
+  @override
+  State<FlashcardsScreen> createState() => _FlashcardsScreenState();
+}
+
+class _FlashcardsScreenState extends State<FlashcardsScreen>
+    with SingleTickerProviderStateMixin {
+  final FlashcardService _flashcardService = FlashcardService();
+  late AnimationController _flipController;
+  bool _isFlipped = false;
+  int _currentIndex = 0;
+  List<Flashcard> _flashcards = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _flipController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+  }
+
+  @override
+  void dispose() {
+    _flipController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _generateFlashcards() async {
+    if (!mounted) return;
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: Colors.white),
+      ),
+    );
+
+    try {
+      final flashcards = await _flashcardService.generateFlashcards(
+        projectId: widget.projectId,
+        count: 10,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      
+      setState(() {
+        _flashcards = flashcards;
+        _currentIndex = 0;
+        _isFlipped = false;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('成功生成 ${flashcards.length} 個抽認卡'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('生成失敗: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _flipCard() {
+    if (_flipController.isAnimating) return;
+    setState(() {
+      _isFlipped = !_isFlipped;
+    });
+    if (_isFlipped) {
+      _flipController.forward();
+    } else {
+      _flipController.reverse();
+    }
+  }
+
+  void _nextCard() {
+    if (_currentIndex < _flashcards.length - 1) {
+      setState(() {
+        _currentIndex++;
+        _isFlipped = false;
+        _flipController.reset();
+      });
+    }
+  }
+
+  void _previousCard() {
+    if (_currentIndex > 0) {
+      setState(() {
+        _currentIndex--;
+        _isFlipped = false;
+        _flipController.reset();
+      });
+    }
+  }
+
+  Future<void> _updateMastery(double mastery) async {
+    if (_currentIndex >= _flashcards.length) return;
+    final flashcard = _flashcards[_currentIndex];
+    try {
+      await _flashcardService.updateReviewStatus(
+        widget.projectId,
+        flashcard.id,
+        masteryLevel: mastery,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('更新失敗: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: const Text('抽認卡', style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add, color: Colors.white),
+            onPressed: _generateFlashcards,
+            tooltip: '生成抽認卡',
+          ),
+        ],
+      ),
+      body: StreamBuilder<List<Flashcard>>(
+        stream: _flashcardService.watchFlashcards(widget.projectId),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            );
+          }
+
+          final flashcards = snapshot.data!;
+          if (flashcards.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.quiz_outlined,
+                    size: 64,
+                    color: Colors.white.withValues(alpha: 0.3),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '還沒有抽認卡',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.6),
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    onPressed: _generateFlashcards,
+                    icon: const Icon(Icons.add),
+                    label: const Text('生成抽認卡'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          if (_flashcards.isEmpty) {
+            _flashcards = flashcards;
+            _currentIndex = 0;
+          }
+
+          if (_currentIndex >= _flashcards.length) {
+            _currentIndex = 0;
+          }
+
+          final currentCard = _flashcards[_currentIndex];
+
+          return Column(
+            children: [
+              // 進度指示器
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Text(
+                      '${_currentIndex + 1} / ${_flashcards.length}',
+                      style: const TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: LinearProgressIndicator(
+                        value: (_currentIndex + 1) / _flashcards.length,
+                        backgroundColor: Colors.white.withValues(alpha: 0.1),
+                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // 抽認卡
+              Expanded(
+                child: Center(
+                  child: GestureDetector(
+                    onTap: _flipCard,
+                    child: AnimatedBuilder(
+                      animation: _flipController,
+                      builder: (context, child) {
+                        final angle = _flipController.value * 3.14159;
+                        final isFront = angle < 1.5708;
+                        return Transform(
+                          alignment: Alignment.center,
+                          transform: Matrix4.identity()
+                            ..setEntry(3, 2, 0.001)
+                            ..rotateY(angle),
+                          child: Container(
+                            width: MediaQuery.of(context).size.width * 0.9,
+                            height: MediaQuery.of(context).size.height * 0.5,
+                            decoration: BoxDecoration(
+                              color: isFront
+                                  ? Colors.blue.withValues(alpha: 0.2)
+                                  : Colors.green.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isFront
+                                    ? Colors.blue.withValues(alpha: 0.5)
+                                    : Colors.green.withValues(alpha: 0.5),
+                                width: 2,
+                              ),
+                            ),
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Text(
+                                  isFront ? currentCard.question : currentCard.answer,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              // 控制按鈕
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: _currentIndex > 0 ? _previousCard : null,
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        _flipCard();
+                      },
+                      icon: Icon(_isFlipped ? Icons.refresh : Icons.flip),
+                      label: Text(_isFlipped ? '查看問題' : '查看答案'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.arrow_forward, color: Colors.white),
+                      onPressed:
+                          _currentIndex < _flashcards.length - 1 ? _nextCard : null,
+                    ),
+                  ],
+                ),
+              ),
+              // 掌握程度按鈕
+              if (_isFlipped)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildMasteryButton('困難', 0.0, Colors.red),
+                      _buildMasteryButton('一般', 0.5, Colors.orange),
+                      _buildMasteryButton('簡單', 1.0, Colors.green),
+                    ],
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildMasteryButton(String label, double mastery, Color color) {
+    return ElevatedButton(
+      onPressed: () {
+        _updateMastery(mastery);
+        _nextCard();
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color.withValues(alpha: 0.2),
+        foregroundColor: color,
+        side: BorderSide(color: color, width: 1),
+      ),
+      child: Text(label),
+    );
+  }
+}
+
