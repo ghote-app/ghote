@@ -14,6 +14,8 @@ class FileModel {
   final String uploaderId;
   final DateTime uploadedAt;
   final Map<String, dynamic>? metadata;
+  final String? extractedText; // 提取的文字內容
+  final String? extractionStatus; // 'pending' | 'extracted' | 'failed'
 
   const FileModel({
     required this.id,
@@ -28,6 +30,8 @@ class FileModel {
     required this.uploaderId,
     required this.uploadedAt,
     required this.metadata,
+    this.extractedText,
+    this.extractionStatus,
   });
 
   String get formattedSize {
@@ -55,6 +59,8 @@ class FileModel {
     String? uploaderId,
     DateTime? uploadedAt,
     Map<String, dynamic>? metadata,
+    String? extractedText,
+    String? extractionStatus,
   }) {
     return FileModel(
       id: id ?? this.id,
@@ -69,6 +75,8 @@ class FileModel {
       uploaderId: uploaderId ?? this.uploaderId,
       uploadedAt: uploadedAt ?? this.uploadedAt,
       metadata: metadata ?? this.metadata,
+      extractedText: extractedText ?? this.extractedText,
+      extractionStatus: extractionStatus ?? this.extractionStatus,
     );
   }
 
@@ -86,6 +94,8 @@ class FileModel {
       'uploaderId': uploaderId,
       'uploadedAt': uploadedAt.toIso8601String(),
       'metadata': metadata,
+      'extractedText': extractedText,
+      'extractionStatus': extractionStatus,
     };
   }
 
@@ -103,6 +113,8 @@ class FileModel {
       uploaderId: json['uploaderId'] as String,
       uploadedAt: DateTime.parse(json['uploadedAt'] as String),
       metadata: (json['metadata'] as Map?)?.cast<String, dynamic>(),
+      extractedText: json['extractedText'] as String?,
+      extractionStatus: json['extractionStatus'] as String?,
     );
   }
 }

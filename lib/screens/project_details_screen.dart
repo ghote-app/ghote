@@ -10,6 +10,10 @@ import '../models/file_model.dart';
 import '../services/project_service.dart';
 import '../services/subscription_service.dart';
 import '../services/storage_service.dart';
+import '../services/document_extraction_service.dart';
+import 'chat_screen.dart';
+import 'flashcards_screen.dart';
+import 'questions_screen.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
   const ProjectDetailsScreen({super.key, required this.projectId, required this.title});
@@ -116,6 +120,16 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   child: _buildStatsCard(files),
                 ),
               ),
+              
+              // AI 功能操作欄
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: _buildAIActionsBar(),
+                ),
+              ),
+              
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
               
               // 檔案列表
               SliverPadding(
@@ -1090,6 +1104,192 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         return Colors.blueGrey;
     }
   }
+
+  Widget _buildAIActionsBar() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_awesome, color: Colors.blue.withValues(alpha: 0.8), size: 20),
+              const SizedBox(width: 8),
+              const Text(
+                'AI 功能',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildActionButton(
+                icon: Icons.text_fields,
+                label: '提取文字',
+                color: Colors.blue,
+                onTap: () => _extractTextFromFiles(),
+              ),
+              _buildActionButton(
+                icon: Icons.chat_bubble_outline,
+                label: 'AI 聊天',
+                color: Colors.green,
+                onTap: () => _openChat(),
+              ),
+              _buildActionButton(
+                icon: Icons.quiz_outlined,
+                label: '抽認卡',
+                color: Colors.orange,
+                onTap: () => _openFlashcards(),
+              ),
+              _buildActionButton(
+                icon: Icons.help_outline,
+                label: '練習問題',
+                color: Colors.purple,
+                onTap: () => _openQuestions(),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _extractTextFromFiles() async {
+    final projectService = ProjectService();
+    final extractionService = const DocumentExtractionService();
+    final files = await projectService.watchFiles(widget.projectId).first;
+
+    final extractableFiles = files.where((f) => 
+      ['pdf', 'txt'].contains(f.type.toLowerCase()) &&
+      (f.extractionStatus != 'extracted')
+    ).toList();
+
+    if (extractableFiles.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('沒有可提取文字的文件')),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: Colors.white),
+      ),
+    );
+
+    int successCount = 0;
+    int failCount = 0;
+
+    for (final file in extractableFiles) {
+      try {
+        await extractionService.updateExtractionStatus(
+          file.id,
+          widget.projectId,
+          'pending',
+        );
+
+        final text = await extractionService.extractText(file);
+        await extractionService.saveExtractedText(
+          file.id,
+          widget.projectId,
+          text,
+        );
+        successCount++;
+      } catch (e) {
+        failCount++;
+        await extractionService.updateExtractionStatus(
+          file.id,
+          widget.projectId,
+          'failed',
+        );
+      }
+    }
+
+    if (!mounted) return;
+    Navigator.of(context).pop();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '提取完成：成功 $successCount 個，失敗 $failCount 個',
+        ),
+        backgroundColor: failCount == 0 ? Colors.green : Colors.orange,
+      ),
+    );
+  }
+
+  void _openChat() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ChatScreen(projectId: widget.projectId),
+      ),
+    );
+  }
+
+  void _openFlashcards() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => FlashcardsScreen(projectId: widget.projectId),
+      ),
+    );
+  }
+
+  void _openQuestions() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => QuestionsScreen(projectId: widget.projectId),
+      ),
+    );
+  }
 }
-
-
