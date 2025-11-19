@@ -43,7 +43,6 @@ class TermsOfServicePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            // '最後更新：2025年10月10日'
             Text(
               t('tos.updated'),
               style: GoogleFonts.inter(
@@ -53,52 +52,42 @@ class TermsOfServicePage extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             _buildSection(
-              // '1. 接受條款'
               t('tos.section1.title'),
               t('tos.section1.content'),
             ),
             _buildSection(
-              // '2. 服務描述'
               t('tos.section2.title'),
               t('tos.section2.content'),
             ),
             _buildSection(
-              // '3. 用戶責任'
               t('tos.section3.title'),
               t('tos.section3.content'),
             ),
             _buildSection(
-              // '4. 隱私保護'
               t('tos.section4.title'),
               t('tos.section4.content'),
             ),
             _buildSection(
-              // '5. 智慧財產權'
               t('tos.section5.title'),
               t('tos.section5.content'),
             ),
             _buildSection(
-              // '6. 服務變更'
               t('tos.section6.title'),
               t('tos.section6.content'),
             ),
             _buildSection(
-              // '7. 免責聲明'
               t('tos.section7.title'),
               t('tos.section7.content'),
             ),
             _buildSection(
-              // '8. 責任限制'
               t('tos.section8.title'),
               t('tos.section8.content'),
             ),
             _buildSection(
-              // '9. 爭議解決'
               t('tos.section9.title'),
               t('tos.section9.content'),
             ),
             _buildSection(
-              // '10. 條款修改'
               t('tos.section10.title'),
               t('tos.section10.content'),
             ),
@@ -113,7 +102,6 @@ class TermsOfServicePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // '聯絡我們'
                   Text(
                     t('tos.contact.title'),
                     style: GoogleFonts.inter(

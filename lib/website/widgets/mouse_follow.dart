@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
 
 class MouseFollow extends StatefulWidget {
   final Widget child;

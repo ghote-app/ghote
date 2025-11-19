@@ -15,11 +15,14 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Load environment variables (optional - .env file may not exist)
-  try {
-    await dotenv.load(fileName: ".env");
-  } catch (e) {
-    // .env file is optional - API key can be set in settings or via environment variables
-    debugPrint('Info: .env file not found, using settings or environment variables for API keys');
+  // Skip loading on web platform to avoid 404 errors
+  if (!kIsWeb) {
+    try {
+      await dotenv.load(fileName: ".env");
+    } catch (e) {
+      // .env file is optional - API key can be set in settings or via environment variables
+      debugPrint('Info: .env file not found, using settings or environment variables for API keys');
+    }
   }
   
   // Check if running on web platform
