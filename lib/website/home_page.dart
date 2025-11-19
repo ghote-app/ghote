@@ -173,56 +173,83 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 768;
+    
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 16 : 24,
+        vertical: isMobile ? 12 : 16,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Image.asset(
-                'assets/AppIcon/Ghote_icon_black_background.png',
-                width: 40,
-                height: 40,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                t('app.title'),
-                style: GoogleFonts.inter(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset(
+                  'assets/AppIcon/Ghote_icon_black_background.png',
+                  width: isMobile ? 32 : 40,
+                  height: isMobile ? 32 : 40,
                 ),
-              ),
-            ],
+                SizedBox(width: isMobile ? 8 : 12),
+                Flexible(
+                  child: Text(
+                    t('app.title'),
+                    style: GoogleFonts.inter(
+                      fontSize: isMobile ? 20 : 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ),
-          Row(
-            children: [
-              _buildLanguageSelector(context),
-              const SizedBox(width: 8),
-              TextButton(
-                onPressed: () => context.go('/terms'),
-                child: Text(
-                  t('nav.terms'),
-                  style: GoogleFonts.inter(
-                    color: Colors.white70,
-                    fontSize: 14,
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildLanguageSelector(context),
+                if (!isMobile) ...[
+                  const SizedBox(width: 8),
+                  TextButton(
+                    onPressed: () => context.go('/terms'),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      t('nav.terms'),
+                      style: GoogleFonts.inter(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              TextButton(
-                onPressed: () => context.go('/privacy'),
-                child: Text(
-                  t('nav.privacy'),
-                  style: GoogleFonts.inter(
-                    color: Colors.white70,
-                    fontSize: 14,
+                  const SizedBox(width: 8),
+                  TextButton(
+                    onPressed: () => context.go('/privacy'),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      t('nav.privacy'),
+                      style: GoogleFonts.inter(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              ],
+            ),
           ),
         ],
       ),

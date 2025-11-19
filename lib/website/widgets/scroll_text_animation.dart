@@ -101,11 +101,15 @@ class _ScrollTextAnimationState extends State<ScrollTextAnimation> {
       key: _key,
       height: MediaQuery.of(context).size.height * 0.5,
       child: Center(
-        child: Wrap(
-          alignment: WrapAlignment.center,
-          children: List.generate(
-            widget.text.length,
-            (index) => _buildLetter(widget.text[index], index),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: List.generate(
+              widget.text.length,
+              (index) => _buildLetter(widget.text[index], index),
+            ),
           ),
         ),
       ),
@@ -114,7 +118,7 @@ class _ScrollTextAnimationState extends State<ScrollTextAnimation> {
 
   Widget _buildLetter(String letter, int index) {
     if (letter == ' ') {
-      return const SizedBox(width: 20);
+      return SizedBox(width: widget.fontSize * 0.15);
     }
 
     return TweenAnimationBuilder<double>(
