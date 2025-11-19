@@ -196,23 +196,31 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
 
   Widget _buildSearchBar() {
     return Container(
-      height: 48,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1),
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
       ),
       child: TextField(
         controller: _searchController,
-        style: const TextStyle(color: Colors.white, fontSize: 14),
+        style: const TextStyle(color: Colors.white, fontSize: 15, height: 1.4),
         decoration: InputDecoration(
           hintText: 'Search projects, documents...',
-          hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14),
-          prefixIcon: Icon(Icons.search_rounded, color: Colors.white.withValues(alpha: 0.7), size: 20),
-          suffixIcon: Icon(Icons.tune_rounded, color: Colors.white.withValues(alpha: 0.7), size: 20),
+          hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 15),
+          prefixIcon: Padding(
+            padding: const EdgeInsets.only(left: 16, right: 12),
+            child: Icon(Icons.search_rounded, color: Colors.white.withValues(alpha: 0.7), size: 22),
+          ),
+          prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+          suffixIcon: Padding(
+            padding: const EdgeInsets.only(right: 16, left: 12),
+            child: Icon(Icons.tune_rounded, color: Colors.white.withValues(alpha: 0.7), size: 22),
+          ),
+          suffixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          isDense: true,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 14),
         ),
       ),
     );
@@ -257,35 +265,50 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
 
   Widget _buildStatCard(String label, String value, IconData icon, Color color) {
     return Container(
+      height: 120, // 固定高度確保所有區塊大小一致
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
-      child: Container(
+      child: Padding(
         padding: const EdgeInsets.all(16),
-        decoration: const BoxDecoration(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             Icon(icon, color: color, size: 24),
-            const SizedBox(height: 12),
-            Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.6),
-                fontSize: 12,
-                letterSpacing: 0.3,
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5,
+                      height: 1.0,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.6),
+                      fontSize: 12,
+                      letterSpacing: 0.3,
+                      height: 1.0,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
           ],
@@ -458,6 +481,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                               item: item,
                               onDelete: () => _confirmDeleteProject(item.id),
                               onTap: () => _navigateToProjectDetails(item),
+                              onArchive: () => _archiveProject(item.id, item.status),
                             ),
                           ),
                         ),
@@ -483,23 +507,125 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     );
   }
 
+  Future<void> _archiveProject(String projectId, String currentStatus) async {
+    try {
+      final projectService = ProjectService();
+      final project = await projectService.getProject(projectId);
+      if (project == null) return;
+
+      final newStatus = currentStatus == 'Archived' ? 'Active' : 'Archived';
+      final updatedProject = Project(
+        id: project.id,
+        title: project.title,
+        description: project.description,
+        ownerId: project.ownerId,
+        collaboratorIds: project.collaboratorIds,
+        createdAt: project.createdAt,
+        lastUpdatedAt: DateTime.now(),
+        status: newStatus,
+        category: project.category,
+      );
+
+      await projectService.updateProject(updatedProject);
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            newStatus == 'Archived' 
+              ? '✅ Project archived' 
+              : '✅ Project unarchived',
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to ${currentStatus == 'Archived' ? 'unarchive' : 'archive'} project: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Future<void> _confirmDeleteProject(String projectId) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.black,
-        title: const Text('Delete project?', style: TextStyle(color: Colors.white)),
-        content: const Text('This will delete the project and its files metadata. This action cannot be undone.', style: TextStyle(color: Colors.white70)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Delete Project?',
+              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: const Text(
+          'This will permanently delete the project and all its files metadata. This action cannot be undone.',
+          style: TextStyle(color: Colors.white70, fontSize: 14),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white70,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+            child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
+            ),
+            child: const Text('Delete', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          ),
         ],
       ),
     );
     if (ok != true) return;
-    await ProjectService().deleteProjectDeep(projectId);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Project deleted')));
+    try {
+      await ProjectService().deleteProjectDeep(projectId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('✅ Project deleted successfully'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to delete project: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   String _formatRelative(DateTime time) {
@@ -766,62 +892,159 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.black,
-        title: const Text('Create project', style: TextStyle(color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        title: Row(
+          children: [
             Container(
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withOpacity(0.12)),
+                color: Colors.blue.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
               ),
-              child: TextField(
-                controller: nameController,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                  hintText: 'Project title',
-                  hintStyle: TextStyle(color: Colors.white54),
-                  border: InputBorder.none,
-                ),
-              ),
+              child: const Icon(Icons.add_circle_outline, color: Colors.blue, size: 20),
             ),
-            const SizedBox(height: 12),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withOpacity(0.12)),
-              ),
-              child: TextField(
-                controller: categoryController,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                  hintText: 'Category (optional)',
-                  hintStyle: TextStyle(color: Colors.white54),
-                  border: InputBorder.none,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              dropdownColor: Colors.black,
-              value: status,
-              items: statusOptions.map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(color: Colors.white)))).toList(),
-              onChanged: (v) => status = v ?? 'Active',
-              decoration: const InputDecoration(hintText: 'Status', hintStyle: TextStyle(color: Colors.white54)),
+            const SizedBox(width: 12),
+            const Text(
+              'Create Project',
+              style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ],
         ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              const Text(
+                'Project Title',
+                style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
+                ),
+                child: TextField(
+                  controller: nameController,
+                  autofocus: true,
+                  style: const TextStyle(color: Colors.white, fontSize: 16, height: 1.4),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    hintText: 'Enter project title',
+                    hintStyle: TextStyle(color: Colors.white54, fontSize: 16),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Category (Optional)',
+                style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
+                ),
+                child: TextField(
+                  controller: categoryController,
+                  style: const TextStyle(color: Colors.white, fontSize: 16, height: 1.4),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    hintText: 'e.g., Study, Work, Personal',
+                    hintStyle: TextStyle(color: Colors.white54, fontSize: 16),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Status',
+                style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: DropdownButtonFormField<String>(
+                  dropdownColor: const Color(0xFF1A1A1A),
+                  value: status,
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+                  ),
+                  items: statusOptions.map((e) {
+                    Color statusColor;
+                    IconData statusIcon;
+                    switch (e) {
+                      case 'Active':
+                        statusColor = Colors.green;
+                        statusIcon = Icons.play_circle_outline;
+                        break;
+                      case 'Completed':
+                        statusColor = Colors.blue;
+                        statusIcon = Icons.check_circle_outline;
+                        break;
+                      case 'Archived':
+                        statusColor = Colors.grey;
+                        statusIcon = Icons.archive_outlined;
+                        break;
+                      default:
+                        statusColor = Colors.white;
+                        statusIcon = Icons.circle_outlined;
+                    }
+                    return DropdownMenuItem(
+                      value: e,
+                      child: Row(
+                        children: [
+                          Icon(statusIcon, color: statusColor, size: 18),
+                          const SizedBox(width: 8),
+                          Text(e, style: const TextStyle(color: Colors.white)),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (v) => status = v ?? 'Active',
+                ),
+              ),
+            ],
+          ),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
           TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white70,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+            child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+          ),
+          ElevatedButton(
             onPressed: () async {
               final title = nameController.text.trim();
               final category = categoryController.text.trim().isEmpty ? null : categoryController.text.trim();
-              if (title.isEmpty) return;
+              if (title.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter a project title')),
+                );
+                return;
+              }
               final now = DateTime.now();
               final project = Project(
                 id: 'p_${now.microsecondsSinceEpoch}',
@@ -837,10 +1060,25 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               await ProjectService().createProject(project);
               if (mounted) Navigator.of(context).pop();
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Project created')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('✅ Project created successfully'),
+                    backgroundColor: Colors.green,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
               }
             },
-            child: const Text('Create'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
+            ),
+            child: const Text('Create', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -910,56 +1148,97 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         }
       }
 
-      // Show storage limit notice for Free/Plus users
-      if (subscription.isFree || subscription.isPlus) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Using limited cloud storage (Free/Plus). Upgrade for unlimited.')),
-        );
-      }
+      // Show upload progress dialog
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => PopScope(
+          canPop: false,
+          child: AlertDialog(
+            backgroundColor: Colors.black87,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  '正在上傳 ${result.files.length} 個檔案...',
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
 
-      // Upload files
+      // Upload files to local storage
       final storage = const StorageService();
       final projectService = ProjectService();
+      int successCount = 0;
+      int failCount = 0;
+      
       for (final f in result.files) {
-        if (f.path == null) continue;
-        final file = File(f.path!);
-        final now = DateTime.now();
-        final fileId = '${now.microsecondsSinceEpoch}-${f.name}';
-        String storageType = 'local';
-        String? localPath;
-        String? cloudPath;
-        String? downloadUrl;
-        if (subscription.isPro) {
-          final uploaded = await storage.uploadToCloudflare(
-            file: file,
+        try {
+          if (f.path == null) {
+            failCount++;
+            continue;
+          }
+          final file = File(f.path!);
+          final now = DateTime.now();
+          final fileId = '${now.microsecondsSinceEpoch}-${f.name}';
+          
+          // Always save to local storage
+          final localPath = await storage.saveToLocal(file, selectedProject.id);
+          
+          final meta = FileModel(
+            id: fileId,
             projectId: selectedProject.id,
-            userId: user.uid,
-            subscription: subscription,
+            name: f.name,
+            type: (f.extension ?? '').toLowerCase(),
+            sizeBytes: f.size,
+            storageType: 'local',
+            localPath: localPath,
+            cloudPath: null,
+            downloadUrl: null,
+            uploaderId: user.uid,
+            uploadedAt: now,
+            metadata: const {},
           );
-          storageType = 'cloud';
-          cloudPath = uploaded['cloudPath'];
-          downloadUrl = uploaded['downloadUrl'];
-        } else {
-          localPath = await storage.saveToLocal(file, selectedProject.id);
+          await projectService.addFileMetadata(selectedProject.id, meta);
+          successCount++;
+        } catch (e) {
+          print('上傳檔案 ${f.name} 失敗: $e');
+          failCount++;
         }
-        final meta = FileModel(
-          id: fileId,
-          projectId: selectedProject.id,
-          name: f.name,
-          type: (f.extension ?? '').toLowerCase(),
-          sizeBytes: f.size,
-          storageType: storageType,
-          localPath: localPath,
-          cloudPath: cloudPath,
-          downloadUrl: downloadUrl,
-          uploaderId: user.uid,
-          uploadedAt: now,
-          metadata: const {},
-        );
-        await projectService.addFileMetadata(selectedProject.id, meta);
       }
+      
+      // Close progress dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+      
+      // Show result message
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Uploaded ${result.files.length} file(s)')));
+      if (failCount > 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ 成功上傳 $successCount 個檔案\n❌ $failCount 個檔案上傳失敗'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ 成功上傳 $successCount 個檔案到本地儲存'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
@@ -995,10 +1274,12 @@ class _ProjectCard extends StatelessWidget {
     required this.item,
     required this.onDelete,
     required this.onTap,
+    required this.onArchive,
   });
   final ProjectItem item;
   final VoidCallback onDelete;
   final VoidCallback onTap;
+  final VoidCallback onArchive;
 
   Color _getStatusColor() {
     switch (item.status) {
@@ -1092,16 +1373,66 @@ class _ProjectCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             PopupMenuButton<String>(
-                              color: const Color(0xFF121212),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              icon: const Icon(Icons.more_horiz_rounded, color: Colors.white70),
+                              color: const Color(0xFF1A1A1A),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                              ),
+                              icon: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.more_horiz_rounded, color: Colors.white70, size: 20),
+                              ),
                               onSelected: (value) async {
-                                if (value == 'delete') onDelete();
+                                if (value == 'open') {
+                                  onTap();
+                                } else if (value == 'archive') {
+                                  onArchive();
+                                } else if (value == 'delete') {
+                                  onDelete();
+                                }
                               },
                               itemBuilder: (context) => [
-                                const PopupMenuItem(value: 'open', child: Text('Open')), 
-                                const PopupMenuItem(value: 'archive', child: Text('Archive')), 
-                                const PopupMenuItem(value: 'delete', child: Text('Delete')), 
+                                PopupMenuItem(
+                                  value: 'open',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.open_in_new_rounded, color: Colors.blue.withValues(alpha: 0.8), size: 20),
+                                      const SizedBox(width: 12),
+                                      const Text('Open', style: TextStyle(color: Colors.white, fontSize: 15)),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'archive',
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        item.status == 'Archived' ? Icons.unarchive_rounded : Icons.archive_rounded,
+                                        color: Colors.orange.withValues(alpha: 0.8),
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        item.status == 'Archived' ? 'Unarchive' : 'Archive',
+                                        style: const TextStyle(color: Colors.white, fontSize: 15),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'delete',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.delete_outline_rounded, color: Colors.red.withValues(alpha: 0.8), size: 20),
+                                      const SizedBox(width: 12),
+                                      const Text('Delete', style: TextStyle(color: Colors.red, fontSize: 15)),
+                                    ],
+                                  ),
+                                ),
                               ],
                             ),
                           ],
