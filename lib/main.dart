@@ -14,11 +14,12 @@ import 'website/main.dart' as website;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Load environment variables
+  // Load environment variables (optional - .env file may not exist)
   try {
     await dotenv.load(fileName: ".env");
   } catch (e) {
-    debugPrint('Warning: Could not load .env file: $e');
+    // .env file is optional - API key can be set in settings or via environment variables
+    debugPrint('Info: .env file not found, using settings or environment variables for API keys');
   }
   
   // Check if running on web platform
