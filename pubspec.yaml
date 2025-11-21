@@ -59,8 +59,7 @@ dependencies:
   flutter_svg: ^2.0.10+1
   
   # OCR 和圖片處理
-  google_mlkit_text_recognition: ^0.13.1
-  google_mlkit_commons: ^0.8.1
+  google_mlkit_text_recognition: ^0.15.0
   image: ^4.0.17
   
 
