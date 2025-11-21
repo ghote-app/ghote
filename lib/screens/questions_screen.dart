@@ -20,15 +20,104 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
   String _selectedType = 'mcq';
   Map<String, String?> _userAnswers = {};
   Map<String, bool> _showAnswers = {};
+  Map<String, TextEditingController> _textControllers = {};
+
+  @override
+  void dispose() {
+    // 清理所有文字控制器
+    for (var controller in _textControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _showGenerateConfirmation(String questionType) async {
+    final typeLabel = questionType == 'mcq' ? '選擇題' : '開放式問題';
+    
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Text(
+          '生成$typeLabel',
+          style: const TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          '將使用 AI 根據您上傳的文件內容生成 5 個$typeLabel。\n\n這可能需要一些時間，確定要繼續嗎？',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('開始生成'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      setState(() {
+        _selectedType = questionType;
+      });
+      await _generateQuestions();
+    }
+  }
 
   Future<void> _generateQuestions() async {
     if (!mounted) return;
 
+    final typeLabel = _selectedType == 'mcq' ? '選擇題' : '開放式問題';
+
+    // 顯示更詳細的生成中對話框
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(color: Colors.white),
+      builder: (context) => WillPopScope(
+        onWillPop: () async => false,
+        child: Dialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(color: Colors.blue),
+                const SizedBox(height: 24),
+                Text(
+                  'AI 正在生成$typeLabel...',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '正在分析文件內容並生成練習題目\n請稍候片刻',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
 
@@ -43,8 +132,12 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('成功生成 ${questions.length} 個問題'),
+          content: Text('✓ 成功生成 ${questions.length} 個$typeLabel'),
           backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     } catch (e) {
@@ -52,8 +145,12 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('生成失敗: $e'),
+          content: Text('✗ 生成失敗: $e'),
           backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     }
@@ -66,6 +163,88 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
     });
   }
 
+  Future<void> _deleteQuestion(String questionId) async {
+    try {
+      await _questionService.deleteQuestion(widget.projectId, questionId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✓ 題目已刪除'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✗ 刪除失敗: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteAllQuestions(List<Question> questions) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          '刪除所有題目',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          '確定要刪除所有 ${questions.length} 個題目嗎？此操作無法復原。',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('全部刪除'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        for (var question in questions) {
+          await _questionService.deleteQuestion(widget.projectId, question.id);
+        }
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✓ 已刪除 ${questions.length} 個題目'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✗ 刪除失敗: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,14 +254,26 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
         title: const Text('練習問題', style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
+          // 刪除所有按鈕
+          StreamBuilder<List<Question>>(
+            stream: _questionService.watchQuestions(widget.projectId),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return IconButton(
+                icon: const Icon(Icons.delete_sweep, color: Colors.red),
+                onPressed: () => _deleteAllQuestions(snapshot.data!),
+                tooltip: '刪除所有題目',
+              );
+            },
+          ),
+          // 生成題目按鈕
           PopupMenuButton<String>(
             icon: const Icon(Icons.add, color: Colors.white),
             color: const Color(0xFF1A1A1A),
             onSelected: (value) {
-              setState(() {
-                _selectedType = value;
-              });
-              _generateQuestions();
+              _showGenerateConfirmation(value);
             },
             itemBuilder: (context) => [
               const PopupMenuItem(
@@ -127,7 +318,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                   ),
                   const SizedBox(height: 8),
                   ElevatedButton.icon(
-                    onPressed: _generateQuestions,
+                    onPressed: () => _showGenerateConfirmation('mcq'),
                     icon: const Icon(Icons.add),
                     label: const Text('生成問題'),
                     style: ElevatedButton.styleFrom(
@@ -196,6 +387,49 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                 ),
               ),
               const Spacer(),
+              // 刪除按鈕
+              IconButton(
+                icon: const Icon(Icons.delete_outline, size: 20),
+                color: Colors.red.withValues(alpha: 0.7),
+                onPressed: () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      backgroundColor: const Color(0xFF1A1A1A),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      title: const Text(
+                        '刪除題目',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      content: const Text(
+                        '確定要刪除這個題目嗎？',
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('取消', style: TextStyle(color: Colors.white54)),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('刪除'),
+                        ),
+                      ],
+                    ),
+                  );
+                  
+                  if (confirmed == true) {
+                    await _deleteQuestion(question.id);
+                  }
+                },
+                tooltip: '刪除題目',
+              ),
               if (showAnswer)
                 Icon(
                   isCorrect ? Icons.check_circle : Icons.cancel,
@@ -272,7 +506,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                 ),
               );
             }),
-          if (question.isOpenEnded && !showAnswer)
+          if (question.isOpenEnded && !showAnswer) ...[
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -282,9 +516,13 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                   color: Colors.white.withValues(alpha: 0.1),
                 ),
               ),
-              child: const TextField(
-                style: TextStyle(color: Colors.white),
-                decoration: InputDecoration(
+              child: TextField(
+                controller: _textControllers.putIfAbsent(
+                  question.id,
+                  () => TextEditingController(),
+                ),
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
                   hintText: '輸入您的答案...',
                   hintStyle: TextStyle(color: Colors.white54),
                   border: InputBorder.none,
@@ -292,11 +530,78 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                 maxLines: 3,
               ),
             ),
-          if (question.isOpenEnded && showAnswer)
-            ElevatedButton(
-              onPressed: () => _checkAnswer(question, userAnswer),
-              child: const Text('提交答案'),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  final answer = _textControllers[question.id]?.text ?? '';
+                  if (answer.trim().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('請輸入答案'),
+                        backgroundColor: Colors.orange,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                    return;
+                  }
+                  _checkAnswer(question, answer);
+                },
+                icon: const Icon(Icons.send),
+                label: const Text('送出答案'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
             ),
+          ],
+          if (question.isOpenEnded && showAnswer) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.1),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '您的答案：',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    userAnswer ?? '',
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                  ),
+                  const Divider(color: Colors.white24, height: 24),
+                  const Text(
+                    '參考答案：',
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    question.correctAnswer ?? '',
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (showAnswer && question.explanation != null) ...[
             const SizedBox(height: 12),
             Container(

@@ -1,11 +1,12 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/pdf.dart' as pdf_lib;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:syncfusion_flutter_pdf/pdf.dart' as syncfusion_pdf;
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../models/file_model.dart';
-import '../services/storage_service.dart';
+import 'storage_service.dart';
 
 class DocumentExtractionService {
   const DocumentExtractionService();
@@ -29,18 +30,33 @@ class DocumentExtractionService {
         throw Exception('無法讀取檔案');
       }
 
-      // 使用 pdf 套件提取文字
-      // 注意：pdf 套件主要用於創建 PDF，提取文字功能有限
-      // 對於生產環境，建議使用後端服務或 OCR
-      // 這裡提供一個基本實現
-      try {
-        // pdf 套件不直接支持文字提取
-        // 暫時返回提示訊息，建議用戶使用其他方法
-        throw Exception('PDF 文字提取需要使用 OCR 或後端服務。請確保 PDF 包含可選文字層。');
-      } catch (e) {
-        // 如果提取失敗，返回錯誤
-        throw Exception('PDF 文字提取失敗: $e');
+      // 使用 Syncfusion PDF 套件提取文字
+      final syncfusion_pdf.PdfDocument document = syncfusion_pdf.PdfDocument(inputBytes: fileBytes);
+      
+      final StringBuffer extractedText = StringBuffer();
+      
+      // 遍歷所有頁面
+      for (int i = 0; i < document.pages.count; i++) {
+        // 使用 PdfTextExtractor 提取文字
+        final String pageText = syncfusion_pdf.PdfTextExtractor(document).extractText(startPageIndex: i, endPageIndex: i);
+        
+        if (pageText.isNotEmpty) {
+          extractedText.writeln('--- 第 ${i + 1} 頁 ---');
+          extractedText.writeln(pageText.trim());
+          extractedText.writeln('');
+        }
       }
+      
+      // 釋放資源
+      document.dispose();
+      
+      final result = extractedText.toString().trim();
+      
+      if (result.isEmpty) {
+        throw Exception('PDF 中沒有找到可提取的文字。此 PDF 可能是掃描版本，需要 OCR 處理。');
+      }
+      
+      return result;
     } catch (e) {
       throw Exception('PDF 文字提取失敗: $e');
     }
@@ -66,13 +82,111 @@ class DocumentExtractionService {
 
       // 嘗試 UTF-8 解碼
       try {
-        return String.fromCharCodes(fileBytes);
+        final text = String.fromCharCodes(fileBytes);
+        // 驗證是否為有效文字（檢查是否包含過多不可見字符）
+        if (text.trim().isEmpty) {
+          throw Exception('文件內容為空');
+        }
+        return text;
       } catch (e) {
-        // 如果 UTF-8 失敗，嘗試其他編碼
-        return String.fromCharCodes(fileBytes);
+        // 如果解碼失敗，嘗試移除無效字符
+        final cleanedBytes = fileBytes.where((byte) => byte >= 32 || byte == 9 || byte == 10 || byte == 13).toList();
+        final text = String.fromCharCodes(cleanedBytes);
+        if (text.trim().isEmpty) {
+          throw Exception('無法解析文件內容，可能不是有效的文字檔案');
+        }
+        return text;
       }
     } catch (e) {
       throw Exception('TXT 文字提取失敗: $e');
+    }
+  }
+
+  /// 使用 OCR 提取圖片中的文字
+  Future<String> extractImageText(FileModel file) async {
+    File? tempFile;
+    TextRecognizer? textRecognizer;
+    
+    try {
+      final storage = const StorageService();
+      File imageFile;
+
+      // 獲取圖片文件
+      if (file.storageType == 'local' && file.localPath != null) {
+        imageFile = File(file.localPath!);
+        if (!await imageFile.exists()) {
+          throw Exception('圖片檔案不存在');
+        }
+      } else if (file.storageType == 'cloud' && file.downloadUrl != null) {
+        // 下載雲端圖片到臨時文件
+        final bytes = await storage.getFileContent(file);
+        final tempDir = await getTemporaryDirectory();
+        final tempPath = '${tempDir.path}/temp_${DateTime.now().millisecondsSinceEpoch}.${file.type}';
+        imageFile = File(tempPath);
+        await imageFile.writeAsBytes(bytes);
+        tempFile = imageFile; // 記錄臨時文件以便清理
+      } else {
+        throw Exception('無法讀取圖片檔案');
+      }
+
+      // 使用 Google ML Kit 進行 OCR
+      final inputImage = InputImage.fromFile(imageFile);
+      // 使用預設的文字識別器（支援多種語言包括中文）
+      textRecognizer = TextRecognizer();
+      
+      final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
+      final StringBuffer extractedText = StringBuffer();
+      
+      // 組織提取的文字
+      for (TextBlock block in recognizedText.blocks) {
+        for (TextLine line in block.lines) {
+          extractedText.writeln(line.text);
+        }
+      }
+      
+      final result = extractedText.toString().trim();
+      
+      if (result.isEmpty) {
+        throw Exception('圖片中沒有找到可識別的文字');
+      }
+      
+      return result;
+    } catch (e) {
+      throw Exception('OCR 文字提取失敗: $e');
+    } finally {
+      // 確保資源被釋放
+      try {
+        textRecognizer?.close();
+      } catch (e) {
+        print('關閉 OCR 識別器失敗: $e');
+      }
+      
+      // 清理臨時文件
+      if (tempFile != null) {
+        try {
+          if (await tempFile.exists()) {
+            await tempFile.delete();
+          }
+        } catch (e) {
+          print('刪除臨時文件失敗: $e');
+        }
+      }
+    }
+  }
+
+  /// 使用 OCR 提取掃描版 PDF 中的文字
+  Future<String> extractScannedPdfText(FileModel file) async {
+    try {
+      // 注意：完整的掃描 PDF OCR 需要將 PDF 轉為圖片然後 OCR
+      // 這裡提供一個簡化版本的提示
+      throw Exception(
+        '掃描版 PDF 處理需要先將 PDF 轉換為圖片。\n'
+        '建議：\n'
+        '1. 使用線上工具將 PDF 轉為圖片\n'
+        '2. 然後上傳圖片使用 OCR 功能'
+      );
+    } catch (e) {
+      throw Exception('掃描版 PDF 處理失敗: $e');
     }
   }
 
@@ -85,12 +199,22 @@ class DocumentExtractionService {
         return await extractPdfText(file);
       case 'txt':
         return await extractTxtText(file);
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'bmp':
+      case 'gif':
+        return await extractImageText(file);
       case 'docx':
       case 'doc':
-        // DOCX 處理需要額外的套件，暫時返回錯誤
-        throw Exception('DOCX 文件處理功能尚未實現');
+        throw Exception(
+          'Word 文件處理暫不支援。\n'
+          '建議：\n'
+          '1. 將 Word 文件另存為 PDF\n'
+          '2. 或複製內容到 TXT 文件後上傳'
+        );
       default:
-        throw Exception('不支援的文件類型: $fileType');
+        throw Exception('不支援的文件類型: $fileType\n支援格式：PDF, TXT, JPG, PNG');
     }
   }
 

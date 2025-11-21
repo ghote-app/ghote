@@ -59,7 +59,7 @@ class FlashcardService {
 
       // 調用 Gemini API 生成抽認卡
       final prompt = '''
-基於以下內容，生成 $count 個抽認卡。每個抽認卡應該包含一個清晰的問題和詳細的答案。
+基於以下內容，生成 $count 個抽認卡，不能多不能少。每個抽認卡應該包含一個清晰的問題和詳細的答案。
 
 內容：
 $content

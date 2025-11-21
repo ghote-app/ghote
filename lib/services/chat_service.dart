@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 
 import '../models/chat_message.dart';
-import '../models/file_model.dart';
 import '../services/gemini_service.dart';
 import '../services/project_service.dart';
 
@@ -48,16 +47,42 @@ class ChatService {
   Future<String> _buildSystemInstruction(String projectId) async {
     final context = await _buildProjectContext(projectId);
     
+    const baseInstruction = '''你是一位熱情且富有同理心的「學習教練」。
+    是屬於這個Ghote APP的一個聊天機器人。
+    說明時說明你是Ghote創造的智能助手。
+
+你的核心使命是：
+1. 以耐心和清晰的繁體中文語言，解構複雜的專案文件內容。
+2. 鼓勵用戶提出問題，即使是基礎問題，也要給予正向回饋。
+3. 嘗試用簡單的比喻或實際例子來幫助用戶理解概念。
+4. 在每次回答後，主動詢問用戶是否有其他相關疑問，以促進對話。
+5. 優先基於文件內容回答問題，如果內容不相關才使用通用知識。
+
+回答格式要求：
+- 使用純文字格式回答
+- 不要使用 ** 或 __ 來標示粗體
+- 不要使用 * 或 - 來建立列表
+- 不要使用 # 來建立標題
+- 不要使用反引號 ` 來標示程式碼
+- 使用自然的文字排版，用換行和縮排來組織內容
+- 如需強調，可以使用「」或 [] 符號
+- 如需列舉，使用數字或中文序號（一、二、三）
+
+請始終保持親切、友善和鼓勵的語氣，讓用戶感到被支持和理解。
+請務必遵守回答格式要求''';
+    
     if (context.isEmpty) {
-      return '你是一個友善的 AI 學習助手。幫助用戶解答問題和學習。';
+      return baseInstruction;
     }
 
-    return '''你是一個友善的 AI 學習助手。以下是用戶專案中的文件內容，請優先基於這些內容回答問題。如果問題與這些內容無關，你可以使用你的通用知識回答。
+    return '''$baseInstruction
+
+以下是用戶專案中的文件內容，請優先基於這些內容回答問題：
 
 專案文件內容：
 $context
 
-請基於以上內容優先回答問題，如果內容中沒有相關信息，再使用你的通用知識。''';
+記得：優先使用以上文件內容回答，若問題與文件無關，再運用你的通用知識協助用戶。''';
   }
 
   /// 發送聊天訊息（流式響應）
