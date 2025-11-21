@@ -38,14 +38,86 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
     super.dispose();
   }
 
+  Future<void> _showGenerateConfirmation() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          '生成抽認卡',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          '將使用 AI 根據您上傳的文件內容生成 10 張抽認卡。\n\n這可能需要一些時間，確定要繼續嗎？',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('開始生成'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _generateFlashcards();
+    }
+  }
+
   Future<void> _generateFlashcards() async {
     if (!mounted) return;
     
+    // 顯示更詳細的生成中對話框
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(color: Colors.white),
+      builder: (context) => WillPopScope(
+        onWillPop: () async => false,
+        child: Dialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(color: Colors.blue),
+                const SizedBox(height: 24),
+                const Text(
+                  'AI 正在生成抽認卡...',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '正在分析文件內容並生成學習卡片\n請稍候片刻',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
 
@@ -57,6 +129,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
       if (!mounted) return;
       Navigator.of(context).pop();
       
+      // 重置為新生成的抽認卡（不包含舊的）
       setState(() {
         _flashcards = flashcards;
         _currentIndex = 0;
@@ -65,8 +138,12 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('成功生成 ${flashcards.length} 個抽認卡'),
+          content: Text('✓ 成功生成 ${flashcards.length} 個抽認卡'),
           backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     } catch (e) {
@@ -74,10 +151,114 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('生成失敗: $e'),
+          content: Text('✗ 生成失敗: $e'),
           backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
+    }
+  }
+
+  Future<void> _deleteFlashcard(String flashcardId) async {
+    try {
+      await _flashcardService.deleteFlashcard(widget.projectId, flashcardId);
+      
+      // 更新本地列表
+      setState(() {
+        _flashcards.removeWhere((f) => f.id == flashcardId);
+        if (_currentIndex >= _flashcards.length && _flashcards.isNotEmpty) {
+          _currentIndex = _flashcards.length - 1;
+        }
+        if (_flashcards.isEmpty) {
+          _currentIndex = 0;
+        }
+      });
+      
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✓ 抽認卡已刪除'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✗ 刪除失敗: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteAllFlashcards(List<Flashcard> flashcards) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          '刪除所有抽認卡',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          '確定要刪除所有 ${flashcards.length} 張抽認卡嗎？此操作無法復原。',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('全部刪除'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        for (var flashcard in flashcards) {
+          await _flashcardService.deleteFlashcard(widget.projectId, flashcard.id);
+        }
+        
+        setState(() {
+          _flashcards.clear();
+          _currentIndex = 0;
+        });
+        
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✓ 已刪除 ${flashcards.length} 張抽認卡'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✗ 刪除失敗: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -139,9 +320,24 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
         title: const Text('抽認卡', style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
+          // 刪除所有按鈕
+          StreamBuilder<List<Flashcard>>(
+            stream: _flashcardService.watchFlashcards(widget.projectId),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return IconButton(
+                icon: const Icon(Icons.delete_sweep, color: Colors.red),
+                onPressed: () => _deleteAllFlashcards(snapshot.data!),
+                tooltip: '刪除所有抽認卡',
+              );
+            },
+          ),
+          // 生成抽認卡按鈕
           IconButton(
             icon: const Icon(Icons.add, color: Colors.white),
-            onPressed: _generateFlashcards,
+            onPressed: _showGenerateConfirmation,
             tooltip: '生成抽認卡',
           ),
         ],
@@ -176,7 +372,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
                   ),
                   const SizedBox(height: 8),
                   ElevatedButton.icon(
-                    onPressed: _generateFlashcards,
+                    onPressed: _showGenerateConfirmation,
                     icon: const Icon(Icons.add),
                     label: const Text('生成抽認卡'),
                     style: ElevatedButton.styleFrom(
@@ -189,13 +385,28 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
             );
           }
 
-          if (_flashcards.isEmpty) {
-            _flashcards = flashcards;
-            _currentIndex = 0;
+          // 同步 StreamBuilder 的資料到本地狀態
+          if (_flashcards.isEmpty || _flashcards.length != flashcards.length) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                setState(() {
+                  _flashcards = flashcards;
+                  if (_currentIndex >= _flashcards.length) {
+                    _currentIndex = 0;
+                  }
+                });
+              }
+            });
           }
 
           if (_currentIndex >= _flashcards.length) {
             _currentIndex = 0;
+          }
+          
+          if (_flashcards.isEmpty) {
+            return const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            );
           }
 
           final currentCard = _flashcards[_currentIndex];
@@ -219,6 +430,50 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
                         valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    // 刪除當前卡片按鈕
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, size: 20),
+                      color: Colors.red.withValues(alpha: 0.7),
+                      onPressed: () async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: const Color(0xFF1A1A1A),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            title: const Text(
+                              '刪除抽認卡',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            content: const Text(
+                              '確定要刪除這張抽認卡嗎？',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: const Text('取消', style: TextStyle(color: Colors.white54)),
+                              ),
+                              ElevatedButton(
+                                onPressed: () => Navigator.of(context).pop(true),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.white,
+                                ),
+                                child: const Text('刪除'),
+                              ),
+                            ],
+                          ),
+                        );
+                        
+                        if (confirmed == true) {
+                          await _deleteFlashcard(currentCard.id);
+                        }
+                      },
+                      tooltip: '刪除此卡',
+                    ),
                   ],
                 ),
               ),
@@ -237,32 +492,38 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
                           transform: Matrix4.identity()
                             ..setEntry(3, 2, 0.001)
                             ..rotateY(angle),
-                          child: Container(
-                            width: MediaQuery.of(context).size.width * 0.9,
-                            height: MediaQuery.of(context).size.height * 0.5,
-                            decoration: BoxDecoration(
-                              color: isFront
-                                  ? Colors.blue.withValues(alpha: 0.2)
-                                  : Colors.green.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
+                          child: Transform(
+                            // 當背面時，再翻轉一次讓文字正常顯示
+                            alignment: Alignment.center,
+                            transform: Matrix4.identity()
+                              ..rotateY(isFront ? 0 : 3.14159),
+                            child: Container(
+                              width: MediaQuery.of(context).size.width * 0.9,
+                              height: MediaQuery.of(context).size.height * 0.5,
+                              decoration: BoxDecoration(
                                 color: isFront
-                                    ? Colors.blue.withValues(alpha: 0.5)
-                                    : Colors.green.withValues(alpha: 0.5),
-                                width: 2,
+                                    ? Colors.blue.withValues(alpha: 0.2)
+                                    : Colors.green.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: isFront
+                                      ? Colors.blue.withValues(alpha: 0.5)
+                                      : Colors.green.withValues(alpha: 0.5),
+                                  width: 2,
+                                ),
                               ),
-                            ),
-                            child: Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: Text(
-                                  isFront ? currentCard.question : currentCard.answer,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w500,
+                              child: Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(24),
+                                  child: Text(
+                                    isFront ? currentCard.question : currentCard.answer,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    textAlign: TextAlign.center,
                                   ),
-                                  textAlign: TextAlign.center,
                                 ),
                               ),
                             ),

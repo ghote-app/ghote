@@ -22,16 +22,22 @@ class GeminiService {
   }
 
   /// 獲取 Gemini 模型實例
-  Future<GenerativeModel> _getModel({String? modelName}) async {
+  Future<GenerativeModel> _getModel({
+    String? modelName,
+    String? systemInstruction,
+  }) async {
     final apiKey = await _getApiKey();
     if (apiKey == null || apiKey.isEmpty) {
       throw Exception('Gemini API 金鑰未設置，請在設置中配置');
     }
 
-    final model = modelName ?? 'gemini-2.0-flash-exp';
+    final model = modelName ?? 'gemini-2.0-flash';
     return GenerativeModel(
       model: model,
       apiKey: apiKey,
+      systemInstruction: systemInstruction != null 
+        ? Content.system(systemInstruction) 
+        : null,
     );
   }
 
@@ -43,10 +49,13 @@ class GeminiService {
     String? modelName,
   }) async* {
     try {
-      final model = await _getModel(modelName: modelName);
-      final chat = model.startChat(
-        history: history,
+      final model = await _getModel(
+        modelName: modelName,
+        systemInstruction: systemInstruction,
       );
+      
+      // 創建聊天會話
+      final chat = model.startChat(history: history);
 
       final response = chat.sendMessageStream(
         Content.text(prompt),
@@ -69,13 +78,13 @@ class GeminiService {
     String? modelName,
   }) async {
     try {
-      final model = await _getModel(modelName: modelName);
+      final model = await _getModel(
+        modelName: modelName,
+        systemInstruction: systemInstruction,
+      );
       final content = Content.text(prompt);
       
-      final response = await model.generateContent([
-        if (systemInstruction != null) Content.system(systemInstruction),
-        content,
-      ]);
+      final response = await model.generateContent([content]);
 
       return response.text ?? '';
     } catch (e) {

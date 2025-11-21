@@ -189,32 +189,87 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         }
       }
 
-      // 獲取訂閱和當前檔案數量
-      final subscription = await SubscriptionService().getUserSubscription(user.uid);
-      final currentFileCount = await ProjectService().getProjectFileCount(widget.projectId);
+      // 獲取訂閱和當前檔案數量（添加重試機制）
+      int retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          final subscription = await SubscriptionService().getUserSubscription(user.uid);
+          final currentFileCount = await ProjectService().getProjectFileCount(widget.projectId);
 
-      // 檢查檔案數量限制 (免費/Plus: 10個)
-      if (subscription.isFree || subscription.isPlus) {
-        if (currentFileCount + result.files.length > 10) {
-          if (!mounted) return;
-          await showDialog<void>(
-            context: context,
-            builder: (context) => AlertDialog(
-              backgroundColor: Colors.black,
-              title: const Text('File Limit Reached', style: TextStyle(color: Colors.white)),
-              content: const Text(
-                '免費/Plus 方案每個專案最多 10 個文件。請升級到 Ghote Pro 享受無限文件上傳。',
-                style: TextStyle(color: Colors.white70),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK'),
+          // 檢查檔案數量限制 (免費/Plus: 10個)
+          if (subscription.isFree || subscription.isPlus) {
+            if (currentFileCount + result.files.length > 10) {
+              if (!mounted) return;
+              await showDialog<void>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  backgroundColor: Colors.black,
+                  title: const Text('File Limit Reached', style: TextStyle(color: Colors.white)),
+                  content: const Text(
+                    '免費/Plus 方案每個專案最多 10 個文件。請升級到 Ghote Pro 享受無限文件上傳。',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('OK'),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          );
-          return;
+              );
+              return;
+            }
+          }
+          break; // 成功，跳出重試循環
+        } catch (e) {
+          retryCount++;
+          if (retryCount < maxRetries) {
+            // 等待後重試
+            await Future.delayed(Duration(seconds: retryCount));
+          } else {
+            // 達到最大重試次數
+            if (!mounted) return;
+            final shouldContinue = await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                backgroundColor: const Color(0xFF1A1A1A),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                title: const Text(
+                  '網路連線問題',
+                  style: TextStyle(color: Colors.white),
+                ),
+                content: Text(
+                  '無法連接到伺服器，請檢查您的網路連線。\n\n錯誤詳情：${e.toString().contains('UNAVAILABLE') ? '服務暫時無法使用' : e.toString()}',
+                  style: const TextStyle(color: Colors.white70),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('取消', style: TextStyle(color: Colors.white54)),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('重試'),
+                  ),
+                ],
+              ),
+            );
+            
+            if (shouldContinue == true) {
+              // 用戶選擇重試，遞歸調用
+              return _uploadFiles();
+            } else {
+              return; // 用戶取消
+            }
+          }
         }
       }
 
@@ -279,8 +334,27 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             metadata: const {},
           );
 
-          await projectService.addFileMetadata(widget.projectId, meta);
-          successCount++;
+          // 保存檔案元數據（添加重試機制）
+          bool metadataSaved = false;
+          int metadataRetry = 0;
+          const maxMetadataRetries = 3;
+          
+          while (!metadataSaved && metadataRetry < maxMetadataRetries) {
+            try {
+              await projectService.addFileMetadata(widget.projectId, meta);
+              metadataSaved = true;
+              successCount++;
+            } catch (metaError) {
+              metadataRetry++;
+              if (metadataRetry >= maxMetadataRetries) {
+                print('保存檔案元數據 ${f.name} 失敗（已重試 $maxMetadataRetries 次）: $metaError');
+                failCount++;
+              } else {
+                // 等待後重試
+                await Future.delayed(Duration(seconds: metadataRetry));
+              }
+            }
+          }
         } catch (e) {
           print('上傳檔案 ${f.name} 失敗: $e');
           failCount++;
@@ -1204,69 +1278,114 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   Future<void> _extractTextFromFiles() async {
     final projectService = ProjectService();
     final extractionService = const DocumentExtractionService();
-    final files = await projectService.watchFiles(widget.projectId).first;
+    
+    try {
+      final files = await projectService.watchFiles(widget.projectId).first;
 
-    final extractableFiles = files.where((f) => 
-      ['pdf', 'txt'].contains(f.type.toLowerCase()) &&
-      (f.extractionStatus != 'extracted')
-    ).toList();
+      // 支援更多文件類型：PDF, TXT, 圖片
+      final extractableFiles = files.where((f) {
+        final type = f.type.toLowerCase();
+        return ['pdf', 'txt', 'jpg', 'jpeg', 'png', 'bmp', 'gif'].contains(type) &&
+               (f.extractionStatus != 'extracted');
+      }).toList();
 
-    if (extractableFiles.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('沒有可提取文字的文件')),
-      );
-      return;
-    }
-
-    if (!mounted) return;
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(color: Colors.white),
-      ),
-    );
-
-    int successCount = 0;
-    int failCount = 0;
-
-    for (final file in extractableFiles) {
-      try {
-        await extractionService.updateExtractionStatus(
-          file.id,
-          widget.projectId,
-          'pending',
+      if (extractableFiles.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('沒有可提取文字的文件\n支援格式：PDF, TXT, JPG, PNG')),
         );
-
-        final text = await extractionService.extractText(file);
-        await extractionService.saveExtractedText(
-          file.id,
-          widget.projectId,
-          text,
-        );
-        successCount++;
-      } catch (e) {
-        failCount++;
-        await extractionService.updateExtractionStatus(
-          file.id,
-          widget.projectId,
-          'failed',
-        );
+        return;
       }
-    }
 
-    if (!mounted) return;
-    Navigator.of(context).pop();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '提取完成：成功 $successCount 個，失敗 $failCount 個',
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(color: Colors.white),
         ),
-        backgroundColor: failCount == 0 ? Colors.green : Colors.orange,
-      ),
-    );
+      );
+
+      int successCount = 0;
+      int failCount = 0;
+
+      for (final file in extractableFiles) {
+        if (!mounted) break; // 檢查是否還在畫面上
+        
+        try {
+          await extractionService.updateExtractionStatus(
+            file.id,
+            widget.projectId,
+            'pending',
+          );
+
+          final text = await extractionService.extractText(file);
+          
+          if (!mounted) break; // 再次檢查
+          
+          await extractionService.saveExtractedText(
+            file.id,
+            widget.projectId,
+            text,
+          );
+          successCount++;
+        } catch (e) {
+          print('文件 ${file.name} 提取失敗: $e');
+          failCount++;
+          try {
+            await extractionService.updateExtractionStatus(
+              file.id,
+              widget.projectId,
+              'failed',
+            );
+          } catch (_) {
+            // 忽略更新狀態失敗
+          }
+        }
+      }
+
+      if (!mounted) return;
+      
+      // 安全地關閉 dialog
+      try {
+        Navigator.of(context).pop();
+      } catch (e) {
+        print('關閉 dialog 失敗: $e');
+      }
+
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '提取完成：成功 $successCount 個，失敗 $failCount 個',
+          ),
+          backgroundColor: failCount == 0 ? Colors.green : Colors.orange,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } catch (e) {
+      print('提取文字過程發生錯誤: $e');
+      
+      // 確保關閉 loading dialog
+      if (mounted) {
+        try {
+          Navigator.of(context).pop();
+        } catch (_) {
+          // dialog 可能已經關閉
+        }
+      }
+      
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('提取文字時發生錯誤: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
   }
 
   void _openChat() {
