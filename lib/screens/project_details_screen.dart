@@ -11,6 +11,7 @@ import '../services/project_service.dart';
 import '../services/subscription_service.dart';
 import '../services/storage_service.dart';
 import '../services/document_extraction_service.dart';
+import '../services/gemini_service.dart';
 import '../utils/toast_utils.dart';
 import 'chat_screen.dart';
 import 'flashcards_screen.dart';
@@ -30,6 +31,13 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   String _selectedCategory = 'all'; // 'all', 'document', 'image', 'video', 'audio', 'other'
   final ScrollController _scrollController = ScrollController();
   final ScrollController _categoryScrollController = ScrollController();
+  String _currentTitle = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _currentTitle = widget.title;
+  }
 
   @override
   void dispose() {
@@ -73,12 +81,37 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: Text(widget.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: GestureDetector(
+          onTap: _editProjectName,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  _currentTitle,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.edit_rounded,
+                color: Colors.white.withValues(alpha: 0.7),
+                size: 18,
+              ),
+            ],
+          ),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
+            tooltip: 'AI 智能命名',
+            onPressed: _aiGenerateName,
+          ),
           IconButton(
             icon: const Icon(Icons.upload_file_rounded, color: Colors.white),
             tooltip: '上傳檔案',
@@ -241,7 +274,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       final result = await FilePicker.platform.pickFiles(
         allowMultiple: true,
         type: FileType.custom,
-        allowedExtensions: ['jpg', 'png', 'pdf', 'txt', 'doc', 'docx'],
+        allowedExtensions: ['jpg', 'png', 'pdf', 'txt', 'doc', 'docx', 'mp3', 'wav', 'm4a', 'ogg', 'flac', 'aac', 'wma'],
       );
 
       if (result == null || result.files.isEmpty) return;
@@ -1187,7 +1220,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
-                      Row(
+                      Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           // 分類標籤
                           Container(
@@ -1209,9 +1245,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                             ),
                           ),
                           Text(
-                            ' · ',
+                            '•',
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.4),
+                              fontSize: 12,
                             ),
                           ),
                           Text(
@@ -1222,9 +1259,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                             ),
                           ),
                           Text(
-                            ' · ',
+                            '•',
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.4),
+                              fontSize: 12,
                             ),
                           ),
                           Text(
@@ -1235,23 +1273,29 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                             ),
                           ),
                           Text(
-                            ' · ',
+                            '•',
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.4),
-                            ),
-                          ),
-                          Icon(
-                            isCloud ? Icons.cloud_done_rounded : Icons.phone_android_rounded,
-                            size: 14,
-                            color: isCloud ? Colors.green : Colors.orange,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            isCloud ? '雲端' : '本地',
-                            style: TextStyle(
-                              color: isCloud ? Colors.green : Colors.orange,
                               fontSize: 12,
                             ),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isCloud ? Icons.cloud_done_rounded : Icons.phone_android_rounded,
+                                size: 14,
+                                color: isCloud ? Colors.green : Colors.orange,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                isCloud ? '雲端' : '本地',
+                                style: TextStyle(
+                                  color: isCloud ? Colors.green : Colors.orange,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -1293,6 +1337,11 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         return Icons.video_file_rounded;
       case 'mp3':
       case 'wav':
+      case 'ogg':
+      case 'flac':
+      case 'aac':
+      case 'm4a':
+      case 'wma':
         return Icons.audio_file_rounded;
       case 'zip':
       case 'rar':
@@ -1321,6 +1370,11 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         return Colors.pink;
       case 'mp3':
       case 'wav':
+      case 'ogg':
+      case 'flac':
+      case 'aac':
+      case 'm4a':
+      case 'wma':
         return Colors.orange;
       case 'zip':
       case 'rar':
@@ -1465,10 +1519,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     try {
       final files = await projectService.watchFiles(widget.projectId).first;
 
-      // 支援更多文件類型：PDF, DOCX, TXT, 圖片
+      // 支援更多文件類型：PDF, DOCX, TXT, 圖片, 音訊
       final extractableFiles = files.where((f) {
         final type = f.type.toLowerCase();
-        return ['pdf', 'docx', 'txt', 'jpg', 'jpeg', 'png', 'bmp', 'gif'].contains(type) &&
+        return ['pdf', 'docx', 'txt', 'jpg', 'jpeg', 'png', 'bmp', 'gif', 'mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma'].contains(type) &&
                (f.extractionStatus != 'extracted');
       }).toList();
 
@@ -1476,7 +1530,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         if (!mounted) return;
         ToastUtils.info(
           context,
-          '沒有可提取文字的文件\n支援格式：PDF, DOCX, TXT, JPG, PNG',
+          '沒有可提取文字的文件\n支援格式：PDF, DOCX, TXT, JPG, PNG, MP3, WAV, M4A 等',
         );
         return;
       }
@@ -1626,6 +1680,274 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         builder: (_) => QuestionsScreen(projectId: widget.projectId),
       ),
     );
+  }
+
+  /// 編輯專案名稱
+  Future<void> _editProjectName() async {
+    final controller = TextEditingController(text: _currentTitle);
+    
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          '編輯專案名稱',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: '輸入專案名稱',
+            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.blue),
+            ),
+          ),
+          onSubmitted: (value) => Navigator.of(context).pop(value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+            child: const Text('確定'),
+          ),
+        ],
+      ),
+    );
+
+    if (newName != null && newName.trim().isNotEmpty && newName != _currentTitle) {
+      try {
+        final projectService = ProjectService();
+        final project = await projectService.getProject(widget.projectId);
+        
+        if (project != null) {
+          final updatedProject = project.copyWith(title: newName.trim());
+          await projectService.updateProject(updatedProject);
+          
+          setState(() {
+            _currentTitle = newName.trim();
+          });
+          
+          if (!mounted) return;
+          ToastUtils.success(context, '專案名稱已更新');
+        }
+      } catch (e) {
+        if (!mounted) return;
+        ToastUtils.error(context, '更新失敗: $e');
+      }
+    }
+  }
+
+  /// AI 智能命名
+  Future<void> _aiGenerateName() async {
+    try {
+      final projectService = ProjectService();
+      final files = await projectService.watchFiles(widget.projectId).first;
+      
+      if (files.isEmpty) {
+        if (!mounted) return;
+        ToastUtils.info(context, '請先上傳檔案，AI 才能根據內容建議名稱');
+        return;
+      }
+
+      // 顯示載入對話框
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => WillPopScope(
+          onWillPop: () async => false,
+          child: Dialog(
+            backgroundColor: const Color(0xFF1A1A1A),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(color: Colors.blue),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'AI 正在分析...',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '正在根據您上傳的 ${files.length} 個檔案生成最適當的專案名稱',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // 收集檔案資訊和已提取的文字
+      final StringBuffer contextBuffer = StringBuffer();
+      contextBuffer.writeln('專案中的檔案清單：');
+      
+      for (final file in files) {
+        contextBuffer.writeln('- ${file.name} (${file.type.toUpperCase()}, ${file.category})');
+        
+        // 如果有提取的文字，加入前 500 字
+        if (file.extractedText != null && file.extractedText!.isNotEmpty) {
+          final preview = file.extractedText!.length > 500 
+              ? '${file.extractedText!.substring(0, 500)}...' 
+              : file.extractedText!;
+          contextBuffer.writeln('  內容預覽: $preview');
+        }
+      }
+
+      // 使用 Gemini 生成專案名稱
+      final geminiService = GeminiService();
+      final prompt = '''
+請根據以下專案的檔案資訊，生成一個簡潔、準確、有意義的專案名稱。
+
+${contextBuffer.toString()}
+
+要求：
+1. 名稱要能反映專案的主題或內容
+2. 長度控制在 2-6 個中文字或 3-20 個英文字
+3. 使用清晰、專業的命名
+4. 只返回專案名稱，不要有任何額外說明或標點符號
+
+專案名稱：''';
+
+      final suggestedName = await geminiService.generateText(prompt: prompt);
+      
+      if (!mounted) return;
+      Navigator.of(context).pop(); // 關閉載入對話框
+      
+      final cleanedName = suggestedName.trim()
+          .replaceAll('「', '')
+          .replaceAll('」', '')
+          .replaceAll('『', '')
+          .replaceAll('』', '')
+          .replaceAll('"', '')
+          .replaceAll("'", '');
+      
+      if (cleanedName.isEmpty) {
+        ToastUtils.error(context, 'AI 命名失敗，請重試');
+        return;
+      }
+
+      // 顯示建議的名稱並詢問是否使用
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.auto_awesome_rounded, color: Colors.blue),
+              SizedBox(width: 8),
+              Text('AI 建議名稱', style: TextStyle(color: Colors.white)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '根據您的檔案內容，AI 建議將專案命名為：',
+                style: TextStyle(color: Colors.white70, fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  cleanedName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '當前名稱：$_currentTitle',
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('保持原名稱', style: TextStyle(color: Colors.white54)),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+              child: const Text('使用 AI 名稱'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed == true) {
+        try {
+          final project = await projectService.getProject(widget.projectId);
+          
+          if (project != null) {
+            final updatedProject = project.copyWith(title: cleanedName);
+            await projectService.updateProject(updatedProject);
+            
+            setState(() {
+              _currentTitle = cleanedName;
+            });
+            
+            if (!mounted) return;
+            ToastUtils.success(context, '✨ 專案已使用 AI 建議名稱');
+          }
+        } catch (e) {
+          if (!mounted) return;
+          ToastUtils.error(context, '更新失敗: $e');
+        }
+      }
+    } catch (e) {
+      // 確保關閉 loading dialog
+      if (mounted) {
+        try {
+          Navigator.of(context).pop();
+        } catch (_) {}
+      }
+      
+      if (!mounted) return;
+      ToastUtils.error(context, 'AI 命名失敗: $e');
+    }
   }
 }
 

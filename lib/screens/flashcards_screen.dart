@@ -23,6 +23,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
   bool _isFlipped = false;
   int _currentIndex = 0;
   List<Flashcard> _flashcards = [];
+  bool _showFavoritesOnly = false; // 只顯示收藏
 
   @override
   void initState() {
@@ -298,6 +299,23 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
         title: const Text('抽認卡', style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
+          // 收藏篩選按鈕
+          IconButton(
+            icon: Icon(
+              _showFavoritesOnly ? Icons.filter_alt : Icons.filter_alt_outlined,
+              color: _showFavoritesOnly ? Colors.amber : Colors.white,
+            ),
+            onPressed: () {
+              setState(() {
+                _showFavoritesOnly = !_showFavoritesOnly;
+              });
+              ToastUtils.success(
+                context,
+                _showFavoritesOnly ? '只顯示收藏' : '顯示全部',
+              );
+            },
+            tooltip: _showFavoritesOnly ? '顯示全部' : '只顯示收藏',
+          ),
           // 刪除所有按鈕
           StreamBuilder<List<Flashcard>>(
             stream: _flashcardService.watchFlashcards(widget.projectId),
@@ -329,35 +347,54 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
             );
           }
 
-          final flashcards = snapshot.data!;
+          // 根據篩選狀態過濾抽認卡
+          final allFlashcards = snapshot.data!;
+          final flashcards = _showFavoritesOnly
+              ? allFlashcards.where((card) => card.isFavorite).toList()
+              : allFlashcards;
+              
           if (flashcards.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.quiz_outlined,
+                    _showFavoritesOnly ? Icons.star_border : Icons.quiz_outlined,
                     size: 64,
                     color: Colors.white.withValues(alpha: 0.3),
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    '還沒有抽認卡',
+                    _showFavoritesOnly ? '還沒有收藏的抽認卡' : '還沒有抽認卡',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.6),
                       fontSize: 16,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  ElevatedButton.icon(
-                    onPressed: _showGenerateConfirmation,
-                    icon: const Icon(Icons.add),
-                    label: const Text('生成抽認卡'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
+                  if (!_showFavoritesOnly)
+                    ElevatedButton.icon(
+                      onPressed: _showGenerateConfirmation,
+                      icon: const Icon(Icons.add),
+                      label: const Text('生成抽認卡'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                      ),
+                    )
+                  else
+                    TextButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _showFavoritesOnly = false;
+                        });
+                      },
+                      icon: const Icon(Icons.filter_alt_off),
+                      label: const Text('顯示全部'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white70,
+                      ),
                     ),
-                  ),
                 ],
               ),
             );
@@ -475,35 +512,89 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
                             alignment: Alignment.center,
                             transform: Matrix4.identity()
                               ..rotateY(isFront ? 0 : 3.14159),
-                            child: Container(
-                              width: MediaQuery.of(context).size.width * 0.9,
-                              height: MediaQuery.of(context).size.height * 0.5,
-                              decoration: BoxDecoration(
-                                color: isFront
-                                    ? Colors.blue.withValues(alpha: 0.2)
-                                    : Colors.green.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: isFront
-                                      ? Colors.blue.withValues(alpha: 0.5)
-                                      : Colors.green.withValues(alpha: 0.5),
-                                  width: 2,
-                                ),
-                              ),
-                              child: Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(24),
-                                  child: Text(
-                                    isFront ? currentCard.question : currentCard.answer,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500,
+                            child: Stack(
+                              children: [
+                                Container(
+                                  width: MediaQuery.of(context).size.width * 0.9,
+                                  height: MediaQuery.of(context).size.height * 0.5,
+                                  decoration: BoxDecoration(
+                                    color: isFront
+                                        ? Colors.blue.withValues(alpha: 0.2)
+                                        : Colors.green.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: isFront
+                                          ? Colors.blue.withValues(alpha: 0.5)
+                                          : Colors.green.withValues(alpha: 0.5),
+                                      width: 2,
                                     ),
-                                    textAlign: TextAlign.center,
+                                  ),
+                                  child: Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(24),
+                                      child: Text(
+                                        isFront ? currentCard.question : currentCard.answer,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
+                                // 收藏按鈕（右上角，隨卡片翻轉）
+                                Positioned(
+                                  right: 8,
+                                  top: 8,
+                                  child: IconButton(
+                                    icon: Icon(
+                                      currentCard.isFavorite ? Icons.star : Icons.star_border,
+                                      color: currentCard.isFavorite ? Colors.amber : Colors.white54,
+                                      size: 32,
+                                    ),
+                                    onPressed: () async {
+                                      final newFavoriteStatus = !currentCard.isFavorite;
+                                      
+                                      // 立即更新本地狀態
+                                      setState(() {
+                                        _flashcards[_currentIndex] = currentCard.copyWith(
+                                          isFavorite: newFavoriteStatus,
+                                        );
+                                      });
+                                      
+                                      try {
+                                        await _flashcardService.toggleFavorite(
+                                          widget.projectId,
+                                          currentCard.id,
+                                          newFavoriteStatus,
+                                        );
+                                        if (!mounted) return;
+                                        ToastUtils.success(
+                                          context,
+                                          newFavoriteStatus ? '已加入收藏' : '已取消收藏',
+                                        );
+                                      } catch (e) {
+                                        // 如果失敗，恢復原狀態
+                                        if (mounted) {
+                                          setState(() {
+                                            _flashcards[_currentIndex] = currentCard.copyWith(
+                                              isFavorite: !newFavoriteStatus,
+                                            );
+                                          });
+                                        }
+                                        if (!mounted) return;
+                                        ToastUtils.error(
+                                          context,
+                                          '操作失敗: $e',
+                                        );
+                                      }
+                                    },
+                                    tooltip: currentCard.isFavorite ? '取消收藏' : '加入收藏',
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         );

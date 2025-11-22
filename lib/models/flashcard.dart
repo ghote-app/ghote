@@ -11,6 +11,7 @@ class Flashcard {
   final DateTime? lastReviewed;
   final int reviewCount;
   final double masteryLevel; // 0.0 - 1.0
+  final bool isFavorite; // 是否收藏
 
   const Flashcard({
     required this.id,
@@ -23,6 +24,7 @@ class Flashcard {
     this.lastReviewed,
     this.reviewCount = 0,
     this.masteryLevel = 0.0,
+    this.isFavorite = false,
   });
 
   Flashcard copyWith({
@@ -36,6 +38,7 @@ class Flashcard {
     DateTime? lastReviewed,
     int? reviewCount,
     double? masteryLevel,
+    bool? isFavorite,
   }) {
     return Flashcard(
       id: id ?? this.id,
@@ -48,6 +51,7 @@ class Flashcard {
       lastReviewed: lastReviewed ?? this.lastReviewed,
       reviewCount: reviewCount ?? this.reviewCount,
       masteryLevel: masteryLevel ?? this.masteryLevel,
+      isFavorite: isFavorite ?? this.isFavorite,
     );
   }
 
@@ -63,6 +67,7 @@ class Flashcard {
       'lastReviewed': lastReviewed?.toIso8601String(),
       'reviewCount': reviewCount,
       'masteryLevel': masteryLevel,
+      'isFavorite': isFavorite,
     };
   }
 
@@ -80,6 +85,7 @@ class Flashcard {
           : null,
       reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
       masteryLevel: (json['masteryLevel'] as num?)?.toDouble() ?? 0.0,
+      isFavorite: json['isFavorite'] as bool? ?? false,
     );
   }
 }

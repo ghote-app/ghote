@@ -164,5 +164,20 @@ $content
       throw Exception('刪除抽認卡失敗: $e');
     }
   }
+
+  /// 切換抽認卡收藏狀態
+  Future<void> toggleFavorite(
+    String projectId,
+    String flashcardId,
+    bool isFavorite,
+  ) async {
+    try {
+      await _flashcardsCol(projectId).doc(flashcardId).update({
+        'isFavorite': isFavorite,
+      });
+    } catch (e) {
+      throw Exception('更新收藏狀態失敗: $e');
+    }
+  }
 }
 

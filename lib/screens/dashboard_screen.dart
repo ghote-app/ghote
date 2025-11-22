@@ -1272,7 +1272,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       return await FilePicker.platform.pickFiles(
         allowMultiple: true,
         type: FileType.custom,
-        allowedExtensions: ['jpg', 'png', 'pdf', 'txt', 'doc', 'docx'],
+        allowedExtensions: ['jpg', 'png', 'pdf', 'txt', 'doc', 'docx', 'mp3', 'wav', 'm4a', 'ogg', 'flac', 'aac', 'wma'],
       );
     } catch (e) {
       rethrow;
