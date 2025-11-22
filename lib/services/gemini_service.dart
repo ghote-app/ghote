@@ -83,13 +83,25 @@ class GeminiService {
     required String prompt,
     String? systemInstruction,
     String? modelName,
+    DataPart? audioPart,
+    DataPart? imagePart,
   }) async {
     try {
       final model = await _getModel(
         modelName: modelName,
         systemInstruction: systemInstruction,
       );
-      final content = Content.text(prompt);
+      
+      // 構建內容（文字 + 音訊/圖片）
+      Content content;
+      if (audioPart != null || imagePart != null) {
+        final List<Part> parts = [TextPart(prompt)];
+        if (audioPart != null) parts.add(audioPart);
+        if (imagePart != null) parts.add(imagePart);
+        content = Content.multi(parts);
+      } else {
+        content = Content.text(prompt);
+      }
       
       final response = await model.generateContent([content]);
 

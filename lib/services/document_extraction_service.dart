@@ -5,9 +5,11 @@ import 'package:syncfusion_flutter_pdf/pdf.dart' as syncfusion_pdf;
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:docx_to_text/docx_to_text.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 
 import '../models/file_model.dart';
 import 'storage_service.dart';
+import 'gemini_service.dart';
 
 class DocumentExtractionService {
   const DocumentExtractionService();
@@ -252,6 +254,46 @@ class DocumentExtractionService {
     }
   }
 
+  /// 提取音訊文件的文字內容（使用 Gemini AI）
+  Future<String> extractAudioText(FileModel file) async {
+    try {
+      final storage = const StorageService();
+      Uint8List audioBytes;
+
+      // 獲取音訊文件
+      if (file.storageType == 'local' && file.localPath != null) {
+        final localFile = File(file.localPath!);
+        if (!await localFile.exists()) {
+          throw Exception('音訊檔案不存在');
+        }
+        audioBytes = await localFile.readAsBytes();
+      } else if (file.storageType == 'cloud' && file.downloadUrl != null) {
+        audioBytes = await storage.getFileContent(file);
+      } else {
+        throw Exception('無法讀取音訊檔案');
+      }
+
+      // 使用 Gemini AI 進行語音轉文字
+      final geminiService = GeminiService();
+      
+      // 準備音訊數據
+      final audioPart = DataPart('audio/${file.type}', audioBytes);
+      
+      final text = await geminiService.generateText(
+        prompt: '請將這段音訊轉換為文字。只返回轉錄的文字內容，不要添加任何說明或註解。',
+        audioPart: audioPart,
+      );
+      
+      if (text.trim().isEmpty) {
+        throw Exception('音訊轉文字失敗：無法識別音訊內容');
+      }
+      
+      return text.trim();
+    } catch (e) {
+      throw Exception('音訊文字提取失敗: $e');
+    }
+  }
+
   /// 提取文件文字（自動判斷類型）
   Future<String> extractText(FileModel file) async {
     final fileType = file.type.toLowerCase();
@@ -269,6 +311,14 @@ class DocumentExtractionService {
         return await extractImageText(file);
       case 'docx':
         return await extractDocxText(file);
+      case 'mp3':
+      case 'wav':
+      case 'ogg':
+      case 'flac':
+      case 'aac':
+      case 'm4a':
+      case 'wma':
+        return await extractAudioText(file);
       case 'doc':
         throw Exception(
           'DOC 格式（舊版 Word）暫不支援。\n'
@@ -278,7 +328,7 @@ class DocumentExtractionService {
           '3. 或複製內容到 TXT 文件後上傳'
         );
       default:
-        throw Exception('不支援的文件類型: $fileType\n支援格式：PDF, DOCX, TXT, JPG, PNG');
+        throw Exception('不支援的文件類型: $fileType\n支援格式：PDF, DOCX, TXT, JPG, PNG, MP3, WAV, M4A 等音訊格式');
     }
   }
 
