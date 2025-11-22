@@ -89,6 +89,7 @@ $context
   Stream<String> sendMessage({
     required String projectId,
     required String userMessage,
+    List<DataPart>? imageParts,
   }) async* {
     try {
       // 保存用戶訊息
@@ -113,6 +114,7 @@ $context
         prompt: userMessage,
         history: history,
         systemInstruction: systemInstruction,
+        imageParts: imageParts,
       )) {
         responseBuffer.write(chunk);
         yield chunk;

@@ -10,6 +10,7 @@ import '../models/subscription.dart';
 import '../services/subscription_service.dart';
 import '../services/storage_service.dart';
 import '../services/project_service.dart';
+import '../utils/toast_utils.dart';
 // import 'upgrade_screen.dart';
 import 'settings_screen.dart';
 import 'project_details_screen.dart';
@@ -50,6 +51,33 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   late AnimationController _animationController;
   String _selectedFilter = 'All';
   String? _displayName;
+
+  // 根據副檔名判斷檔案分類
+  String _getCategoryFromExtension(String extension) {
+    final ext = extension.toLowerCase().replaceAll('.', '');
+    
+    // 文件類型
+    if (['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt', 'xls', 'xlsx', 'ppt', 'pptx', 'csv'].contains(ext)) {
+      return 'document';
+    }
+    
+    // 圖片類型
+    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp', 'ico', 'tiff', 'heic'].contains(ext)) {
+      return 'image';
+    }
+    
+    // 影片類型
+    if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm', 'm4v', '3gp'].contains(ext)) {
+      return 'video';
+    }
+    
+    // 音訊類型
+    if (['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma'].contains(ext)) {
+      return 'audio';
+    }
+    
+    return 'other';
+  }
 
   @override
   void initState() {
@@ -529,24 +557,17 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       await projectService.updateProject(updatedProject);
       if (!mounted) return;
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            newStatus == 'Archived' 
-              ? '✅ Project archived' 
-              : '✅ Project unarchived',
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
+      ToastUtils.success(
+        context,
+        newStatus == 'Archived' 
+          ? '✅ Project archived' 
+          : '✅ Project unarchived',
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to ${currentStatus == 'Archived' ? 'unarchive' : 'archive'} project: $e'),
-          backgroundColor: Colors.red,
-        ),
+      ToastUtils.error(
+        context,
+        'Failed to ${currentStatus == 'Archived' ? 'unarchive' : 'archive'} project: $e',
       );
     }
   }
@@ -610,20 +631,15 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     try {
       await ProjectService().deleteProjectDeep(projectId);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('✅ Project deleted successfully'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
+      ToastUtils.success(
+        context,
+        '✅ Project deleted successfully',
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to delete project: $e'),
-          backgroundColor: Colors.red,
-        ),
+      ToastUtils.error(
+        context,
+        'Failed to delete project: $e',
       );
     }
   }
@@ -856,8 +872,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     // Check project count limit before creating
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in first')),
+      ToastUtils.info(
+        context,
+        'Please sign in first',
       );
       return;
     }
@@ -1040,8 +1057,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               final title = nameController.text.trim();
               final category = categoryController.text.trim().isEmpty ? null : categoryController.text.trim();
               if (title.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please enter a project title')),
+                ToastUtils.warning(
+                  context,
+                  'Please enter a project title',
                 );
                 return;
               }
@@ -1060,12 +1078,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               await ProjectService().createProject(project);
               if (mounted) Navigator.of(context).pop();
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('✅ Project created successfully'),
-                    backgroundColor: Colors.green,
-                    behavior: SnackBarBehavior.floating,
-                  ),
+                ToastUtils.success(
+                  context,
+                  '✅ Project created successfully',
                 );
               }
             },
@@ -1090,7 +1105,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please sign in first')));
+        ToastUtils.info(context, 'Please sign in first');
         return;
       }
 
@@ -1111,8 +1126,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       for (final f in result.files) {
         if (f.size > maxFileSize) {
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('檔案大小超過 10MB 上限，已取消上傳。')),
+          ToastUtils.warning(
+            context,
+            '檔案大小超過 10MB 上限，已取消上傳。',
           );
           return;
         }
@@ -1198,6 +1214,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             projectId: selectedProject.id,
             name: f.name,
             type: (f.extension ?? '').toLowerCase(),
+            category: _getCategoryFromExtension(f.extension ?? ''),
             sizeBytes: f.size,
             storageType: 'local',
             localPath: localPath,
@@ -1223,25 +1240,19 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       // Show result message
       if (!mounted) return;
       if (failCount > 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ 成功上傳 $successCount 個檔案\n❌ $failCount 個檔案上傳失敗'),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 3),
-          ),
+        ToastUtils.warning(
+          context,
+          '✅ 成功上傳 $successCount 個檔案\n❌ $failCount 個檔案上傳失敗',
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ 成功上傳 $successCount 個檔案到本地儲存'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
+        ToastUtils.success(
+          context,
+          '✅ 成功上傳 $successCount 個檔案到本地儲存',
         );
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+      ToastUtils.error(context, 'Upload failed: $e');
     }
   }
 

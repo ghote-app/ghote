@@ -11,6 +11,7 @@ import '../services/project_service.dart';
 import '../services/subscription_service.dart';
 import '../services/storage_service.dart';
 import '../services/document_extraction_service.dart';
+import '../utils/toast_utils.dart';
 import 'chat_screen.dart';
 import 'flashcards_screen.dart';
 import 'questions_screen.dart';
@@ -26,6 +27,43 @@ class ProjectDetailsScreen extends StatefulWidget {
 }
 
 class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
+  String _selectedCategory = 'all'; // 'all', 'document', 'image', 'video', 'audio', 'other'
+  final ScrollController _scrollController = ScrollController();
+  final ScrollController _categoryScrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _categoryScrollController.dispose();
+    super.dispose();
+  }
+
+  // 根據副檔名判斷檔案分類
+  String _getCategoryFromExtension(String extension) {
+    final ext = extension.toLowerCase().replaceAll('.', '');
+    
+    // 文件類型
+    if (['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt', 'xls', 'xlsx', 'ppt', 'pptx', 'csv'].contains(ext)) {
+      return 'document';
+    }
+    
+    // 圖片類型
+    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp', 'ico', 'tiff', 'heic'].contains(ext)) {
+      return 'image';
+    }
+    
+    // 影片類型
+    if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm', 'm4v', '3gp'].contains(ext)) {
+      return 'video';
+    }
+    
+    // 音訊類型
+    if (['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma'].contains(ext)) {
+      return 'audio';
+    }
+    
+    return 'other';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +89,8 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       body: StreamBuilder<List<FileModel>>(
         stream: projectService.watchFiles(widget.projectId),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          // 保留上次的數據，避免閃爍
+          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
             return const Center(
               child: CircularProgressIndicator(color: Colors.white),
             );
@@ -83,6 +122,11 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           
           final files = snapshot.data ?? <FileModel>[];
           
+          // 根據分類篩選檔案
+          final filteredFiles = _selectedCategory == 'all'
+              ? files
+              : files.where((f) => f.category == _selectedCategory).toList();
+          
           if (files.isEmpty) {
             return Center(
               child: Column(
@@ -112,24 +156,43 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           }
 
           return CustomScrollView(
+            controller: _scrollController,
             slivers: [
               // 檔案統計區域
               SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: _buildStatsCard(files),
+                child: RepaintBoundary(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: _buildStatsCard(files),
+                  ),
                 ),
               ),
               
               // AI 功能操作欄
               SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: _buildAIActionsBar(),
+                child: RepaintBoundary(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: _buildAIActionsBar(),
+                  ),
                 ),
               ),
               
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              
+              // 分類篩選器 - 使用 SliverPersistentHeader 固定
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _CategoryFilterDelegate(
+                  child: RepaintBoundary(
+                    child: Container(
+                      color: Colors.black,
+                      padding: const EdgeInsets.only(left: 20, right: 20, bottom: 12),
+                      child: _buildCategoryFilter(files),
+                    ),
+                  ),
+                ),
+              ),
               
               // 檔案列表
               SliverPadding(
@@ -137,13 +200,21 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
-                      final file = files[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _buildFileCard(context, file),
+                      final file = filteredFiles[index];
+                      return AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child: Padding(
+                          key: ValueKey(file.id),
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _buildFileCard(context, file),
+                        ),
                       );
                     },
-                    childCount: files.length,
+                    childCount: filteredFiles.length,
+                    findChildIndexCallback: (Key key) {
+                      final valueKey = key as ValueKey<String>;
+                      return filteredFiles.indexWhere((file) => file.id == valueKey.value);
+                    },
                   ),
                 ),
               ),
@@ -162,9 +233,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('請先登入')),
-        );
+        ToastUtils.info(context, '請先登入');
         return;
       }
 
@@ -182,9 +251,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       for (final f in result.files) {
         if (f.size > maxFileSize) {
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('檔案大小超過 10MB 上限，已取消上傳。')),
-          );
+          ToastUtils.warning(context, '檔案大小超過 10MB 上限，已取消上傳。');
           return;
         }
       }
@@ -324,6 +391,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             projectId: widget.projectId,
             name: f.name,
             type: (f.extension ?? '').toLowerCase(),
+            category: _getCategoryFromExtension(f.extension ?? ''),
             sizeBytes: f.size,
             storageType: 'local',
             localPath: localPath,
@@ -368,30 +436,13 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
 
       if (!mounted) return;
       if (failCount > 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ 成功上傳 $successCount 個檔案\n❌ $failCount 個檔案上傳失敗'),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        ToastUtils.warning(context, '✅ 成功上傳 $successCount 個檔案\n❌ $failCount 個檔案上傳失敗');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ 成功上傳 $successCount 個檔案到本地儲存'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        ToastUtils.success(context, '✅ 成功上傳 $successCount 個檔案到本地儲存');
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('上傳失敗: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      ToastUtils.error(context, '上傳失敗: $e');
     }
   }
 
@@ -503,12 +554,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('預覽失敗: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      ToastUtils.error(context, '預覽失敗: $e');
     }
   }
 
@@ -662,12 +708,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       }
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('無法開啟檔案: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      ToastUtils.error(context, '無法開啟檔案: $e');
     }
   }
 
@@ -865,20 +906,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         }
 
         if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ 檔案已刪除'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        ToastUtils.success(context, '✅ 檔案已刪除');
       } catch (e) {
         if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('刪除失敗: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        ToastUtils.error(context, '刪除失敗: $e');
       }
     }
   }
@@ -969,6 +1000,99 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     );
   }
 
+  // 分類篩選器
+  Widget _buildCategoryFilter(List<FileModel> files) {
+    final categories = {
+      'all': {'label': '全部', 'icon': Icons.apps_rounded, 'color': Colors.white},
+      'document': {'label': '文件', 'icon': Icons.description_rounded, 'color': Colors.blue},
+      'image': {'label': '圖片', 'icon': Icons.image_rounded, 'color': Colors.green},
+      'video': {'label': '影片', 'icon': Icons.video_file_rounded, 'color': Colors.purple},
+      'audio': {'label': '音訊', 'icon': Icons.audio_file_rounded, 'color': Colors.orange},
+      'other': {'label': '其他', 'icon': Icons.insert_drive_file_rounded, 'color': Colors.grey},
+    };
+
+    // 計算每個分類的數量
+    final counts = {
+      'all': files.length,
+      'document': files.where((f) => f.category == 'document').length,
+      'image': files.where((f) => f.category == 'image').length,
+      'video': files.where((f) => f.category == 'video').length,
+      'audio': files.where((f) => f.category == 'audio').length,
+      'other': files.where((f) => f.category == 'other').length,
+    };
+
+    return SingleChildScrollView(
+      key: const PageStorageKey('category_filter_scroll'),
+      controller: _categoryScrollController,
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: categories.entries.map((entry) {
+          final isSelected = _selectedCategory == entry.key;
+          final count = counts[entry.key] ?? 0;
+          final categoryData = entry.value;
+          
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              selected: isSelected,
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    categoryData['icon'] as IconData,
+                    size: 16,
+                    color: isSelected ? Colors.white : (categoryData['color'] as Color).withValues(alpha: 0.7),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${categoryData['label']}',
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.7),
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isSelected 
+                          ? Colors.white.withValues(alpha: 0.2)
+                          : Colors.white.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '$count',
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.6),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              onSelected: (_) {
+                setState(() {
+                  _selectedCategory = entry.key;
+                });
+              },
+              backgroundColor: Colors.white.withValues(alpha: 0.05),
+              selectedColor: (categoryData['color'] as Color).withValues(alpha: 0.25),
+              checkmarkColor: Colors.white,
+              side: BorderSide(
+                color: isSelected
+                    ? (categoryData['color'] as Color).withValues(alpha: 0.5)
+                    : Colors.white.withValues(alpha: 0.1),
+                width: 1.5,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   Widget _buildStatItem(String label, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -1012,24 +1136,25 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   Widget _buildFileCard(BuildContext context, FileModel file) {
     final isCloud = file.storageType == 'cloud';
     
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
+    return RepaintBoundary(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(16),
-          onTap: () => _previewFile(context, file),
-          onLongPress: () => _showFileOptions(context, file),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                // 檔案圖示
-                Container(
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => _previewFile(context, file),
+            onLongPress: () => _showFileOptions(context, file),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // 檔案圖示
+                  Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: _getFileColor(file.type).withValues(alpha: 0.15),
@@ -1064,6 +1189,31 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
+                          // 分類標籤
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: _getCategoryColor(file.category).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: _getCategoryColor(file.category).withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Text(
+                              _getCategoryLabel(file.category),
+                              style: TextStyle(
+                                color: _getCategoryColor(file.category),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            ' · ',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.4),
+                            ),
+                          ),
                           Text(
                             file.type.toUpperCase(),
                             style: TextStyle(
@@ -1120,6 +1270,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 
@@ -1176,6 +1327,38 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         return Colors.amber;
       default:
         return Colors.blueGrey;
+    }
+  }
+
+  // 獲取分類標籤
+  String _getCategoryLabel(String category) {
+    switch (category) {
+      case 'document':
+        return '文件';
+      case 'image':
+        return '圖片';
+      case 'video':
+        return '影片';
+      case 'audio':
+        return '音訊';
+      default:
+        return '其他';
+    }
+  }
+
+  // 獲取分類顏色
+  Color _getCategoryColor(String category) {
+    switch (category) {
+      case 'document':
+        return Colors.blue;
+      case 'image':
+        return Colors.green;
+      case 'video':
+        return Colors.purple;
+      case 'audio':
+        return Colors.orange;
+      default:
+        return Colors.grey;
     }
   }
 
@@ -1282,17 +1465,18 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     try {
       final files = await projectService.watchFiles(widget.projectId).first;
 
-      // 支援更多文件類型：PDF, TXT, 圖片
+      // 支援更多文件類型：PDF, DOCX, TXT, 圖片
       final extractableFiles = files.where((f) {
         final type = f.type.toLowerCase();
-        return ['pdf', 'txt', 'jpg', 'jpeg', 'png', 'bmp', 'gif'].contains(type) &&
+        return ['pdf', 'docx', 'txt', 'jpg', 'jpeg', 'png', 'bmp', 'gif'].contains(type) &&
                (f.extractionStatus != 'extracted');
       }).toList();
 
       if (extractableFiles.isEmpty) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('沒有可提取文字的文件\n支援格式：PDF, TXT, JPG, PNG')),
+        ToastUtils.info(
+          context,
+          '沒有可提取文字的文件\n支援格式：PDF, DOCX, TXT, JPG, PNG',
         );
         return;
       }
@@ -1301,8 +1485,41 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(color: Colors.white),
+        builder: (context) => WillPopScope(
+          onWillPop: () async => false,
+          child: Dialog(
+            backgroundColor: const Color(0xFF1A1A1A),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(color: Colors.blue),
+                  const SizedBox(height: 24),
+                  const Text(
+                    '正在提取文字...',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '正在從文件中提取文字內容\n請稍候片刻',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       );
 
@@ -1355,15 +1572,17 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
 
       if (!mounted) return;
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '提取完成：成功 $successCount 個，失敗 $failCount 個',
-          ),
-          backgroundColor: failCount == 0 ? Colors.green : Colors.orange,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+      if (failCount == 0) {
+        ToastUtils.success(
+          context,
+          '提取完成：成功 $successCount 個',
+        );
+      } else {
+        ToastUtils.warning(
+          context,
+          '提取完成：成功 $successCount 個，失敗 $failCount 個',
+        );
+      }
     } catch (e) {
       print('提取文字過程發生錯誤: $e');
       
@@ -1378,12 +1597,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       
       if (!mounted) return;
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('提取文字時發生錯誤: $e'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 5),
-        ),
+      ToastUtils.error(
+        context,
+        '提取文字時發生錯誤: $e',
       );
     }
   }
@@ -1410,5 +1626,29 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         builder: (_) => QuestionsScreen(projectId: widget.projectId),
       ),
     );
+  }
+}
+
+// 分類篩選器固定 Header Delegate
+class _CategoryFilterDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+
+  _CategoryFilterDelegate({required this.child});
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return child;
+  }
+
+  @override
+  double get maxExtent => 56.0; // 高度
+
+  @override
+  double get minExtent => 56.0; // 高度
+
+  @override
+  bool shouldRebuild(covariant _CategoryFilterDelegate oldDelegate) {
+    // 只有當 child 真的改變時才重建
+    return child != oldDelegate.child;
   }
 }

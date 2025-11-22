@@ -5,6 +5,7 @@ import 'upgrade_screen.dart';
 import '../services/subscription_service.dart';
 import '../services/api_key_service.dart';
 import '../models/subscription.dart';
+import '../utils/toast_utils.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -207,7 +208,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onPressed: () async {
                   await SubscriptionService().setTestPlan(userId: userId, plan: _pendingPlan);
                   if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Plan updated (test)')));
+                  ToastUtils.success(context, 'Plan updated (test)');
                   setState(() {});
                 },
                 child: const Text('Apply'),
@@ -331,11 +332,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 await user?.updateDisplayName(controller.text.trim());
                 if (context.mounted) Navigator.of(context).pop();
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Name updated')));
+                  ToastUtils.success(context, 'Name updated');
                 }
               } catch (e) {
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
+                ToastUtils.error(context, 'Failed: $e');
               }
             },
             child: const Text('Save'),
@@ -347,7 +348,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _changeAvatar(BuildContext context) async {
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Avatar change will be available soon')));
+    ToastUtils.info(context, 'Avatar change will be available soon');
   }
 
   Future<void> _manageGeminiApiKey(BuildContext context) async {
@@ -430,19 +431,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               if (apiKey.isEmpty) {
                 await apiKeyService.clearGeminiApiKey();
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('API 金鑰已清除')),
-                  );
+                  ToastUtils.info(context, 'API 金鑰已清除');
                 }
               } else {
                 await apiKeyService.setGeminiApiKey(apiKey);
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('✅ API 金鑰已保存'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
+                  ToastUtils.success(context, '✅ API 金鑰已保存');
                 }
               }
               if (context.mounted) Navigator.of(context).pop();

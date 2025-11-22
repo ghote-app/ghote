@@ -47,6 +47,7 @@ class GeminiService {
     required List<Content> history,
     String? systemInstruction,
     String? modelName,
+    List<DataPart>? imageParts,
   }) async* {
     try {
       final model = await _getModel(
@@ -57,8 +58,14 @@ class GeminiService {
       // 創建聊天會話
       final chat = model.startChat(history: history);
 
+      // 構建內容（文字 + 圖片）
+      final List<Part> parts = [TextPart(prompt)];
+      if (imageParts != null && imageParts.isNotEmpty) {
+        parts.addAll(imageParts);
+      }
+
       final response = chat.sendMessageStream(
-        Content.text(prompt),
+        Content.multi(parts),
       );
 
       await for (final chunk in response) {
