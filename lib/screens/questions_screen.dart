@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/question.dart';
 import '../services/question_service.dart';
+import '../utils/toast_utils.dart';
 
 class QuestionsScreen extends StatefulWidget {
   final String projectId;
@@ -130,28 +131,16 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
       if (!mounted) return;
       Navigator.of(context).pop();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('✓ 成功生成 ${questions.length} 個$typeLabel'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
+      ToastUtils.success(
+        context,
+        '✓ 成功生成 ${questions.length} 個$typeLabel',
       );
     } catch (e) {
       if (!mounted) return;
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('✗ 生成失敗: $e'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
+      ToastUtils.error(
+        context,
+        '✗ 生成失敗: $e',
       );
     }
   }
@@ -167,21 +156,15 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
     try {
       await _questionService.deleteQuestion(widget.projectId, questionId);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✓ 題目已刪除'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
+      ToastUtils.success(
+        context,
+        '✓ 題目已刪除',
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('✗ 刪除失敗: $e'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
+      ToastUtils.error(
+        context,
+        '✗ 刪除失敗: $e',
       );
     }
   }
@@ -225,21 +208,15 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
           await _questionService.deleteQuestion(widget.projectId, question.id);
         }
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✓ 已刪除 ${questions.length} 個題目'),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-          ),
+        ToastUtils.success(
+          context,
+          '✓ 已刪除 ${questions.length} 個題目',
         );
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✗ 刪除失敗: $e'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
+        ToastUtils.error(
+          context,
+          '✗ 刪除失敗: $e',
         );
       }
     }
@@ -537,12 +514,9 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                 onPressed: () {
                   final answer = _textControllers[question.id]?.text ?? '';
                   if (answer.trim().isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('請輸入答案'),
-                        backgroundColor: Colors.orange,
-                        behavior: SnackBarBehavior.floating,
-                      ),
+                    ToastUtils.warning(
+                      context,
+                      '請輸入答案',
                     );
                     return;
                   }

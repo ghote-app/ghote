@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/flashcard.dart';
 import '../services/flashcard_service.dart';
+import '../utils/toast_utils.dart';
 
 class FlashcardsScreen extends StatefulWidget {
   final String projectId;
@@ -136,28 +137,16 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
         _isFlipped = false;
       });
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('✓ 成功生成 ${flashcards.length} 個抽認卡'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
+      ToastUtils.success(
+        context,
+        '✓ 成功生成 ${flashcards.length} 個抽認卡',
       );
     } catch (e) {
       if (!mounted) return;
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('✗ 生成失敗: $e'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
+      ToastUtils.error(
+        context,
+        '✗ 生成失敗: $e',
       );
     }
   }
@@ -178,21 +167,15 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
       });
       
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✓ 抽認卡已刪除'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
+      ToastUtils.success(
+        context,
+        '✓ 抽認卡已刪除',
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('✗ 刪除失敗: $e'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
+      ToastUtils.error(
+        context,
+        '✗ 刪除失敗: $e',
       );
     }
   }
@@ -242,21 +225,15 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
         });
         
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✓ 已刪除 ${flashcards.length} 張抽認卡'),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-          ),
+        ToastUtils.success(
+          context,
+          '✓ 已刪除 ${flashcards.length} 張抽認卡',
         );
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✗ 刪除失敗: $e'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
+        ToastUtils.error(
+          context,
+          '✗ 刪除失敗: $e',
         );
       }
     }
@@ -305,8 +282,9 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('更新失敗: $e')),
+      ToastUtils.error(
+        context,
+        '更新失敗: $e',
       );
     }
   }

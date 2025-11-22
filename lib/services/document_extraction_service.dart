@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart' as syncfusion_pdf;
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:docx_to_text/docx_to_text.dart';
 
 import '../models/file_model.dart';
 import 'storage_service.dart';
@@ -53,7 +54,15 @@ class DocumentExtractionService {
       final result = extractedText.toString().trim();
       
       if (result.isEmpty) {
-        throw Exception('PDF 中沒有找到可提取的文字。此 PDF 可能是掃描版本，需要 OCR 處理。');
+        throw Exception(
+          'PDF 中沒有找到可提取的文字。\n\n'
+          '可能原因：\n'
+          '1. 這是掃描版 PDF（圖片型）\n'
+          '2. PDF 包含大量圖表或圖片\n\n'
+          '解決方案：\n'
+          '• 在 AI 聊天時，可直接將 PDF 檔案中的圖片上傳並詢問 AI\n'
+          '• 或使用 OCR 工具將 PDF 轉換為可編輯文字'
+        );
       }
       
       return result;
@@ -174,6 +183,59 @@ class DocumentExtractionService {
     }
   }
 
+  /// 提取 DOCX 文件的文字內容
+  Future<String> extractDocxText(FileModel file) async {
+    File? tempFile;
+    
+    try {
+      final storage = const StorageService();
+      File docxFile;
+
+      // 獲取 DOCX 文件
+      if (file.storageType == 'local' && file.localPath != null) {
+        docxFile = File(file.localPath!);
+        if (!await docxFile.exists()) {
+          throw Exception('DOCX 檔案不存在');
+        }
+      } else if (file.storageType == 'cloud' && file.downloadUrl != null) {
+        // 下載雲端文件到臨時文件
+        final bytes = await storage.getFileContent(file);
+        final tempDir = await getTemporaryDirectory();
+        final tempPath = '${tempDir.path}/temp_${DateTime.now().millisecondsSinceEpoch}.docx';
+        docxFile = File(tempPath);
+        await docxFile.writeAsBytes(bytes);
+        tempFile = docxFile; // 記錄臨時文件以便清理
+      } else {
+        throw Exception('無法讀取 DOCX 檔案');
+      }
+
+      // 讀取 DOCX 文件內容
+      final bytes = await docxFile.readAsBytes();
+      
+      // 使用 docx_to_text 提取文字
+      final text = docxToText(bytes);
+      
+      if (text.trim().isEmpty) {
+        throw Exception('DOCX 文件中沒有找到可提取的文字');
+      }
+      
+      return text.trim();
+    } catch (e) {
+      throw Exception('DOCX 文字提取失敗: $e');
+    } finally {
+      // 清理臨時文件
+      if (tempFile != null) {
+        try {
+          if (await tempFile.exists()) {
+            await tempFile.delete();
+          }
+        } catch (e) {
+          print('刪除臨時 DOCX 文件失敗: $e');
+        }
+      }
+    }
+  }
+
   /// 使用 OCR 提取掃描版 PDF 中的文字
   Future<String> extractScannedPdfText(FileModel file) async {
     try {
@@ -206,15 +268,17 @@ class DocumentExtractionService {
       case 'gif':
         return await extractImageText(file);
       case 'docx':
+        return await extractDocxText(file);
       case 'doc':
         throw Exception(
-          'Word 文件處理暫不支援。\n'
+          'DOC 格式（舊版 Word）暫不支援。\n'
           '建議：\n'
-          '1. 將 Word 文件另存為 PDF\n'
-          '2. 或複製內容到 TXT 文件後上傳'
+          '1. 將 DOC 文件另存為 DOCX 格式\n'
+          '2. 或將 Word 文件另存為 PDF\n'
+          '3. 或複製內容到 TXT 文件後上傳'
         );
       default:
-        throw Exception('不支援的文件類型: $fileType\n支援格式：PDF, TXT, JPG, PNG');
+        throw Exception('不支援的文件類型: $fileType\n支援格式：PDF, DOCX, TXT, JPG, PNG');
     }
   }
 

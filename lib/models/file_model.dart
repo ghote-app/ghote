@@ -6,6 +6,7 @@ class FileModel {
   final String projectId;
   final String name;
   final String type; // 'pdf', 'png', 'txt', 'docx', etc.
+  final String category; // 'document', 'image', 'video', 'audio', 'other'
   final int sizeBytes;
   final String storageType; // 'local' | 'cloud'
   final String? localPath;
@@ -22,6 +23,7 @@ class FileModel {
     required this.projectId,
     required this.name,
     required this.type,
+    required this.category,
     required this.sizeBytes,
     required this.storageType,
     required this.localPath,
@@ -51,6 +53,7 @@ class FileModel {
     String? projectId,
     String? name,
     String? type,
+    String? category,
     int? sizeBytes,
     String? storageType,
     String? localPath,
@@ -67,6 +70,7 @@ class FileModel {
       projectId: projectId ?? this.projectId,
       name: name ?? this.name,
       type: type ?? this.type,
+      category: category ?? this.category,
       sizeBytes: sizeBytes ?? this.sizeBytes,
       storageType: storageType ?? this.storageType,
       localPath: localPath ?? this.localPath,
@@ -86,6 +90,7 @@ class FileModel {
       'projectId': projectId,
       'name': name,
       'type': type,
+      'category': category,
       'sizeBytes': sizeBytes,
       'storageType': storageType,
       'localPath': localPath,
@@ -99,12 +104,39 @@ class FileModel {
     };
   }
 
+  static String _getCategoryFromType(String type) {
+    final ext = type.toLowerCase();
+    
+    // Document types
+    if (['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt', 'xls', 'xlsx', 'ppt', 'pptx', 'csv'].contains(ext)) {
+      return 'document';
+    }
+    
+    // Image types
+    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp', 'ico', 'tiff', 'heic'].contains(ext)) {
+      return 'image';
+    }
+    
+    // Video types
+    if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm', 'm4v', '3gp'].contains(ext)) {
+      return 'video';
+    }
+    
+    // Audio types
+    if (['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma'].contains(ext)) {
+      return 'audio';
+    }
+    
+    return 'other';
+  }
+
   factory FileModel.fromJson(Map<String, dynamic> json) {
     return FileModel(
       id: json['id'] as String,
       projectId: json['projectId'] as String,
       name: json['name'] as String,
       type: json['type'] as String,
+      category: json['category'] as String? ?? _getCategoryFromType(json['type'] as String),
       sizeBytes: (json['sizeBytes'] as num).toInt(),
       storageType: json['storageType'] as String,
       localPath: json['localPath'] as String?,

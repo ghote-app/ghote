@@ -7,6 +7,7 @@ import '../utils/responsive.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../utils/toast_utils.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, required this.onLogin});
@@ -78,8 +79,9 @@ class _LoginScreenState extends State<LoginScreen>
     } on FirebaseAuthException catch (e) {
       // 這裡可以顯示錯誤訊息給使用者
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('登入失敗：${e.message}')),
+        ToastUtils.error(
+          context,
+          '登入失敗：${e.message}',
         );
       }
     } finally {
@@ -103,14 +105,16 @@ class _LoginScreenState extends State<LoginScreen>
       final user = userCredential.user;
       if (user != null && mounted) {
         widget.onLogin(user.displayName ?? user.email ?? '', user.email ?? '');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('註冊成功，已自動登入')),
+        ToastUtils.success(
+          context,
+          '註冊成功，已自動登入',
         );
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('註冊失敗：${e.message}')),
+        ToastUtils.error(
+          context,
+          '註冊失敗：${e.message}',
         );
       }
     } finally {
@@ -157,14 +161,16 @@ class _LoginScreenState extends State<LoginScreen>
       
       if (user != null && mounted) {
         widget.onLogin(user.displayName ?? user.email ?? '', user.email ?? '');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Google 登入成功')),
+        ToastUtils.success(
+          context,
+          'Google 登入成功',
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Google 登入失敗：$e')),
+        ToastUtils.error(
+          context,
+          'Google 登入失敗：$e',
         );
       }
     } finally {
@@ -243,8 +249,9 @@ class _LoginScreenState extends State<LoginScreen>
     if (result == true && mounted) {
       final email = emailController.text.trim();
       if (email.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter your email address')),
+        ToastUtils.warning(
+          context,
+          'Please enter your email address',
         );
         return;
       }
@@ -252,12 +259,9 @@ class _LoginScreenState extends State<LoginScreen>
       try {
         await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Password reset email sent to $email'),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 4),
-            ),
+          ToastUtils.success(
+            context,
+            'Password reset email sent to $email',
           );
         }
       } on FirebaseAuthException catch (e) {
@@ -268,8 +272,9 @@ class _LoginScreenState extends State<LoginScreen>
           } else if (e.code == 'invalid-email') {
             message = 'Invalid email address';
           }
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(message), backgroundColor: Colors.red),
+          ToastUtils.error(
+            context,
+            message,
           );
         }
       }
