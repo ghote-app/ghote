@@ -9,16 +9,54 @@ class GeminiService {
 
   GeminiService({String? apiKey}) : _apiKey = apiKey;
 
+  /// 將技術性錯誤轉換為用戶友好的中文訊息
+  String _formatErrorMessage(dynamic error) {
+    final errorStr = error.toString().toLowerCase();
+    
+    // 模型過載
+    if (errorStr.contains('overloaded') || errorStr.contains('503') || errorStr.contains('service unavailable')) {
+      return 'AI 服務繁忙中，請稍後再試';
+    }
+    
+    // 配額超限
+    if (errorStr.contains('quota') || errorStr.contains('rate limit') || errorStr.contains('429')) {
+      return 'API 使用次數已達上限，請稍後再試';
+    }
+    
+    // API 金鑰問題
+    if (errorStr.contains('api key') || errorStr.contains('invalid key') || errorStr.contains('401') || errorStr.contains('unauthorized')) {
+      return 'API 金鑰無效，請檢查設定';
+    }
+    
+    // 網路問題
+    if (errorStr.contains('network') || errorStr.contains('connection') || errorStr.contains('timeout') || errorStr.contains('socketexception')) {
+      return '網路連線失敗，請檢查網路狀態';
+    }
+    
+    // 內容過長
+    if (errorStr.contains('too long') || errorStr.contains('token') || errorStr.contains('context length')) {
+      return '內容過長，請嘗試減少文字量';
+    }
+    
+    // 安全過濾
+    if (errorStr.contains('safety') || errorStr.contains('blocked') || errorStr.contains('harmful')) {
+      return '內容被安全過濾，請調整輸入內容';
+    }
+    
+    // 其他錯誤
+    return 'AI 生成失敗，請稍後再試';
+  }
+
   Future<String?> _getApiKey() async {
-    // 優先使用傳入的 API 金鑰
+    // 優先使用構造函數傳入的 API 金鑰
     if (_apiKey != null) return _apiKey;
     
-    // 其次從環境變數讀取
-    final envKey = dotenv.env['GEMINI_API_KEY'];
-    if (envKey != null && envKey.isNotEmpty) return envKey;
+    // 其次從 SharedPreferences 讀取（用戶設置優先）
+    final userKey = await _apiKeyService.getGeminiApiKey();
+    if (userKey != null && userKey.isNotEmpty) return userKey;
     
-    // 最後從 SharedPreferences 讀取（用戶設置）
-    return await _apiKeyService.getGeminiApiKey();
+    // 最後從環境變數讀取（作為備用）
+    return dotenv.env['GEMINI_API_KEY'];
   }
 
   /// 獲取 Gemini 模型實例
@@ -31,7 +69,7 @@ class GeminiService {
       throw Exception('Gemini API 金鑰未設置，請在設置中配置');
     }
 
-    final model = modelName ?? 'gemini-2.0-flash';
+    final model = modelName ?? 'gemini-2.5-flash-lite';
     return GenerativeModel(
       model: model,
       apiKey: apiKey,
@@ -74,7 +112,7 @@ class GeminiService {
         }
       }
     } catch (e) {
-      throw Exception('Gemini API 錯誤: $e');
+      throw Exception(_formatErrorMessage(e));
     }
   }
 
@@ -107,7 +145,7 @@ class GeminiService {
 
       return response.text ?? '';
     } catch (e) {
-      throw Exception('Gemini API 錯誤: $e');
+      throw Exception(_formatErrorMessage(e));
     }
   }
 
@@ -138,7 +176,7 @@ $content
       // 暫時返回空列表，實際實現時需要解析 JSON
       return [];
     } catch (e) {
-      throw Exception('生成抽認卡失敗: $e');
+      throw Exception(_formatErrorMessage(e));
     }
   }
 
@@ -186,7 +224,7 @@ ${questionType == 'mcq'
       // 暫時返回空列表，實際實現時需要解析 JSON
       return [];
     } catch (e) {
-      throw Exception('生成問題失敗: $e');
+      throw Exception(_formatErrorMessage(e));
     }
   }
 }

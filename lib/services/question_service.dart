@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/question.dart';
-import '../models/file_model.dart';
 import '../services/gemini_service.dart';
 import '../services/project_service.dart';
+import '../utils/error_utils.dart';
 
 class QuestionService {
   final GeminiService _geminiService;
@@ -28,73 +28,104 @@ class QuestionService {
   Future<List<Question>> generateQuestions({
     required String projectId,
     String? fileId,
-    String questionType = 'mcq', // 'mcq' | 'open-ended'
+    String questionType = 'mcq-single', // 'mcq-single' | 'mcq-multiple' | 'open-ended'
     int count = 5,
+    String language = 'zh', // 'zh' | 'en'
   }) async {
     try {
-      // 獲取文件內容
+      // 獲取目前存在的文件（確保使用最新資料，避免使用已刪除文件）
+      final files = await _projectService.watchFiles(projectId).first;
+      
       String content;
       if (fileId != null) {
-        final files = await _projectService.watchFiles(projectId).first;
-        final file = files.firstWhere((f) => f.id == fileId);
+        // 檢查指定文件是否仍然存在
+        final file = files.where((f) => f.id == fileId).firstOrNull;
+        if (file == null) {
+          throw Exception('文件不存在或已被刪除');
+        }
         content = file.extractedText ?? '';
         if (content.isEmpty) {
           throw Exception('文件尚未提取文字，請先提取文字');
         }
       } else {
-        // 從所有文件獲取內容
-        final files = await _projectService.watchFiles(projectId).first;
-        final StringBuffer buffer = StringBuffer();
-        for (final file in files) {
-          if (file.extractedText != null && file.extractedText!.isNotEmpty) {
-            buffer.writeln('--- ${file.name} ---');
-            buffer.writeln(file.extractedText);
-            buffer.writeln('');
-          }
-        }
-        content = buffer.toString();
-        if (content.isEmpty) {
+        // 從所有「目前存在且已提取文字」的文件獲取內容
+        final validFiles = files.where((f) => 
+          f.extractedText != null && 
+          f.extractedText!.isNotEmpty &&
+          f.extractionStatus == 'extracted'
+        ).toList();
+        
+        if (validFiles.isEmpty) {
           throw Exception('專案中沒有已提取文字的文件');
         }
+        
+        final StringBuffer buffer = StringBuffer();
+        for (final file in validFiles) {
+          buffer.writeln('--- ${file.name} ---');
+          buffer.writeln(file.extractedText);
+          buffer.writeln('');
+        }
+        content = buffer.toString();
       }
 
       // 調用 Gemini API 生成問題
-      final typeText = questionType == 'mcq' ? '選擇題' : '開放式問題';
+      final languageInstruction = language == 'en'
+          ? 'Generate questions in English.'
+          : '以繁體中文生成問題。';
+      
+      String typeText;
+      String requirementText;
+      String exampleFormat;
+      
+      // 向後兼容：將 'mcq' 視為 'mcq-single'
+      final normalizedType = questionType == 'mcq' ? 'mcq-single' : questionType;
+      
+      if (normalizedType == 'mcq-single') {
+        typeText = language == 'en' ? 'single-choice questions' : '單選題';
+        requirementText = language == 'en'
+            ? 'Each question should include: question, 4 options (A/B/C/D), one correct answer, explanation, and difficulty (easy/medium/hard).'
+            : '每個單選題應包含：問題、4個選項（A/B/C/D）、一個正確答案、解釋、難度（easy/medium/hard）。';
+        exampleFormat = language == 'en'
+            ? '''[\n  {\n    "question": "Question 1",\n    "options": ["Option A", "Option B", "Option C", "Option D"],\n    "correctAnswer": "Option A",\n    "explanation": "Explanation",\n    "difficulty": "medium"\n  }\n]'''
+            : '''[\n  {\n    "question": "問題1",\n    "options": ["選項A", "選項B", "選項C", "選項D"],\n    "correctAnswer": "選項A",\n    "explanation": "解釋",\n    "difficulty": "medium"\n  }\n]''';
+      } else if (normalizedType == 'mcq-multiple') {
+        typeText = language == 'en' ? 'multiple-choice questions (select all that apply)' : '多選題';
+        requirementText = language == 'en'
+            ? 'Each question should include: question, 4-5 options (A/B/C/D/E), multiple correct answers (2-3), explanation, and difficulty (easy/medium/hard).'
+            : '每個多選題應包含：問題、4-5個選項（A/B/C/D/E）、多個正確答案（2-3個）、解釋、難度（easy/medium/hard）。';
+        exampleFormat = language == 'en'
+            ? '''[\n  {\n    "question": "Which of the following are correct? (Select all that apply)",\n    "options": ["Option A", "Option B", "Option C", "Option D"],\n    "correctAnswers": ["Option A", "Option C"],\n    "explanation": "Explanation",\n    "difficulty": "medium"\n  }\n]'''
+            : '''[\n  {\n    "question": "以下哪些是正確的？（可多選）",\n    "options": ["選項A", "選項B", "選項C", "選項D"],\n    "correctAnswers": ["選項A", "選項C"],\n    "explanation": "解釋",\n    "difficulty": "medium"\n  }\n]''';
+      } else {
+        typeText = language == 'en' ? 'open-ended questions' : '開放式問答題';
+        requirementText = language == 'en'
+            ? 'Each question should include: question, reference answer, keywords (3-5 key terms), explanation, and difficulty (easy/medium/hard).'
+            : '每個開放式問題應包含：問題、參考答案、關鍵字（3-5個）、解釋、難度（easy/medium/hard）。';
+        exampleFormat = language == 'en'
+            ? '''[\n  {\n    "question": "Question 1",\n    "answer": "Reference answer 1",\n    "keywords": ["keyword1", "keyword2", "keyword3"],\n    "explanation": "Explanation",\n    "difficulty": "medium"\n  }\n]'''
+            : '''[\n  {\n    "question": "問題1",\n    "answer": "參考答案1",\n    "keywords": ["關鍵字1", "關鍵字2", "關鍵字3"],\n    "explanation": "解釋",\n    "difficulty": "medium"\n  }\n]''';
+      }
+      
       final prompt = '''
-基於以下內容，生成 $count 個$typeText。
+Based on the following content, generate $count $typeText.
 
-內容：
+$languageInstruction
+
+Content:
 $content
 
-${questionType == 'mcq' 
-  ? '每個選擇題應包含：問題、4個選項（A/B/C/D）、正確答案和解釋。' 
-  : '每個開放式問題應包含：問題、參考答案和解釋。'}
+$requirementText
 
-請以嚴格的 JSON 格式返回，格式如下：
-${questionType == 'mcq'
-  ? '''[
-  {
-    "question": "問題1",
-    "options": ["選項A", "選項B", "選項C", "選項D"],
-    "correctAnswer": "選項A",
-    "explanation": "解釋"
-  }
-]'''
-  : '''[
-  {
-    "question": "問題1",
-    "answer": "參考答案1",
-    "explanation": "解釋"
-  }
-]'''}
+Return in strict JSON format:
+$exampleFormat
 
-只返回 JSON 數組，不要包含任何其他文字、markdown 格式或解釋。
+Only return the JSON array, no other text, markdown formatting, or explanations.
 ''';
 
       final response = await _geminiService.generateText(prompt: prompt);
       
       // 解析 JSON 響應
-      final questions = _parseQuestionsJson(response, projectId, fileId, questionType);
+      final questions = _parseQuestionsJson(response, projectId, fileId, normalizedType);
       
       // 保存到 Firestore
       for (final question in questions) {
@@ -103,7 +134,7 @@ ${questionType == 'mcq'
 
       return questions;
     } catch (e) {
-      throw Exception('生成問題失敗: $e');
+      throw Exception(ErrorUtils.formatAiError(e));
     }
   }
 
@@ -134,22 +165,53 @@ ${questionType == 'mcq'
       return jsonList.asMap().entries.map((entry) {
         final index = entry.key;
         final item = entry.value as Map<String, dynamic>;
+        final difficulty = item['difficulty'] as String? ?? 'medium';
         
-        if (questionType == 'mcq') {
+        if (questionType == 'mcq-single' || questionType == 'mcq') {
           return Question(
-            id: 'q_mcq_${now.microsecondsSinceEpoch}_$index',
+            id: 'q_mcq_s_${now.microsecondsSinceEpoch}_$index',
             projectId: projectId,
             fileId: fileId,
             questionText: item['question'] as String? ?? '',
-            questionType: 'mcq',
+            questionType: 'mcq-single',
             options: item['options'] != null
                 ? (item['options'] as List).map((e) => e.toString()).toList()
                 : null,
             correctAnswer: item['correctAnswer'] as String?,
             explanation: item['explanation'] as String?,
+            difficulty: difficulty,
+            createdAt: now,
+          );
+        } else if (questionType == 'mcq-multiple') {
+          // 處理多選題的正確答案
+          List<String>? correctAnswers;
+          if (item['correctAnswers'] != null) {
+            correctAnswers = (item['correctAnswers'] as List)
+                .map((e) => e.toString())
+                .toList();
+          }
+          return Question(
+            id: 'q_mcq_m_${now.microsecondsSinceEpoch}_$index',
+            projectId: projectId,
+            fileId: fileId,
+            questionText: item['question'] as String? ?? '',
+            questionType: 'mcq-multiple',
+            options: item['options'] != null
+                ? (item['options'] as List).map((e) => e.toString()).toList()
+                : null,
+            correctAnswers: correctAnswers,
+            explanation: item['explanation'] as String?,
+            difficulty: difficulty,
             createdAt: now,
           );
         } else {
+          // 開放式問題
+          List<String>? keywords;
+          if (item['keywords'] != null) {
+            keywords = (item['keywords'] as List)
+                .map((e) => e.toString())
+                .toList();
+          }
           return Question(
             id: 'q_open_${now.microsecondsSinceEpoch}_$index',
             projectId: projectId,
@@ -158,6 +220,8 @@ ${questionType == 'mcq'
             questionType: 'open-ended',
             correctAnswer: item['answer'] as String?,
             explanation: item['explanation'] as String?,
+            keywords: keywords,
+            difficulty: difficulty,
             createdAt: now,
           );
         }
@@ -183,6 +247,26 @@ ${questionType == 'mcq'
       await _questionsCol(projectId).doc(questionId).delete();
     } catch (e) {
       throw Exception('刪除問題失敗: $e');
+    }
+  }
+
+  /// 刪除與特定文件關聯的所有問題
+  Future<int> deleteQuestionsByFileId(String projectId, String fileId) async {
+    try {
+      final snapshot = await _questionsCol(projectId)
+          .where('fileId', isEqualTo: fileId)
+          .get();
+      
+      if (snapshot.docs.isEmpty) return 0;
+      
+      final batch = FirebaseFirestore.instance.batch();
+      for (final doc in snapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+      return snapshot.docs.length;
+    } catch (e) {
+      throw Exception('刪除文件相關問題失敗: $e');
     }
   }
 }

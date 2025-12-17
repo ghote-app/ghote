@@ -3,7 +3,7 @@ import '../models/subscription.dart';
 /// AiProviderService selects the underlying AI model/provider
 /// based on the user's subscription plan and available keys.
 ///
-/// free/plus -> Gemini Flash 2.5 (free model)
+/// free/plus -> Gemini Flash 2.0 Lite (free model)
 /// pro       -> OpenAI or Claude (prefer OpenAI if token is set)
 class AiProviderService {
   const AiProviderService({
@@ -41,7 +41,7 @@ class AiProviderService {
       case 'gemini':
       default:
         // Free tier model
-        return 'gemini-2.5-flash';
+        return 'gemini-2.5-flash-lite';
     }
   }
 }

@@ -11,6 +11,7 @@ class Project {
   final DateTime lastUpdatedAt;
   final String status; // 'Active', 'Completed', 'Archived'
   final String? category;
+  final String? colorTag; // Color tag for visual distinction (hex color string)
 
   const Project({
     required this.id,
@@ -22,6 +23,7 @@ class Project {
     required this.lastUpdatedAt,
     required this.status,
     required this.category,
+    this.colorTag,
   });
 
   Project copyWith({
@@ -34,6 +36,7 @@ class Project {
     DateTime? lastUpdatedAt,
     String? status,
     String? category,
+    String? colorTag,
   }) {
     return Project(
       id: id ?? this.id,
@@ -45,6 +48,7 @@ class Project {
       lastUpdatedAt: lastUpdatedAt ?? this.lastUpdatedAt,
       status: status ?? this.status,
       category: category ?? this.category,
+      colorTag: colorTag ?? this.colorTag,
     );
   }
 
@@ -59,6 +63,7 @@ class Project {
       'lastUpdatedAt': lastUpdatedAt.toIso8601String(),
       'status': status,
       'category': category,
+      'colorTag': colorTag,
     };
   }
 
@@ -76,8 +81,8 @@ class Project {
       lastUpdatedAt: DateTime.parse(json['lastUpdatedAt'] as String),
       status: json['status'] as String,
       category: json['category'] as String?,
+      colorTag: json['colorTag'] as String?,
     );
   }
 }
-
 

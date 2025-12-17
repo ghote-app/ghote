@@ -353,7 +353,7 @@ class DocumentExtractionService {
   Future<void> updateExtractionStatus(
     String fileId,
     String projectId,
-    String status, // 'pending' | 'extracted' | 'failed'
+    String status, // 'pending' | 'processing' | 'extracted' | 'failed'
   ) async {
     try {
       await FirebaseFirestore.instance

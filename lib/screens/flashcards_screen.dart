@@ -41,45 +41,87 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
   }
 
   Future<void> _showGenerateConfirmation() async {
-    final confirmed = await showDialog<bool>(
+    String selectedLanguage = 'zh';
+    
+    final confirmed = await showDialog<String?>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: const Text(
-          '生成抽認卡',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: const Text(
-          '將使用 AI 根據您上傳的文件內容生成 10 張抽認卡。\n\n這可能需要一些時間，確定要繼續嗎？',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消', style: TextStyle(color: Colors.white54)),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
+          title: const Text(
+            '生成抽認卡',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '將使用 AI 根據您上傳的文件內容生成 10 張抽認卡。\n\n這可能需要一些時間，確定要繼續嗎？',
+                style: TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '生成語言：',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: RadioListTile<String>(
+                      value: 'zh',
+                      groupValue: selectedLanguage,
+                      onChanged: (value) => setState(() => selectedLanguage = value!),
+                      title: const Text('中文', style: TextStyle(color: Colors.white)),
+                      activeColor: Colors.blue,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  Expanded(
+                    child: RadioListTile<String>(
+                      value: 'en',
+                      groupValue: selectedLanguage,
+                      onChanged: (value) => setState(() => selectedLanguage = value!),
+                      title: const Text('English', style: TextStyle(color: Colors.white)),
+                      activeColor: Colors.blue,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(null),
+              child: const Text('取消', style: TextStyle(color: Colors.white54)),
             ),
-            child: const Text('開始生成'),
-          ),
-        ],
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(selectedLanguage),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('開始生成'),
+            ),
+          ],
+        ),
       ),
     );
 
-    if (confirmed == true) {
-      await _generateFlashcards();
+    if (confirmed != null) {
+      await _generateFlashcards(confirmed);
     }
   }
 
-  Future<void> _generateFlashcards() async {
+  Future<void> _generateFlashcards(String language) async {
     if (!mounted) return;
+    
+    final languageText = language == 'en' ? 'English' : '中文';
     
     // 顯示更詳細的生成中對話框
     showDialog(
@@ -109,7 +151,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '正在分析文件內容並生成學習卡片\n請稍候片刻',
+                  '正在分析文件內容並生成學習卡片 ($languageText)\n請稍候片刻',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.7),
@@ -127,6 +169,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
       final flashcards = await _flashcardService.generateFlashcards(
         projectId: widget.projectId,
         count: 10,
+        language: language,
       );
       if (!mounted) return;
       Navigator.of(context).pop();
@@ -147,7 +190,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
       Navigator.of(context).pop();
       ToastUtils.error(
         context,
-        '✗ 生成失敗: $e',
+        '${e.toString().replaceFirst('Exception: ', '')}',
       );
     }
   }

@@ -7,6 +7,7 @@ class Flashcard {
   final String question;
   final String answer;
   final String difficulty; // 'easy' | 'medium' | 'hard'
+  final List<String> tags; // 標籤
   final DateTime createdAt;
   final DateTime? lastReviewed;
   final int reviewCount;
@@ -20,12 +21,27 @@ class Flashcard {
     required this.question,
     required this.answer,
     this.difficulty = 'medium',
+    this.tags = const [],
     required this.createdAt,
     this.lastReviewed,
     this.reviewCount = 0,
     this.masteryLevel = 0.0,
     this.isFavorite = false,
   });
+
+  /// 難度對應的顯示文字
+  String get difficultyLabel {
+    switch (difficulty) {
+      case 'easy':
+        return '簡單';
+      case 'medium':
+        return '中等';
+      case 'hard':
+        return '困難';
+      default:
+        return '中等';
+    }
+  }
 
   Flashcard copyWith({
     String? id,
@@ -34,6 +50,7 @@ class Flashcard {
     String? question,
     String? answer,
     String? difficulty,
+    List<String>? tags,
     DateTime? createdAt,
     DateTime? lastReviewed,
     int? reviewCount,
@@ -47,6 +64,7 @@ class Flashcard {
       question: question ?? this.question,
       answer: answer ?? this.answer,
       difficulty: difficulty ?? this.difficulty,
+      tags: tags ?? this.tags,
       createdAt: createdAt ?? this.createdAt,
       lastReviewed: lastReviewed ?? this.lastReviewed,
       reviewCount: reviewCount ?? this.reviewCount,
@@ -63,6 +81,7 @@ class Flashcard {
       'question': question,
       'answer': answer,
       'difficulty': difficulty,
+      'tags': tags,
       'createdAt': createdAt.toIso8601String(),
       'lastReviewed': lastReviewed?.toIso8601String(),
       'reviewCount': reviewCount,
@@ -79,6 +98,9 @@ class Flashcard {
       question: json['question'] as String,
       answer: json['answer'] as String,
       difficulty: json['difficulty'] as String? ?? 'medium',
+      tags: json['tags'] != null
+          ? (json['tags'] as List).map((e) => e as String).toList()
+          : [],
       createdAt: DateTime.parse(json['createdAt'] as String),
       lastReviewed: json['lastReviewed'] != null
           ? DateTime.parse(json['lastReviewed'] as String)
