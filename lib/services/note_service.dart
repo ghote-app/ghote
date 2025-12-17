@@ -1,16 +1,16 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../models/flashcard.dart';
+import '../models/note.dart';
 import '../services/gemini_service.dart';
 import '../services/project_service.dart';
 import '../utils/error_utils.dart';
 
-class FlashcardService {
+class NoteService {
   final GeminiService _geminiService;
   final ProjectService _projectService;
 
-  FlashcardService({
+  NoteService({
     GeminiService? geminiService,
     ProjectService? projectService,
   })  : _geminiService = geminiService ?? GeminiService(),
@@ -18,17 +18,17 @@ class FlashcardService {
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  CollectionReference<Map<String, dynamic>> _flashcardsCol(String projectId) =>
+  CollectionReference<Map<String, dynamic>> _notesCol(String projectId) =>
       _firestore
           .collection('projects')
           .doc(projectId)
-          .collection('flashcards');
+          .collection('notes');
 
-  /// 從專案文件生成抽認卡
-  Future<List<Flashcard>> generateFlashcards({
+  /// 從專案文件生成重點筆記
+  Future<List<Note>> generateNotes({
     required String projectId,
     String? fileId,
-    int count = 10,
+    int count = 5,
     String language = 'zh', // 'zh' | 'en'
   }) async {
     try {
@@ -67,38 +67,42 @@ class FlashcardService {
         content = buffer.toString();
       }
 
-      // 調用 Gemini API 生成抽認卡
+      // 調用 Gemini API 生成重點筆記
       final languageInstruction = language == 'en'
-          ? 'Generate flashcards in English.'
-          : '以繁體中文生成抽認卡。';
+          ? 'Generate study notes in English.'
+          : '以繁體中文生成重點筆記。';
+      
       final exampleFormat = language == 'en'
           ? '''[
   {
-    "question": "Question 1",
-    "answer": "Answer 1",
-    "difficulty": "medium",
-    "tags": ["tag1", "tag2"]
+    "title": "Note Title",
+    "mainConcepts": ["Concept 1", "Concept 2", "Concept 3"],
+    "detailedExplanation": "Detailed explanation of the topic...",
+    "importance": "high",
+    "keywords": ["keyword1", "keyword2", "keyword3"]
   }
 ]'''
           : '''[
   {
-    "question": "問題1",
-    "answer": "答案1",
-    "difficulty": "medium",
-    "tags": ["標籤1", "標籤2"]
+    "title": "筆記標題",
+    "mainConcepts": ["概念1", "概念2", "概念3"],
+    "detailedExplanation": "主題的詳細說明...",
+    "importance": "high",
+    "keywords": ["關鍵字1", "關鍵字2", "關鍵字3"]
   }
 ]''';
       
       final prompt = '''
-Based on the following content, generate exactly $count flashcards.
+Based on the following content, generate exactly $count key study notes.
 
 $languageInstruction
 
-Each flashcard should include:
-1. question: A clear question (front of card)
-2. answer: A detailed answer (back of card)
-3. difficulty: "easy", "medium", or "hard" based on complexity
-4. tags: 2-3 relevant topic tags
+Each note should include:
+1. title: A clear and concise title summarizing the topic
+2. mainConcepts: 2-5 main concepts or key points (as an array)
+3. detailedExplanation: A comprehensive explanation (100-300 words)
+4. importance: "high", "medium", or "low" based on the topic's significance
+5. keywords: 3-5 important keywords for this topic (as an array)
 
 Content:
 $content
@@ -112,21 +116,21 @@ Only return the JSON array, no other text, markdown formatting, or explanations.
       final response = await _geminiService.generateText(prompt: prompt);
       
       // 解析 JSON 響應
-      final flashcards = _parseFlashcardsJson(response, projectId, fileId);
+      final notes = _parseNotesJson(response, projectId, fileId);
       
       // 保存到 Firestore
-      for (final flashcard in flashcards) {
-        await _flashcardsCol(projectId).doc(flashcard.id).set(flashcard.toJson());
+      for (final note in notes) {
+        await _notesCol(projectId).doc(note.id).set(note.toJson());
       }
 
-      return flashcards;
+      return notes;
     } catch (e) {
       throw Exception(ErrorUtils.formatAiError(e));
     }
   }
 
   /// 解析 JSON 響應
-  List<Flashcard> _parseFlashcardsJson(
+  List<Note> _parseNotesJson(
     String jsonResponse,
     String projectId,
     String? fileId,
@@ -152,68 +156,73 @@ Only return the JSON array, no other text, markdown formatting, or explanations.
         final index = entry.key;
         final item = entry.value as Map<String, dynamic>;
         
-        // 解析 tags
-        List<String> tags = [];
-        if (item['tags'] != null) {
-          tags = (item['tags'] as List).map((e) => e.toString()).toList();
+        // 解析 mainConcepts
+        List<String> mainConcepts = [];
+        if (item['mainConcepts'] != null) {
+          mainConcepts = (item['mainConcepts'] as List)
+              .map((e) => e.toString())
+              .toList();
         }
         
-        return Flashcard(
-          id: 'fc_${now.microsecondsSinceEpoch}_$index',
+        // 解析 keywords
+        List<String> keywords = [];
+        if (item['keywords'] != null) {
+          keywords = (item['keywords'] as List)
+              .map((e) => e.toString())
+              .toList();
+        }
+        
+        return Note(
+          id: 'note_${now.microsecondsSinceEpoch}_$index',
           projectId: projectId,
           fileId: fileId,
-          question: item['question'] as String? ?? '',
-          answer: item['answer'] as String? ?? '',
-          difficulty: item['difficulty'] as String? ?? 'medium',
-          tags: tags,
+          title: item['title'] as String? ?? '未命名筆記',
+          mainConcepts: mainConcepts,
+          detailedExplanation: item['detailedExplanation'] as String? ?? '',
+          importance: item['importance'] as String? ?? 'medium',
+          keywords: keywords,
           createdAt: now,
         );
       }).toList();
     } catch (e) {
-      throw Exception('解析抽認卡 JSON 失敗: $e');
+      throw Exception('解析重點筆記 JSON 失敗: $e');
     }
   }
 
-  /// 獲取專案的抽認卡列表
-  Stream<List<Flashcard>> watchFlashcards(String projectId) {
-    return _flashcardsCol(projectId)
+  /// 獲取專案的重點筆記列表
+  Stream<List<Note>> watchNotes(String projectId) {
+    return _notesCol(projectId)
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => Flashcard.fromJson(doc.data()))
+            .map((doc) => Note.fromJson(doc.data()))
             .toList());
   }
 
-  /// 更新抽認卡的複習狀態
-  Future<void> updateReviewStatus(
-    String projectId,
-    String flashcardId, {
-    required double masteryLevel,
-  }) async {
+  /// 獲取單一筆記
+  Future<Note?> getNote(String projectId, String noteId) async {
     try {
-      await _flashcardsCol(projectId).doc(flashcardId).update({
-        'lastReviewed': DateTime.now().toIso8601String(),
-        'reviewCount': FieldValue.increment(1),
-        'masteryLevel': masteryLevel,
-      });
+      final doc = await _notesCol(projectId).doc(noteId).get();
+      if (!doc.exists) return null;
+      return Note.fromJson(doc.data()!);
     } catch (e) {
-      throw Exception('更新複習狀態失敗: $e');
+      throw Exception('獲取筆記失敗: $e');
     }
   }
 
-  /// 刪除抽認卡
-  Future<void> deleteFlashcard(String projectId, String flashcardId) async {
+  /// 刪除筆記
+  Future<void> deleteNote(String projectId, String noteId) async {
     try {
-      await _flashcardsCol(projectId).doc(flashcardId).delete();
+      await _notesCol(projectId).doc(noteId).delete();
     } catch (e) {
-      throw Exception('刪除抽認卡失敗: $e');
+      throw Exception('刪除筆記失敗: $e');
     }
   }
 
-  /// 刪除與特定文件關聯的所有抽認卡
-  Future<int> deleteFlashcardsByFileId(String projectId, String fileId) async {
+  /// 刪除與特定文件關聯的所有筆記
+  Future<int> deleteNotesByFileId(String projectId, String fileId) async {
     try {
-      final snapshot = await _flashcardsCol(projectId)
+      final snapshot = await _notesCol(projectId)
           .where('fileId', isEqualTo: fileId)
           .get();
       
@@ -226,23 +235,38 @@ Only return the JSON array, no other text, markdown formatting, or explanations.
       await batch.commit();
       return snapshot.docs.length;
     } catch (e) {
-      throw Exception('刪除文件相關抽認卡失敗: $e');
+      throw Exception('刪除文件相關筆記失敗: $e');
     }
   }
 
-  /// 切換抽認卡收藏狀態
+  /// 切換筆記收藏狀態
   Future<void> toggleFavorite(
     String projectId,
-    String flashcardId,
+    String noteId,
     bool isFavorite,
   ) async {
     try {
-      await _flashcardsCol(projectId).doc(flashcardId).update({
+      await _notesCol(projectId).doc(noteId).update({
         'isFavorite': isFavorite,
       });
     } catch (e) {
       throw Exception('更新收藏狀態失敗: $e');
     }
   }
-}
 
+  /// 刪除專案所有筆記
+  Future<void> deleteAllNotes(String projectId) async {
+    try {
+      final snapshot = await _notesCol(projectId).get();
+      if (snapshot.docs.isEmpty) return;
+      
+      final batch = FirebaseFirestore.instance.batch();
+      for (final doc in snapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+    } catch (e) {
+      throw Exception('刪除所有筆記失敗: $e');
+    }
+  }
+}

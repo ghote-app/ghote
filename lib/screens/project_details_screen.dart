@@ -12,10 +12,14 @@ import '../services/subscription_service.dart';
 import '../services/storage_service.dart';
 import '../services/document_extraction_service.dart';
 import '../services/gemini_service.dart';
+import '../services/flashcard_service.dart';
+import '../services/question_service.dart';
+import '../services/note_service.dart';
 import '../utils/toast_utils.dart';
 import 'chat_screen.dart';
 import 'flashcards_screen.dart';
 import 'questions_screen.dart';
+import 'notes_screen.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
   const ProjectDetailsScreen({super.key, required this.projectId, required this.title});
@@ -32,6 +36,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   final ScrollController _scrollController = ScrollController();
   final ScrollController _categoryScrollController = ScrollController();
   String _currentTitle = '';
+  
+  // FR-3.3: 上傳進度回調
+  void Function(int count, String fileName)? _uploadProgressCallback;
 
   @override
   void initState() {
@@ -43,6 +50,8 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   void dispose() {
     _scrollController.dispose();
     _categoryScrollController.dispose();
+    // 清理 callback 避免記憶體洩漏
+    _uploadProgressCallback = null;
     super.dispose();
   }
 
@@ -373,29 +382,89 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         }
       }
 
-      // 顯示上傳進度對話框
+      // FR-3.3: 顯示即時上傳進度對話框
+      int uploadedCount = 0;
+      final totalFiles = result.files.length;
+      String currentFileName = '';
+      
       if (!mounted) return;
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => PopScope(
-          canPop: false,
-          child: AlertDialog(
-            backgroundColor: Colors.black87,
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+        builder: (context) => StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            // 儲存 setDialogState 供後續更新（包含 mounted 檢查）
+            _uploadProgressCallback = (int count, String fileName) {
+              // 檢查對話框是否仍然存在
+              if (dialogContext.mounted) {
+                setDialogState(() {
+                  uploadedCount = count;
+                  currentFileName = fileName;
+                });
+              }
+            };
+            
+            return PopScope(
+              canPop: false,
+              child: AlertDialog(
+                backgroundColor: const Color(0xFF1A1A1A),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 8),
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 60,
+                          height: 60,
+                          child: CircularProgressIndicator(
+                            value: totalFiles > 0 ? uploadedCount / totalFiles : null,
+                            strokeWidth: 4,
+                            backgroundColor: Colors.white.withValues(alpha: 0.1),
+                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+                          ),
+                        ),
+                        Text(
+                          '$uploadedCount/$totalFiles',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      '正在上傳...',
+                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    if (currentFileName.isNotEmpty)
+                      Text(
+                        currentFileName,
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 13),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    const SizedBox(height: 8),
+                    // 進度條
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: totalFiles > 0 ? uploadedCount / totalFiles : null,
+                        backgroundColor: Colors.white.withValues(alpha: 0.1),
+                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+                        minHeight: 6,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  '正在上傳 ${result.files.length} 個檔案...',
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       );
 
@@ -410,6 +479,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           failCount++;
           continue;
         }
+        
+        // 更新進度
+        _uploadProgressCallback?.call(successCount + failCount, f.name);
         
         try {
           final file = File(f.path!);
@@ -471,11 +543,86 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       if (failCount > 0) {
         ToastUtils.warning(context, '✅ 成功上傳 $successCount 個檔案\n❌ $failCount 個檔案上傳失敗');
       } else {
-        ToastUtils.success(context, '✅ 成功上傳 $successCount 個檔案到本地儲存');
+        ToastUtils.success(context, '✅ 成功上傳 $successCount 個檔案');
+        
+        // FR-3.4: 上傳成功後自動開始處理（文字提取）
+        if (successCount > 0) {
+          _autoExtractText();
+        }
       }
     } catch (e) {
       if (!mounted) return;
       ToastUtils.error(context, '上傳失敗: $e');
+    }
+  }
+
+  /// FR-3.4: 自動提取新上傳文件的文字
+  Future<void> _autoExtractText() async {
+    final projectService = ProjectService();
+    final extractionService = const DocumentExtractionService();
+    
+    try {
+      final files = await projectService.watchFiles(widget.projectId).first;
+      
+      // 找出尚未提取的可提取文件
+      final pendingFiles = files.where((f) {
+        final type = f.type.toLowerCase();
+        return ['pdf', 'docx', 'txt', 'jpg', 'jpeg', 'png', 'bmp', 'gif', 'mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma'].contains(type) &&
+               (f.extractionStatus == null || f.extractionStatus == 'pending');
+      }).toList();
+      
+      if (pendingFiles.isEmpty) return;
+      
+      // 在背景處理，不阻擋用戶
+      for (final file in pendingFiles) {
+        // 在處理每個文件前，重新檢查文件是否仍然存在（可能已被用戶刪除）
+        final currentFiles = await projectService.watchFiles(widget.projectId).first;
+        final fileStillExists = currentFiles.any((f) => f.id == file.id);
+        
+        if (!fileStillExists) {
+          print('文件 ${file.name} 已被刪除，跳過提取');
+          continue;
+        }
+        
+        try {
+          // 更新狀態為處理中
+          await extractionService.updateExtractionStatus(file.id, widget.projectId, 'processing');
+          
+          // 提取文字
+          final text = await extractionService.extractText(file);
+          
+          // 再次檢查文件是否仍存在（提取過程中可能被刪除）
+          final stillExists = (await projectService.watchFiles(widget.projectId).first)
+              .any((f) => f.id == file.id);
+          
+          if (!stillExists) {
+            print('文件 ${file.name} 在提取過程中被刪除');
+            continue;
+          }
+          
+          // 保存提取結果
+          await extractionService.saveExtractedText(file.id, widget.projectId, text);
+          
+          // FR-3.6: 處理完成通知（簡化版 - 使用 Toast）
+          if (mounted) {
+            ToastUtils.success(context, '📄 「${file.name}」文字提取完成');
+          }
+        } catch (e) {
+          // 檢查是否因文件被刪除導致錯誤
+          final stillExists = (await projectService.watchFiles(widget.projectId).first)
+              .any((f) => f.id == file.id);
+          
+          if (stillExists) {
+            // 文件仍存在，更新狀態為失敗
+            try {
+              await extractionService.updateExtractionStatus(file.id, widget.projectId, 'failed');
+            } catch (_) {}
+          }
+          print('自動提取 ${file.name} 失敗: $e');
+        }
+      }
+    } catch (e) {
+      print('自動文字提取過程出錯: $e');
     }
   }
 
@@ -904,9 +1051,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.black,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('刪除檔案', style: TextStyle(color: Colors.white)),
         content: Text(
-          '確定要刪除「${file.name}」嗎？\n此操作無法復原。',
+          '確定要刪除「${file.name}」嗎？\n\n⚠️ 此操作會同時刪除該文件生成的所有筆記、抽認卡和練習問題。',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
@@ -924,6 +1072,25 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
 
     if (confirmed == true) {
       try {
+        // 刪除關聯的學習內容
+        final flashcardService = FlashcardService();
+        final questionService = QuestionService();
+        final noteService = NoteService();
+        
+        final deletedNotes = await noteService.deleteNotesByFileId(
+          widget.projectId,
+          file.id,
+        );
+        final deletedFlashcards = await flashcardService.deleteFlashcardsByFileId(
+          widget.projectId, 
+          file.id,
+        );
+        final deletedQuestions = await questionService.deleteQuestionsByFileId(
+          widget.projectId, 
+          file.id,
+        );
+        
+        // 刪除文件元資料
         await ProjectService().deleteFileMetadata(widget.projectId, file.id);
         
         // 如果是本地檔案，嘗試刪除實體檔案
@@ -939,7 +1106,12 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         }
 
         if (!context.mounted) return;
-        ToastUtils.success(context, '✅ 檔案已刪除');
+        
+        String message = '✅ 檔案已刪除';
+        if (deletedNotes > 0 || deletedFlashcards > 0 || deletedQuestions > 0) {
+          message += '\n已清除 $deletedNotes 份筆記、$deletedFlashcards 張抽認卡、$deletedQuestions 道練習題';
+        }
+        ToastUtils.success(context, message);
       } catch (e) {
         if (!context.mounted) return;
         ToastUtils.error(context, '刪除失敗: $e');
@@ -1169,6 +1341,73 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   Widget _buildFileCard(BuildContext context, FileModel file) {
     final isCloud = file.storageType == 'cloud';
     
+    // FR-3.5: 處理狀態
+    Widget? statusWidget;
+    if (file.extractionStatus == 'processing') {
+      statusWidget = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 12,
+            height: 12,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.withValues(alpha: 0.8)),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            '處理中',
+            style: TextStyle(
+              color: Colors.blue.withValues(alpha: 0.8),
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      );
+    } else if (file.extractionStatus == 'extracted') {
+      statusWidget = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.check_circle_rounded,
+            size: 14,
+            color: Colors.green.withValues(alpha: 0.8),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            '已完成',
+            style: TextStyle(
+              color: Colors.green.withValues(alpha: 0.8),
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      );
+    } else if (file.extractionStatus == 'failed') {
+      statusWidget = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.error_rounded,
+            size: 14,
+            color: Colors.red.withValues(alpha: 0.8),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            '處理失敗',
+            style: TextStyle(
+              color: Colors.red.withValues(alpha: 0.8),
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      );
+    }
+    
     return RepaintBoundary(
       child: Container(
         decoration: BoxDecoration(
@@ -1297,6 +1536,17 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                               ),
                             ],
                           ),
+                          // FR-3.5: 處理狀態顯示
+                          if (statusWidget != null) ...[
+                            Text(
+                              '•',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.4),
+                                fontSize: 12,
+                              ),
+                            ),
+                            statusWidget,
+                          ],
                         ],
                       ),
                     ],
@@ -1447,16 +1697,16 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             runSpacing: 8,
             children: [
               _buildActionButton(
-                icon: Icons.text_fields,
-                label: '提取文字',
-                color: Colors.blue,
-                onTap: () => _extractTextFromFiles(),
-              ),
-              _buildActionButton(
                 icon: Icons.chat_bubble_outline,
                 label: 'AI 聊天',
-                color: Colors.green,
+                color: Colors.blue,
                 onTap: () => _openChat(),
+              ),
+              _buildActionButton(
+                icon: Icons.notes,
+                label: '重點筆記',
+                color: Colors.teal,
+                onTap: () => _openNotes(),
               ),
               _buildActionButton(
                 icon: Icons.quiz_outlined,
@@ -1512,152 +1762,6 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     );
   }
 
-  Future<void> _extractTextFromFiles() async {
-    final projectService = ProjectService();
-    final extractionService = const DocumentExtractionService();
-    
-    try {
-      final files = await projectService.watchFiles(widget.projectId).first;
-
-      // 支援更多文件類型：PDF, DOCX, TXT, 圖片, 音訊
-      final extractableFiles = files.where((f) {
-        final type = f.type.toLowerCase();
-        return ['pdf', 'docx', 'txt', 'jpg', 'jpeg', 'png', 'bmp', 'gif', 'mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma'].contains(type) &&
-               (f.extractionStatus != 'extracted');
-      }).toList();
-
-      if (extractableFiles.isEmpty) {
-        if (!mounted) return;
-        ToastUtils.info(
-          context,
-          '沒有可提取文字的文件\n支援格式：PDF, DOCX, TXT, JPG, PNG, MP3, WAV, M4A 等',
-        );
-        return;
-      }
-
-      if (!mounted) return;
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => WillPopScope(
-          onWillPop: () async => false,
-          child: Dialog(
-            backgroundColor: const Color(0xFF1A1A1A),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(color: Colors.blue),
-                  const SizedBox(height: 24),
-                  const Text(
-                    '正在提取文字...',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '正在從文件中提取文字內容\n請稍候片刻',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-
-      int successCount = 0;
-      int failCount = 0;
-
-      for (final file in extractableFiles) {
-        if (!mounted) break; // 檢查是否還在畫面上
-        
-        try {
-          await extractionService.updateExtractionStatus(
-            file.id,
-            widget.projectId,
-            'pending',
-          );
-
-          final text = await extractionService.extractText(file);
-          
-          if (!mounted) break; // 再次檢查
-          
-          await extractionService.saveExtractedText(
-            file.id,
-            widget.projectId,
-            text,
-          );
-          successCount++;
-        } catch (e) {
-          print('文件 ${file.name} 提取失敗: $e');
-          failCount++;
-          try {
-            await extractionService.updateExtractionStatus(
-              file.id,
-              widget.projectId,
-              'failed',
-            );
-          } catch (_) {
-            // 忽略更新狀態失敗
-          }
-        }
-      }
-
-      if (!mounted) return;
-      
-      // 安全地關閉 dialog
-      try {
-        Navigator.of(context).pop();
-      } catch (e) {
-        print('關閉 dialog 失敗: $e');
-      }
-
-      if (!mounted) return;
-      
-      if (failCount == 0) {
-        ToastUtils.success(
-          context,
-          '提取完成：成功 $successCount 個',
-        );
-      } else {
-        ToastUtils.warning(
-          context,
-          '提取完成：成功 $successCount 個，失敗 $failCount 個',
-        );
-      }
-    } catch (e) {
-      print('提取文字過程發生錯誤: $e');
-      
-      // 確保關閉 loading dialog
-      if (mounted) {
-        try {
-          Navigator.of(context).pop();
-        } catch (_) {
-          // dialog 可能已經關閉
-        }
-      }
-      
-      if (!mounted) return;
-      
-      ToastUtils.error(
-        context,
-        '提取文字時發生錯誤: $e',
-      );
-    }
-  }
-
   void _openChat() {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -1682,72 +1786,185 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     );
   }
 
-  /// 編輯專案名稱
+  void _openNotes() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => NotesScreen(projectId: widget.projectId),
+      ),
+    );
+  }
+
+  /// 編輯專案名稱與描述
   Future<void> _editProjectName() async {
-    final controller = TextEditingController(text: _currentTitle);
+    final projectService = ProjectService();
+    final project = await projectService.getProject(widget.projectId);
     
-    final newName = await showDialog<String>(
+    if (project == null) return;
+    
+    final nameController = TextEditingController(text: _currentTitle);
+    final descriptionController = TextEditingController(text: project.description ?? '');
+    
+    final colorOptions = [
+      {'name': 'Blue', 'value': '#2196F3'},
+      {'name': 'Green', 'value': '#4CAF50'},
+      {'name': 'Orange', 'value': '#FF9800'},
+      {'name': 'Purple', 'value': '#9C27B0'},
+      {'name': 'Red', 'value': '#F44336'},
+      {'name': 'Pink', 'value': '#E91E63'},
+      {'name': 'Teal', 'value': '#009688'},
+      {'name': 'Indigo', 'value': '#3F51B5'},
+    ];
+    String? selectedColor = project.colorTag ?? colorOptions[0]['value'];
+    
+    final result = await showDialog<Map<String, String?>>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: const Text(
-          '編輯專案名稱',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          style: const TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            hintText: '輸入專案名稱',
-            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            '編輯專案資訊',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '專案名稱',
+                  style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: nameController,
+                  autofocus: true,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: '輸入專案名稱',
+                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Colors.blue),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  '專案描述 (選填)',
+                  style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: descriptionController,
+                  maxLines: 3,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: '輸入專案描述',
+                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Colors.blue),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  '顏色標籤',
+                  style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: colorOptions.map((color) {
+                    final colorValue = color['value']!;
+                    final isSelected = selectedColor == colorValue;
+                    final colorInt = int.parse(colorValue.substring(1), radix: 16) + 0xFF000000;
+                    return GestureDetector(
+                      onTap: () => setState(() => selectedColor = colorValue),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Color(colorInt),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected ? Colors.white : Colors.transparent,
+                            width: 3,
+                          ),
+                          boxShadow: isSelected ? [
+                            BoxShadow(
+                              color: Color(colorInt).withValues(alpha: 0.5),
+                              blurRadius: 8,
+                              spreadRadius: 2,
+                            ),
+                          ] : null,
+                        ),
+                        child: isSelected
+                            ? const Icon(Icons.check, color: Colors.white, size: 18)
+                            : null,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.blue),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('取消', style: TextStyle(color: Colors.white54)),
             ),
-          ),
-          onSubmitted: (value) => Navigator.of(context).pop(value),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop({
+                'name': nameController.text,
+                'description': descriptionController.text,
+                'colorTag': selectedColor,
+              }),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+              child: const Text('確定'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消', style: TextStyle(color: Colors.white54)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-            child: const Text('確定'),
-          ),
-        ],
       ),
     );
 
-    if (newName != null && newName.trim().isNotEmpty && newName != _currentTitle) {
-      try {
-        final projectService = ProjectService();
-        final project = await projectService.getProject(widget.projectId);
-        
-        if (project != null) {
-          final updatedProject = project.copyWith(title: newName.trim());
+    if (result != null) {
+      final newName = result['name']?.trim();
+      final newDescription = result['description']?.trim();
+      final newColorTag = result['colorTag'];
+      
+      if (newName != null && newName.isNotEmpty) {
+        try {
+          final updatedProject = project.copyWith(
+            title: newName,
+            description: newDescription?.isEmpty == true ? null : newDescription,
+            colorTag: newColorTag,
+            lastUpdatedAt: DateTime.now(),
+          );
           await projectService.updateProject(updatedProject);
           
           setState(() {
-            _currentTitle = newName.trim();
+            _currentTitle = newName;
           });
           
           if (!mounted) return;
-          ToastUtils.success(context, '專案名稱已更新');
+          ToastUtils.success(context, '專案資訊已更新');
+        } catch (e) {
+          if (!mounted) return;
+          ToastUtils.error(context, '更新失敗: $e');
         }
-      } catch (e) {
-        if (!mounted) return;
-        ToastUtils.error(context, '更新失敗: $e');
       }
     }
   }

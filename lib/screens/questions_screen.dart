@@ -18,8 +18,9 @@ class QuestionsScreen extends StatefulWidget {
 
 class _QuestionsScreenState extends State<QuestionsScreen> {
   final QuestionService _questionService = QuestionService();
-  String _selectedType = 'mcq';
-  Map<String, String?> _userAnswers = {};
+  String _selectedType = 'mcq-single';
+  Map<String, String?> _userAnswers = {};  // 單選題答案
+  Map<String, Set<String>> _userMultiAnswers = {};  // 多選題答案
   Map<String, bool> _showAnswers = {};
   Map<String, TextEditingController> _textControllers = {};
 
@@ -33,52 +34,118 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
   }
 
   Future<void> _showGenerateConfirmation(String questionType) async {
-    final typeLabel = questionType == 'mcq' ? '選擇題' : '開放式問題';
+    String typeLabel;
+    switch (questionType) {
+      case 'mcq-single':
+        typeLabel = '單選題';
+        break;
+      case 'mcq-multiple':
+        typeLabel = '多選題';
+        break;
+      case 'open-ended':
+        typeLabel = '開放式問答';
+        break;
+      default:
+        typeLabel = '選擇題';
+    }
+    String selectedLanguage = 'zh';
     
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showDialog<String?>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: Text(
-          '生成$typeLabel',
-          style: const TextStyle(color: Colors.white),
-        ),
-        content: Text(
-          '將使用 AI 根據您上傳的文件內容生成 5 個$typeLabel。\n\n這可能需要一些時間，確定要繼續嗎？',
-          style: const TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消', style: TextStyle(color: Colors.white54)),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
+          title: Text(
+            '生成$typeLabel',
+            style: const TextStyle(color: Colors.white),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '將使用 AI 根據您上傳的文件內容生成 5 個$typeLabel。\n\n這可能需要一些時間，確定要繼續嗎？',
+                style: const TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '生成語言：',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: RadioListTile<String>(
+                      value: 'zh',
+                      groupValue: selectedLanguage,
+                      onChanged: (value) => setState(() => selectedLanguage = value!),
+                      title: const Text('中文', style: TextStyle(color: Colors.white)),
+                      activeColor: Colors.blue,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  Expanded(
+                    child: RadioListTile<String>(
+                      value: 'en',
+                      groupValue: selectedLanguage,
+                      onChanged: (value) => setState(() => selectedLanguage = value!),
+                      title: const Text('English', style: TextStyle(color: Colors.white)),
+                      activeColor: Colors.blue,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(null),
+              child: const Text('取消', style: TextStyle(color: Colors.white54)),
             ),
-            child: const Text('開始生成'),
-          ),
-        ],
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(selectedLanguage),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('開始生成'),
+            ),
+          ],
+        ),
       ),
     );
 
-    if (confirmed == true) {
+    if (confirmed != null) {
       setState(() {
         _selectedType = questionType;
       });
-      await _generateQuestions();
+      await _generateQuestions(confirmed);
     }
   }
 
-  Future<void> _generateQuestions() async {
+  Future<void> _generateQuestions(String language) async {
     if (!mounted) return;
 
-    final typeLabel = _selectedType == 'mcq' ? '選擇題' : '開放式問題';
+    String typeLabel;
+    switch (_selectedType) {
+      case 'mcq-single':
+        typeLabel = '單選題';
+        break;
+      case 'mcq-multiple':
+        typeLabel = '多選題';
+        break;
+      case 'open-ended':
+        typeLabel = '開放式問答';
+        break;
+      default:
+        typeLabel = '選擇題';
+    }
+    final languageText = language == 'en' ? 'English' : '中文';
 
     // 顯示更詳細的生成中對話框
     showDialog(
@@ -108,7 +175,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '正在分析文件內容並生成練習題目\n請稍候片刻',
+                  '正在分析文件內容並生成練習題目 ($languageText)\n請稍候片刻',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.7),
@@ -127,6 +194,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
         projectId: widget.projectId,
         questionType: _selectedType,
         count: 5,
+        language: language,
       );
       if (!mounted) return;
       Navigator.of(context).pop();
@@ -140,7 +208,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
       Navigator.of(context).pop();
       ToastUtils.error(
         context,
-        '✗ 生成失敗: $e',
+        e.toString().replaceFirst('Exception: ', ''),
       );
     }
   }
@@ -254,12 +322,16 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
             },
             itemBuilder: (context) => [
               const PopupMenuItem(
-                value: 'mcq',
-                child: Text('生成選擇題', style: TextStyle(color: Colors.white)),
+                value: 'mcq-single',
+                child: Text('生成單選題', style: TextStyle(color: Colors.white)),
+              ),
+              const PopupMenuItem(
+                value: 'mcq-multiple',
+                child: Text('生成多選題', style: TextStyle(color: Colors.white)),
               ),
               const PopupMenuItem(
                 value: 'open-ended',
-                child: Text('生成開放式問題', style: TextStyle(color: Colors.white)),
+                child: Text('生成開放式問答', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -295,7 +367,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                   ),
                   const SizedBox(height: 8),
                   ElevatedButton.icon(
-                    onPressed: () => _showGenerateConfirmation('mcq'),
+                    onPressed: () => _showGenerateConfirmation('mcq-single'),
                     icon: const Icon(Icons.add),
                     label: const Text('生成問題'),
                     style: ElevatedButton.styleFrom(
@@ -324,7 +396,31 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
   Widget _buildQuestionCard(Question question) {
     final showAnswer = _showAnswers[question.id] ?? false;
     final userAnswer = _userAnswers[question.id];
-    final isCorrect = userAnswer == question.correctAnswer;
+    final userMultiAnswer = _userMultiAnswers[question.id] ?? <String>{};
+    
+    // 計算是否正確
+    bool isCorrect;
+    if (question.isMcqMultiple) {
+      final correctSet = (question.correctAnswers ?? []).toSet();
+      isCorrect = showAnswer && userMultiAnswer.length == correctSet.length &&
+          userMultiAnswer.containsAll(correctSet);
+    } else {
+      isCorrect = userAnswer == question.correctAnswer;
+    }
+    
+    // 獲取題型標籤
+    String typeLabel;
+    Color typeColor;
+    if (question.isMcqSingle) {
+      typeLabel = '單選題';
+      typeColor = Colors.blue;
+    } else if (question.isMcqMultiple) {
+      typeLabel = '多選題';
+      typeColor = Colors.orange;
+    } else {
+      typeLabel = '開放式';
+      typeColor = Colors.purple;
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -346,18 +442,34 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
         children: [
           Row(
             children: [
+              // 題型標籤
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: question.isMcq
-                      ? Colors.blue.withValues(alpha: 0.2)
-                      : Colors.purple.withValues(alpha: 0.2),
+                  color: typeColor.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  question.isMcq ? '選擇題' : '開放式',
+                  typeLabel,
                   style: TextStyle(
-                    color: question.isMcq ? Colors.blue : Colors.purple,
+                    color: typeColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // 難度標籤
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _getDifficultyColor(question.difficulty).withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  question.difficultyLabel,
+                  style: TextStyle(
+                    color: _getDifficultyColor(question.difficulty),
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -368,43 +480,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
               IconButton(
                 icon: const Icon(Icons.delete_outline, size: 20),
                 color: Colors.red.withValues(alpha: 0.7),
-                onPressed: () async {
-                  final confirmed = await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      backgroundColor: const Color(0xFF1A1A1A),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      title: const Text(
-                        '刪除題目',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      content: const Text(
-                        '確定要刪除這個題目嗎？',
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: const Text('取消', style: TextStyle(color: Colors.white54)),
-                        ),
-                        ElevatedButton(
-                          onPressed: () => Navigator.of(context).pop(true),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            foregroundColor: Colors.white,
-                          ),
-                          child: const Text('刪除'),
-                        ),
-                      ],
-                    ),
-                  );
-                  
-                  if (confirmed == true) {
-                    await _deleteQuestion(question.id);
-                  }
-                },
+                onPressed: () => _confirmDeleteQuestion(question.id),
                 tooltip: '刪除題目',
               ),
               if (showAnswer)
@@ -416,6 +492,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
             ],
           ),
           const SizedBox(height: 12),
+          // 問題文字
           Text(
             question.questionText,
             style: const TextStyle(
@@ -425,157 +502,38 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          if (question.isMcq && question.options != null)
-            ...question.options!.map((option) {
-              final isSelected = userAnswer == option;
-              final isCorrectOption = option == question.correctAnswer;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: InkWell(
-                  onTap: showAnswer
-                      ? null
-                      : () => _checkAnswer(question, option),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: showAnswer
-                          ? (isCorrectOption
-                              ? Colors.green.withValues(alpha: 0.2)
-                              : isSelected
-                                  ? Colors.red.withValues(alpha: 0.2)
-                                  : Colors.white.withValues(alpha: 0.05))
-                          : (isSelected
-                              ? Colors.blue.withValues(alpha: 0.2)
-                              : Colors.white.withValues(alpha: 0.05)),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: showAnswer
-                            ? (isCorrectOption
-                                ? Colors.green
-                                : isSelected
-                                    ? Colors.red
-                                    : Colors.white.withValues(alpha: 0.1))
-                            : (isSelected
-                                ? Colors.blue
-                                : Colors.white.withValues(alpha: 0.1)),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        if (showAnswer && isCorrectOption)
-                          const Icon(Icons.check_circle,
-                              color: Colors.green, size: 20),
-                        if (showAnswer && isSelected && !isCorrectOption)
-                          const Icon(Icons.cancel, color: Colors.red, size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            option,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }),
-          if (question.isOpenEnded && !showAnswer) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.1),
-                ),
-              ),
-              child: TextField(
-                controller: _textControllers.putIfAbsent(
-                  question.id,
-                  () => TextEditingController(),
-                ),
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  hintText: '輸入您的答案...',
-                  hintStyle: TextStyle(color: Colors.white54),
-                  border: InputBorder.none,
-                ),
-                maxLines: 3,
-              ),
-            ),
+          // 根據題型顯示不同的答題區域
+          if (question.isMcqSingle && question.options != null)
+            _buildSingleChoiceOptions(question, showAnswer, userAnswer),
+          if (question.isMcqMultiple && question.options != null)
+            _buildMultipleChoiceOptions(question, showAnswer, userMultiAnswer),
+          if (question.isOpenEnded)
+            _buildOpenEndedAnswer(question, showAnswer, userAnswer),
+          // 顯示關鍵字（開放式問題）
+          if (showAnswer && question.isOpenEnded && question.keywords != null && question.keywords!.isNotEmpty) ...[
             const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  final answer = _textControllers[question.id]?.text ?? '';
-                  if (answer.trim().isEmpty) {
-                    ToastUtils.warning(
-                      context,
-                      '請輸入答案',
-                    );
-                    return;
-                  }
-                  _checkAnswer(question, answer);
-                },
-                icon: const Icon(Icons.send),
-                label: const Text('送出答案'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
-          ],
-          if (question.isOpenEnded && showAnswer) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.1),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '您的答案：',
-                    style: TextStyle(
-                      color: Colors.white70,
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: question.keywords!.map((keyword) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.teal.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '#$keyword',
+                    style: const TextStyle(
+                      color: Colors.teal,
                       fontSize: 12,
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    userAnswer ?? '',
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
-                  ),
-                  const Divider(color: Colors.white24, height: 24),
-                  const Text(
-                    '參考答案：',
-                    style: TextStyle(
-                      color: Colors.green,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    question.correctAnswer ?? '',
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
-                  ),
-                ],
-              ),
+                );
+              }).toList(),
             ),
           ],
+          // 解釋區域
           if (showAnswer && question.explanation != null) ...[
             const SizedBox(height: 12),
             Container(
@@ -604,6 +562,319 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Color _getDifficultyColor(String difficulty) {
+    switch (difficulty) {
+      case 'easy':
+        return Colors.green;
+      case 'medium':
+        return Colors.orange;
+      case 'hard':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Future<void> _confirmDeleteQuestion(String questionId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          '刪除題目',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          '確定要刪除這個題目嗎？',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('刪除'),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirmed == true) {
+      await _deleteQuestion(questionId);
+    }
+  }
+
+  Widget _buildSingleChoiceOptions(Question question, bool showAnswer, String? userAnswer) {
+    return Column(
+      children: question.options!.map((option) {
+        final isSelected = userAnswer == option;
+        final isCorrectOption = option == question.correctAnswer;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: InkWell(
+            onTap: showAnswer ? null : () => _checkAnswer(question, option),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: showAnswer
+                    ? (isCorrectOption
+                        ? Colors.green.withValues(alpha: 0.2)
+                        : isSelected
+                            ? Colors.red.withValues(alpha: 0.2)
+                            : Colors.white.withValues(alpha: 0.05))
+                    : (isSelected
+                        ? Colors.blue.withValues(alpha: 0.2)
+                        : Colors.white.withValues(alpha: 0.05)),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: showAnswer
+                      ? (isCorrectOption
+                          ? Colors.green
+                          : isSelected
+                              ? Colors.red
+                              : Colors.white.withValues(alpha: 0.1))
+                      : (isSelected
+                          ? Colors.blue
+                          : Colors.white.withValues(alpha: 0.1)),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                    color: showAnswer
+                        ? (isCorrectOption ? Colors.green : isSelected ? Colors.red : Colors.white54)
+                        : (isSelected ? Colors.blue : Colors.white54),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      option,
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                    ),
+                  ),
+                  if (showAnswer && isCorrectOption)
+                    const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildMultipleChoiceOptions(Question question, bool showAnswer, Set<String> userMultiAnswer) {
+    final correctAnswers = (question.correctAnswers ?? []).toSet();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (!showAnswer)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              '（可多選，選擇完畢後點擊送出）',
+              style: TextStyle(color: Colors.grey[500], fontSize: 12),
+            ),
+          ),
+        ...question.options!.map((option) {
+          final isSelected = userMultiAnswer.contains(option);
+          final isCorrectOption = correctAnswers.contains(option);
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: InkWell(
+              onTap: showAnswer ? null : () {
+                setState(() {
+                  final current = _userMultiAnswers[question.id] ?? <String>{};
+                  if (current.contains(option)) {
+                    current.remove(option);
+                  } else {
+                    current.add(option);
+                  }
+                  _userMultiAnswers[question.id] = current;
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: showAnswer
+                      ? (isCorrectOption
+                          ? Colors.green.withValues(alpha: 0.2)
+                          : isSelected
+                              ? Colors.red.withValues(alpha: 0.2)
+                              : Colors.white.withValues(alpha: 0.05))
+                      : (isSelected
+                          ? Colors.orange.withValues(alpha: 0.2)
+                          : Colors.white.withValues(alpha: 0.05)),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: showAnswer
+                        ? (isCorrectOption
+                            ? Colors.green
+                            : isSelected
+                                ? Colors.red
+                                : Colors.white.withValues(alpha: 0.1))
+                        : (isSelected
+                            ? Colors.orange
+                            : Colors.white.withValues(alpha: 0.1)),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      isSelected ? Icons.check_box : Icons.check_box_outline_blank,
+                      color: showAnswer
+                          ? (isCorrectOption ? Colors.green : isSelected ? Colors.red : Colors.white54)
+                          : (isSelected ? Colors.orange : Colors.white54),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        option,
+                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                      ),
+                    ),
+                    if (showAnswer && isCorrectOption)
+                      const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                    if (showAnswer && isSelected && !isCorrectOption)
+                      const Icon(Icons.cancel, color: Colors.red, size: 20),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+        if (!showAnswer)
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: userMultiAnswer.isEmpty ? null : () {
+                setState(() {
+                  _showAnswers[question.id] = true;
+                });
+              },
+              icon: const Icon(Icons.send),
+              label: const Text('送出答案'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: Colors.grey[700],
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildOpenEndedAnswer(Question question, bool showAnswer, String? userAnswer) {
+    if (!showAnswer) {
+      return Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.1),
+              ),
+            ),
+            child: TextField(
+              controller: _textControllers.putIfAbsent(
+                question.id,
+                () => TextEditingController(),
+              ),
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                hintText: '輸入您的答案...',
+                hintStyle: TextStyle(color: Colors.white54),
+                border: InputBorder.none,
+              ),
+              maxLines: 3,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                final answer = _textControllers[question.id]?.text ?? '';
+                if (answer.trim().isEmpty) {
+                  ToastUtils.warning(context, '請輸入答案');
+                  return;
+                }
+                _checkAnswer(question, answer);
+              },
+              icon: const Icon(Icons.send),
+              label: const Text('送出答案'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.purple,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.1),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '您的答案：',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            userAnswer ?? '',
+            style: const TextStyle(color: Colors.white, fontSize: 14),
+          ),
+          const Divider(color: Colors.white24, height: 24),
+          const Text(
+            '參考答案：',
+            style: TextStyle(
+              color: Colors.green,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            question.correctAnswer ?? '',
+            style: const TextStyle(color: Colors.white, fontSize: 14),
+          ),
         ],
       ),
     );
