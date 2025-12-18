@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/question.dart';
 import '../services/question_service.dart';
+import '../services/learning_progress_service.dart';
 import '../utils/toast_utils.dart';
 
 class QuestionsScreen extends StatefulWidget {
@@ -18,6 +19,7 @@ class QuestionsScreen extends StatefulWidget {
 
 class _QuestionsScreenState extends State<QuestionsScreen> {
   final QuestionService _questionService = QuestionService();
+  final LearningProgressService _progressService = LearningProgressService();
   String _selectedType = 'mcq-single';
   Map<String, String?> _userAnswers = {};  // 單選題答案
   Map<String, Set<String>> _userMultiAnswers = {};  // 多選題答案
@@ -214,10 +216,28 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
   }
 
   void _checkAnswer(Question question, String? selectedAnswer) {
+    // FR-9.2: 記錄測驗結果
+    final isCorrect = selectedAnswer == question.correctAnswer;
+    _recordQuizAttempt(isCorrect);
+    
     setState(() {
       _userAnswers[question.id] = selectedAnswer;
       _showAnswers[question.id] = true;
     });
+  }
+
+  /// FR-9.2: 記錄測驗作答結果到學習進度
+  Future<void> _recordQuizAttempt(bool isCorrect) async {
+    try {
+      await _progressService.recordQuizAttempt(
+        projectId: widget.projectId,
+        correctCount: isCorrect ? 1 : 0,
+        totalQuestions: 1,
+      );
+    } catch (e) {
+      // 靜默失敗，不影響用戶體驗
+      debugPrint('記錄測驗結果失敗: $e');
+    }
   }
 
   Future<void> _deleteQuestion(String questionId) async {
@@ -766,6 +786,12 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: userMultiAnswer.isEmpty ? null : () {
+                // FR-9.2: 記錄多選題測驗結果
+                final correctSet = (question.correctAnswers ?? []).toSet();
+                final isCorrect = userMultiAnswer.length == correctSet.length &&
+                    userMultiAnswer.containsAll(correctSet);
+                _recordQuizAttempt(isCorrect);
+                
                 setState(() {
                   _showAnswers[question.id] = true;
                 });

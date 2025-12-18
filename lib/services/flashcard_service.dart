@@ -244,5 +244,93 @@ Only return the JSON array, no other text, markdown formatting, or explanations.
       throw Exception('更新收藏狀態失敗: $e');
     }
   }
+
+  /// FR-8.5 & FR-8.6: 更新卡片標記狀態
+  Future<void> updateCardStatus(
+    String projectId,
+    String flashcardId,
+    String status, // 'mastered' | 'review' | 'difficult' | 'unlearned'
+  ) async {
+    try {
+      await _flashcardsCol(projectId).doc(flashcardId).update({
+        'status': status,
+        'lastReviewed': DateTime.now().toIso8601String(),
+        'reviewCount': FieldValue.increment(1),
+      });
+    } catch (e) {
+      throw Exception('更新卡片狀態失敗: $e');
+    }
+  }
+
+  /// FR-8.9: 根據狀態篩選抽認卡
+  Stream<List<Flashcard>> watchFlashcardsByStatus(String projectId, String status) {
+    return _flashcardsCol(projectId)
+        .where('status', isEqualTo: status)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Flashcard.fromJson(doc.data()))
+            .toList());
+  }
+
+  /// FR-9.3: 獲取學習進度統計
+  Future<Map<String, int>> getFlashcardStats(String projectId) async {
+    try {
+      final snapshot = await _flashcardsCol(projectId).get();
+      final cards = snapshot.docs.map((doc) => Flashcard.fromJson(doc.data())).toList();
+      
+      return {
+        'total': cards.length,
+        'mastered': cards.where((c) => c.status == 'mastered').length,
+        'review': cards.where((c) => c.status == 'review').length,
+        'difficult': cards.where((c) => c.status == 'difficult').length,
+        'unlearned': cards.where((c) => c.status == 'unlearned').length,
+      };
+    } catch (e) {
+      throw Exception('獲取學習統計失敗: $e');
+    }
+  }
+
+  /// FR-9.3: 獲取學習進度統計 Stream
+  Stream<Map<String, int>> watchFlashcardStats(String projectId) {
+    return _flashcardsCol(projectId)
+        .snapshots()
+        .map((snapshot) {
+          final cards = snapshot.docs.map((doc) => Flashcard.fromJson(doc.data())).toList();
+          return {
+            'total': cards.length,
+            'mastered': cards.where((c) => c.status == 'mastered').length,
+            'review': cards.where((c) => c.status == 'review').length,
+            'difficult': cards.where((c) => c.status == 'difficult').length,
+            'unlearned': cards.where((c) => c.status == 'unlearned').length,
+          };
+        });
+  }
+
+  /// FR-8.8: 獲取所有標籤
+  Future<List<String>> getAllTags(String projectId) async {
+    try {
+      final snapshot = await _flashcardsCol(projectId).get();
+      final Set<String> tags = {};
+      for (final doc in snapshot.docs) {
+        final card = Flashcard.fromJson(doc.data());
+        tags.addAll(card.tags);
+      }
+      return tags.toList()..sort();
+    } catch (e) {
+      throw Exception('獲取標籤失敗: $e');
+    }
+  }
+
+  /// FR-8.8: 根據標籤篩選
+  Stream<List<Flashcard>> watchFlashcardsByTag(String projectId, String tag) {
+    return _flashcardsCol(projectId)
+        .where('tags', arrayContains: tag)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Flashcard.fromJson(doc.data()))
+            .toList());
+  }
 }
 

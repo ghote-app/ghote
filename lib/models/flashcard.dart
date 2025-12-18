@@ -1,4 +1,5 @@
 // Flashcard model for spaced repetition learning
+// FR-8: 抽認卡學習功能
 
 class Flashcard {
   final String id;
@@ -7,12 +8,13 @@ class Flashcard {
   final String question;
   final String answer;
   final String difficulty; // 'easy' | 'medium' | 'hard'
-  final List<String> tags; // 標籤
+  final List<String> tags; // 標籤 (FR-8.8)
   final DateTime createdAt;
-  final DateTime? lastReviewed;
+  final DateTime? lastReviewed; // FR-9.5: 最後查看時間
   final int reviewCount;
   final double masteryLevel; // 0.0 - 1.0
   final bool isFavorite; // 是否收藏
+  final String status; // FR-8.5: 'unlearned' | 'mastered' | 'review' | 'difficult'
 
   const Flashcard({
     required this.id,
@@ -27,6 +29,7 @@ class Flashcard {
     this.reviewCount = 0,
     this.masteryLevel = 0.0,
     this.isFavorite = false,
+    this.status = 'unlearned', // FR-8.5: 預設未學習
   });
 
   /// 難度對應的顯示文字
@@ -43,6 +46,36 @@ class Flashcard {
     }
   }
 
+  /// FR-8.5: 狀態對應的顯示文字
+  String get statusLabel {
+    switch (status) {
+      case 'mastered':
+        return '已掌握';
+      case 'review':
+        return '需複習';
+      case 'difficult':
+        return '困難';
+      case 'unlearned':
+      default:
+        return '未學習';
+    }
+  }
+
+  /// FR-8.5: 狀態對應的顏色
+  static int getStatusColor(String status) {
+    switch (status) {
+      case 'mastered':
+        return 0xFF4CAF50; // Green
+      case 'review':
+        return 0xFFFF9800; // Orange
+      case 'difficult':
+        return 0xFFF44336; // Red
+      case 'unlearned':
+      default:
+        return 0xFF9E9E9E; // Grey
+    }
+  }
+
   Flashcard copyWith({
     String? id,
     String? projectId,
@@ -56,6 +89,7 @@ class Flashcard {
     int? reviewCount,
     double? masteryLevel,
     bool? isFavorite,
+    String? status,
   }) {
     return Flashcard(
       id: id ?? this.id,
@@ -70,6 +104,7 @@ class Flashcard {
       reviewCount: reviewCount ?? this.reviewCount,
       masteryLevel: masteryLevel ?? this.masteryLevel,
       isFavorite: isFavorite ?? this.isFavorite,
+      status: status ?? this.status,
     );
   }
 
@@ -87,6 +122,7 @@ class Flashcard {
       'reviewCount': reviewCount,
       'masteryLevel': masteryLevel,
       'isFavorite': isFavorite,
+      'status': status,
     };
   }
 
@@ -108,6 +144,7 @@ class Flashcard {
       reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
       masteryLevel: (json['masteryLevel'] as num?)?.toDouble() ?? 0.0,
       isFavorite: json['isFavorite'] as bool? ?? false,
+      status: json['status'] as String? ?? 'unlearned',
     );
   }
 }
