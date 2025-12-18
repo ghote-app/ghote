@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/question.dart';
 import '../services/question_service.dart';
+import '../services/learning_progress_service.dart';
 import '../utils/toast_utils.dart';
 
 /// FR-6 選擇題測驗畫面
@@ -24,6 +25,7 @@ class QuizScreen extends StatefulWidget {
 
 class _QuizScreenState extends State<QuizScreen> {
   final QuestionService _questionService = QuestionService();
+  final LearningProgressService _progressService = LearningProgressService();
   final PageController _pageController = PageController();
   
   late List<Question> _questions;
@@ -158,8 +160,25 @@ class _QuizScreenState extends State<QuizScreen> {
         questionId,
         isCorrect,
       );
+      
+      // FR-9.2: 記錄測驗結果到學習進度
+      await _recordQuizAttempt(isCorrect);
     } catch (e) {
       debugPrint('保存作答結果失敗: $e');
+    }
+  }
+
+  /// FR-9.2: 記錄測驗作答結果到學習進度
+  Future<void> _recordQuizAttempt(bool isCorrect) async {
+    try {
+      await _progressService.recordQuizAttempt(
+        projectId: widget.projectId,
+        correctCount: isCorrect ? 1 : 0,
+        totalQuestions: 1,
+      );
+    } catch (e) {
+      // 靜默失敗，不影響用戶體驗
+      debugPrint('記錄測驗結果到學習進度失敗: $e');
     }
   }
 

@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:open_filex/open_filex.dart';
 
 import '../models/file_model.dart';
+import '../models/learning_progress.dart';
 import '../services/project_service.dart';
 import '../services/subscription_service.dart';
 import '../services/storage_service.dart';
@@ -15,6 +16,7 @@ import '../services/gemini_service.dart';
 import '../services/flashcard_service.dart';
 import '../services/question_service.dart';
 import '../services/note_service.dart';
+import '../services/learning_progress_service.dart';
 import '../utils/toast_utils.dart';
 import 'chat_screen.dart';
 import 'flashcards_screen.dart';
@@ -216,6 +218,16 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: _buildAIActionsBar(),
+                  ),
+                ),
+              ),
+              
+              // FR-9.4: 學習進度區塊
+              SliverToBoxAdapter(
+                child: RepaintBoundary(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    child: _buildLearningProgressCard(),
                   ),
                 ),
               ),
@@ -1725,6 +1737,211 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         ],
       ),
     );
+  }
+
+  /// FR-9.4: 學習進度卡片
+  Widget _buildLearningProgressCard() {
+    final progressService = LearningProgressService();
+    
+    return StreamBuilder<LearningProgress?>(
+      stream: progressService.watchProgress(widget.projectId),
+      builder: (context, snapshot) {
+        final progress = snapshot.data;
+        
+        // 如果沒有任何學習進度，顯示引導訊息
+        if (progress == null || 
+            (progress.totalFlashcards == 0 && progress.totalQuizAttempts == 0)) {
+          return Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.school_outlined,
+                  color: Colors.white.withValues(alpha: 0.4),
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '開始學習抽認卡或練習問題來追蹤進度',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.blue.withValues(alpha: 0.15),
+                Colors.purple.withValues(alpha: 0.1),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.school, color: Colors.blue.withValues(alpha: 0.8), size: 20),
+                  const SizedBox(width: 8),
+                  const Text(
+                    '學習進度',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  // 整體進度
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      progress.overallProgressPercent,
+                      style: const TextStyle(
+                        color: Colors.green,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // 抽認卡進度
+              if (progress.totalFlashcards > 0) ...[
+                _buildProgressItem(
+                  icon: Icons.quiz_outlined,
+                  label: '抽認卡',
+                  value: '${progress.masteredFlashcards}/${progress.totalFlashcards} 已掌握',
+                  progress: progress.flashcardProgress,
+                  color: Colors.orange,
+                ),
+                const SizedBox(height: 12),
+              ],
+              // 測驗正確率
+              if (progress.totalQuizAttempts > 0)
+                _buildProgressItem(
+                  icon: Icons.check_circle_outline,
+                  label: '測驗正確率',
+                  value: '${progress.correctAnswers}/${progress.totalQuizAttempts} 題',
+                  progress: progress.quizAccuracy,
+                  color: Colors.purple,
+                ),
+              // 最後學習時間
+              if (progress.lastFlashcardStudyAt != null || progress.lastQuizAt != null) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.access_time,
+                      color: Colors.white.withValues(alpha: 0.5),
+                      size: 14,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '最後學習: ${_formatLastStudyTime(progress)}',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildProgressItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    required double progress,
+    required Color color,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, color: color, size: 18),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.8),
+            fontSize: 13,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor: Colors.white.withValues(alpha: 0.1),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+              minHeight: 6,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatLastStudyTime(LearningProgress progress) {
+    DateTime? lastTime;
+    
+    if (progress.lastFlashcardStudyAt != null && progress.lastQuizAt != null) {
+      lastTime = progress.lastFlashcardStudyAt!.isAfter(progress.lastQuizAt!)
+          ? progress.lastFlashcardStudyAt
+          : progress.lastQuizAt;
+    } else {
+      lastTime = progress.lastFlashcardStudyAt ?? progress.lastQuizAt;
+    }
+    
+    if (lastTime == null) return '無紀錄';
+    
+    final now = DateTime.now();
+    final diff = now.difference(lastTime);
+    
+    if (diff.inMinutes < 1) return '剛剛';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} 分鐘前';
+    if (diff.inHours < 24) return '${diff.inHours} 小時前';
+    if (diff.inDays < 7) return '${diff.inDays} 天前';
+    
+    return '${lastTime.month}/${lastTime.day}';
   }
 
   Widget _buildActionButton({
