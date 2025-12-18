@@ -269,5 +269,45 @@ Only return the JSON array, no other text, markdown formatting, or explanations.
       throw Exception('刪除文件相關問題失敗: $e');
     }
   }
+
+  /// FR-6.8: 更新作答結果
+  Future<void> updateAnswerResult(
+    String projectId,
+    String questionId,
+    bool isCorrect,
+  ) async {
+    try {
+      await _questionsCol(projectId).doc(questionId).update({
+        'lastAnswerResult': isCorrect,
+        'lastAnsweredAt': DateTime.now().toIso8601String(),
+        'answerCount': FieldValue.increment(1),
+        'correctCount': isCorrect ? FieldValue.increment(1) : FieldValue.increment(0),
+      });
+    } catch (e) {
+      throw Exception('更新作答結果失敗: $e');
+    }
+  }
+
+  /// 獲取特定文件的問題列表 (FR-6.1)
+  Stream<List<Question>> watchQuestionsByFileId(String projectId, String fileId) {
+    return _questionsCol(projectId)
+        .where('fileId', isEqualTo: fileId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Question.fromJson(doc.data()))
+            .toList());
+  }
+
+  /// 根據題型篩選問題
+  Stream<List<Question>> watchQuestionsByType(String projectId, String questionType) {
+    return _questionsCol(projectId)
+        .where('questionType', isEqualTo: questionType)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Question.fromJson(doc.data()))
+            .toList());
+  }
 }
 
