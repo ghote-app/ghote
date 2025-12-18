@@ -69,6 +69,10 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  
+  # Testing utilities
+  mocktail: ^1.0.4                # Mock objects without codegen
+  fake_cloud_firestore: ^3.1.0    # Fake Firestore for testing
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
