@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../models/question.dart';
 import '../services/question_service.dart';
-import '../services/learning_progress_service.dart';
 import '../utils/toast_utils.dart';
 import 'quiz_screen.dart';
 
@@ -25,12 +24,7 @@ class QuestionsScreen extends StatefulWidget {
 
 class _QuestionsScreenState extends State<QuestionsScreen> {
   final QuestionService _questionService = QuestionService();
-  final LearningProgressService _progressService = LearningProgressService();
-  String _selectedType = 'mcq-single';
-  Map<String, String?> _userAnswers = {};  // 單選題答案
-  Map<String, Set<String>> _userMultiAnswers = {};  // 多選題答案
-  Map<String, bool> _showAnswers = {};
-  Map<String, TextEditingController> _textControllers = {};
+  String _filterType = 'all'; // 'all' | 'mcq-single' | 'mcq-multiple' | 'open-ended'
 
   /// 進入測驗模式
   void _startQuiz(List<Question> questions, {String? questionType}) {
@@ -284,31 +278,6 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
       if (!mounted) return;
       Navigator.of(context).pop();
       ToastUtils.error(context, e.toString().replaceFirst('Exception: ', ''));
-    }
-  }
-
-  void _checkAnswer(Question question, String? selectedAnswer) {
-    // FR-9.2: 記錄測驗結果
-    final isCorrect = selectedAnswer == question.correctAnswer;
-    _recordQuizAttempt(isCorrect);
-    
-    setState(() {
-      _userAnswers[question.id] = selectedAnswer;
-      _showAnswers[question.id] = true;
-    });
-  }
-
-  /// FR-9.2: 記錄測驗作答結果到學習進度
-  Future<void> _recordQuizAttempt(bool isCorrect) async {
-    try {
-      await _progressService.recordQuizAttempt(
-        projectId: widget.projectId,
-        correctCount: isCorrect ? 1 : 0,
-        totalQuestions: 1,
-      );
-    } catch (e) {
-      // 靜默失敗，不影響用戶體驗
-      debugPrint('記錄測驗結果失敗: $e');
     }
   }
 
@@ -671,62 +640,17 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                       question.difficultyLabel,
                       style: TextStyle(color: _getDifficultyColor(question.difficulty), fontSize: 12, fontWeight: FontWeight.w600),
                     ),
-                    if (showAnswer && isCorrectOption)
-                      const Icon(Icons.check_circle, color: Colors.green, size: 20),
-                    if (showAnswer && isSelected && !isCorrectOption)
-                      const Icon(Icons.cancel, color: Colors.red, size: 20),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-        if (!showAnswer)
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: userMultiAnswer.isEmpty ? null : () {
-                // FR-9.2: 記錄多選題測驗結果
-                final correctSet = (question.correctAnswers ?? []).toSet();
-                final isCorrect = userMultiAnswer.length == correctSet.length &&
-                    userMultiAnswer.containsAll(correctSet);
-                _recordQuizAttempt(isCorrect);
-                
-                setState(() {
-                  _showAnswers[question.id] = true;
-                });
-              },
-              icon: const Icon(Icons.send),
-              label: const Text('送出答案'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: Colors.grey[700],
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildOpenEndedAnswer(Question question, bool showAnswer, String? userAnswer) {
-    if (!showAnswer) {
-      return Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.1),
-              ),
-            ),
-            child: TextField(
-              controller: _textControllers.putIfAbsent(
-                question.id,
-                () => TextEditingController(),
+                  ),
+                  const Spacer(),
+                  // 刪除按鈕
+                  IconButton(
+                    icon: Icon(Icons.delete_outline, size: 20, color: Colors.red.withValues(alpha: 0.7)),
+                    onPressed: () => _confirmDeleteQuestion(question.id),
+                    tooltip: '刪除題目',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               // 問題文字
