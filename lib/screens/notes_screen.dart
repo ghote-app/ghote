@@ -7,10 +7,12 @@ import '../utils/toast_utils.dart';
 
 class NotesScreen extends StatefulWidget {
   final String projectId;
+  final String? initialNoteId; // 可選：跳到特定筆記
 
   const NotesScreen({
     super.key,
     required this.projectId,
+    this.initialNoteId,
   });
 
   @override
@@ -19,6 +21,8 @@ class NotesScreen extends StatefulWidget {
 
 class _NotesScreenState extends State<NotesScreen> {
   final NoteService _noteService = NoteService();
+  final ScrollController _scrollController = ScrollController();
+  final Map<String, GlobalKey> _noteKeys = {};
   List<Note> _notes = [];
   bool _isLoading = true;
   String _filterImportance = 'all'; // 'all' | 'high' | 'medium' | 'low'
@@ -32,6 +36,12 @@ class _NotesScreenState extends State<NotesScreen> {
     _loadNotes();
   }
 
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   void _loadNotes() {
     _noteService.watchNotes(widget.projectId).listen((notes) {
       if (mounted) {
@@ -41,8 +51,28 @@ class _NotesScreenState extends State<NotesScreen> {
           // 初始化展開狀態（預設全部展開）
           for (final note in notes) {
             _expandedSections[note.id] ??= {'concepts', 'explanation', 'keywords'};
+            _noteKeys[note.id] ??= GlobalKey();
           }
         });
+        
+        // 如果有指定初始筆記，滾動到該筆記
+        if (widget.initialNoteId != null) {
+          _scrollToNote(widget.initialNoteId!);
+        }
+      }
+    });
+  }
+  
+  /// 滾動到指定筆記
+  void _scrollToNote(String noteId) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final key = _noteKeys[noteId];
+      if (key?.currentContext != null) {
+        Scrollable.ensureVisible(
+          key!.currentContext!,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
       }
     });
   }
@@ -394,11 +424,19 @@ class _NotesScreenState extends State<NotesScreen> {
   }
 
   Widget _buildNoteCard(Note note) {
+    final isTargetNote = widget.initialNoteId == note.id;
+    
     return Card(
+      key: _noteKeys[note.id],
       margin: const EdgeInsets.only(bottom: 16),
-      color: const Color(0xFF1E1E1E),
+      color: isTargetNote 
+          ? const Color(0xFF2A3A2A) // 高亮顯示目標筆記
+          : const Color(0xFF1E1E1E),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
+        side: isTargetNote 
+            ? const BorderSide(color: Colors.green, width: 2)
+            : BorderSide.none,
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
