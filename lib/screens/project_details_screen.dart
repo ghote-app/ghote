@@ -17,11 +17,13 @@ import '../services/flashcard_service.dart';
 import '../services/question_service.dart';
 import '../services/note_service.dart';
 import '../services/learning_progress_service.dart';
+import '../services/sync_service.dart';
 import '../utils/toast_utils.dart';
 import 'chat_screen.dart';
 import 'flashcards_screen.dart';
 import 'questions_screen.dart';
 import 'notes_screen.dart';
+import 'content_search_screen.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
   const ProjectDetailsScreen({super.key, required this.projectId, required this.title});
@@ -118,6 +120,18 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
+          // FR-10: 內容搜尋按鈕
+          IconButton(
+            icon: const Icon(Icons.search_rounded, color: Colors.white),
+            tooltip: '搜尋內容',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ContentSearchScreen(projectId: widget.projectId),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
             tooltip: 'AI 智能命名',
@@ -2057,7 +2071,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 const SizedBox(height: 8),
                 TextField(
                   controller: nameController,
-                  autofocus: true,
+                  autofocus: false,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     hintText: '輸入專案名稱',

@@ -18,10 +18,12 @@ import '../utils/toast_utils.dart';
 /// FR-8.9: 篩選特定標記狀態的卡片
 class FlashcardsScreen extends StatefulWidget {
   final String projectId;
+  final String? initialFlashcardId; // 可選：導航到特定抽認卡
 
   const FlashcardsScreen({
     super.key,
     required this.projectId,
+    this.initialFlashcardId,
   });
 
   @override
@@ -429,7 +431,15 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
               if (mounted) {
                 setState(() {
                   _flashcards = filteredCards;
-                  if (_currentIndex >= _flashcards.length) {
+                  // 如果有指定初始抽認卡，跳到該卡片
+                  if (widget.initialFlashcardId != null && _currentIndex == 0) {
+                    final targetIndex = _flashcards.indexWhere(
+                      (f) => f.id == widget.initialFlashcardId,
+                    );
+                    if (targetIndex >= 0) {
+                      _currentIndex = targetIndex;
+                    }
+                  } else if (_currentIndex >= _flashcards.length) {
                     _currentIndex = _flashcards.isNotEmpty ? _flashcards.length - 1 : 0;
                   }
                 });

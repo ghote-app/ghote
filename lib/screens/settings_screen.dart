@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'upgrade_screen.dart';
 import '../services/subscription_service.dart';
 import '../services/api_key_service.dart';
+import '../services/sync_service.dart';
 import '../models/subscription.dart';
 import '../utils/toast_utils.dart';
 
@@ -89,6 +90,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: const Icon(Icons.chevron_right, color: Colors.white54),
             onTap: () => _manageGeminiApiKey(context),
           ),
+          const Divider(color: Colors.white24, height: 1),
+          // FR-11.4: 資料同步設定
+          _sectionTitle('Data Sync'),
+          _buildSyncSection(),
           const Divider(color: Colors.white24, height: 1),
           _sectionTitle('Security'),
           _tile(
@@ -456,6 +461,103 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
+
+  /// FR-11.4: 資料同步區塊
+  Widget _buildSyncSection() {
+    final syncService = SyncService();
+    
+    return StreamBuilder<SyncStatus>(
+      stream: syncService.syncStatusStream,
+      builder: (context, snapshot) {
+        final status = snapshot.data;
+        final isOnline = syncService.isOnline;
+        
+        return Column(
+          children: [
+            // 同步狀態顯示
+            ListTile(
+              leading: Icon(
+                isOnline ? Icons.cloud_done : Icons.cloud_off,
+                color: isOnline ? Colors.green : Colors.orange,
+              ),
+              title: Text(
+                isOnline ? '已連線' : '離線模式',
+                style: const TextStyle(color: Colors.white),
+              ),
+              subtitle: Text(
+                status?.message ?? (isOnline ? '資料會自動同步到雲端' : '資料將在網路恢復時同步'),
+                style: const TextStyle(color: Colors.white70),
+              ),
+              trailing: status?.status == SyncState.syncing
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.blue,
+                      ),
+                    )
+                  : null,
+            ),
+            // 手動同步按鈕
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: status?.status == SyncState.syncing
+                      ? null
+                      : () async {
+                          final result = await syncService.syncPendingData();
+                          if (!mounted) return;
+                          if (result.success) {
+                            ToastUtils.success(context, result.message);
+                          } else {
+                            ToastUtils.error(context, result.message);
+                          }
+                        },
+                  icon: const Icon(Icons.sync),
+                  label: const Text('手動同步'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey[700],
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // 待同步數量
+            FutureBuilder<int>(
+              future: syncService.getPendingDataCount(),
+              builder: (context, countSnapshot) {
+                final count = countSnapshot.data ?? 0;
+                if (count == 0) return const SizedBox.shrink();
+                
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Row(
+                    children: [
+                      Icon(Icons.pending, size: 16, color: Colors.orange.withValues(alpha: 0.7)),
+                      const SizedBox(width: 8),
+                      Text(
+                        '有 $count 個專案待同步',
+                        style: TextStyle(
+                          color: Colors.orange.withValues(alpha: 0.9),
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
-
-
