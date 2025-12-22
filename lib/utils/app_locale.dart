@@ -343,6 +343,16 @@ final Map<String, Map<String, String>> _strings = {
   'error.projectLimit': {'en': 'Project limit reached. Upgrade to Pro for unlimited projects.', 'zh': '專案數量已達上限。升級 Pro 享受無限專案。'},
   'error.fileLimit': {'en': 'File limit reached. Upgrade to Pro for unlimited files.', 'zh': '檔案數量已達上限。升級 Pro 享受無限檔案。'},
   
+  // Quiz
+  'quiz.correct': {'en': 'Correct!', 'zh': '答對了！'},
+  'quiz.incorrect': {'en': 'Incorrect', 'zh': '答錯了'},
+  'quiz.correctMessage': {'en': 'Great job! Keep it up!', 'zh': '太棒了！繼續加油！'},
+  'quiz.incorrectMessage': {'en': 'Check the correct answer below', 'zh': '查看下方正確答案'},
+  'quiz.explanation': {'en': 'Explanation', 'zh': '解析'},
+  'quiz.singleChoice': {'en': 'Single', 'zh': '單選'},
+  'quiz.multipleChoice': {'en': 'Multiple', 'zh': '多選'},
+  'quiz.openEnded': {'en': 'Open', 'zh': '問答'},
+  
   // Toasts
   'toast.saved': {'en': 'Saved successfully', 'zh': '儲存成功'},
   'toast.deleted': {'en': 'Deleted successfully', 'zh': '刪除成功'},
