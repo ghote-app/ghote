@@ -11,6 +11,7 @@ import '../services/subscription_service.dart';
 import '../services/storage_service.dart';
 import '../services/project_service.dart';
 import '../utils/toast_utils.dart';
+import '../utils/app_locale.dart';
 // import 'upgrade_screen.dart';
 import 'settings_screen.dart';
 import 'project_details_screen.dart';
@@ -228,7 +229,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 children: <Widget>[
                   const SizedBox(height: 4),
                   Text(
-                    'Welcome back,',
+                    tr('dashboard.welcomeBack'),
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 14,
@@ -282,7 +283,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         controller: _searchController,
         style: const TextStyle(color: Colors.white, fontSize: 15, height: 1.4),
         decoration: InputDecoration(
-          hintText: 'Search projects, documents...',
+          hintText: tr('dashboard.search'),
           hintStyle: TextStyle(
             color: Colors.white.withValues(alpha: 0.5),
             fontSize: 15,
@@ -468,7 +469,12 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Widget _buildFilterChips() {
-    final filters = ['All', 'Active', 'Completed', 'Archived'];
+    final filters = [
+      {'key': 'All', 'label': tr('dashboard.all')},
+      {'key': 'Active', 'label': tr('dashboard.active')},
+      {'key': 'Completed', 'label': tr('dashboard.completed')},
+      {'key': 'Archived', 'label': tr('dashboard.archived')},
+    ];
     return SliverToBoxAdapter(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -480,7 +486,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '排序',
+                  tr('dashboard.sort'),
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.5),
                     fontSize: 12,
@@ -504,10 +510,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                   itemCount: filters.length,
                   itemBuilder: (context, index) {
                     final filter = filters[index];
-                    final isSelected = selectedFilter == filter;
+                    final isSelected = selectedFilter == filter['key'];
                     return Padding(
                       padding: const EdgeInsets.only(right: 10),
-                      child: _buildFilterChip(filter, isSelected),
+                      child: _buildFilterChip(filter['key']!, filter['label']!, isSelected),
                     );
                   },
                 );
@@ -522,13 +528,13 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildSortButton() {
     final sortOptions = [
-      {'key': 'lastUpdated', 'icon': Icons.update_rounded, 'tooltip': '最後更新'},
+      {'key': 'lastUpdated', 'icon': Icons.update_rounded, 'tooltip': tr('dashboard.lastUpdated')},
       {
         'key': 'createdAt',
         'icon': Icons.calendar_today_rounded,
-        'tooltip': '建立日期',
+        'tooltip': tr('dashboard.createdAt'),
       },
-      {'key': 'title', 'icon': Icons.sort_by_alpha_rounded, 'tooltip': '名稱'},
+      {'key': 'title', 'icon': Icons.sort_by_alpha_rounded, 'tooltip': tr('dashboard.nameAZ')},
     ];
 
     return ValueListenableBuilder<String>(
@@ -578,11 +584,11 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildFilterChip(String label, bool isSelected) {
+  Widget _buildFilterChip(String key, String label, bool isSelected) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => _selectedFilterNotifier.value = label,
+        onTap: () => _selectedFilterNotifier.value = key,
         borderRadius: BorderRadius.circular(30),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -1318,28 +1324,27 @@ class _DashboardScreenState extends State<DashboardScreen>
                 const SizedBox(height: 8),
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      width: 1.5,
-                    ),
+                    color: Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: TextField(
                     controller: nameController,
                     autofocus: true,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
-                      height: 1.4,
+                      fontSize: 15,
+                      height: 1.5,
                     ),
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 14,
                       ),
                       hintText: 'Enter project title',
-                      hintStyle: TextStyle(color: Colors.white54, fontSize: 16),
+                      hintStyle: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.35),
+                        fontSize: 15,
+                      ),
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,
@@ -1358,28 +1363,27 @@ class _DashboardScreenState extends State<DashboardScreen>
                 const SizedBox(height: 8),
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      width: 1.5,
-                    ),
+                    color: Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: TextField(
                     controller: descriptionController,
                     maxLines: 3,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
-                      height: 1.4,
+                      fontSize: 15,
+                      height: 1.5,
                     ),
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 14,
                       ),
                       hintText: 'Enter project description',
-                      hintStyle: TextStyle(color: Colors.white54, fontSize: 16),
+                      hintStyle: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.35),
+                        fontSize: 15,
+                      ),
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,
@@ -1398,27 +1402,26 @@ class _DashboardScreenState extends State<DashboardScreen>
                 const SizedBox(height: 8),
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      width: 1.5,
-                    ),
+                    color: Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: TextField(
                     controller: categoryController,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
-                      height: 1.4,
+                      fontSize: 15,
+                      height: 1.5,
                     ),
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 14,
                       ),
                       hintText: 'e.g., Study, Work, Personal',
-                      hintStyle: TextStyle(color: Colors.white54, fontSize: 16),
+                      hintStyle: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.35),
+                        fontSize: 15,
+                      ),
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,
@@ -1491,61 +1494,65 @@ class _DashboardScreenState extends State<DashboardScreen>
                   ),
                 ),
                 const SizedBox(height: 8),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.12),
+                DropdownButtonHideUnderline(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: DropdownButtonFormField<String>(
-                    dropdownColor: const Color(0xFF1A1A1A),
-                    value: status,
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 12,
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      dropdownColor: const Color(0xFF1E1E1E),
+                      borderRadius: BorderRadius.circular(10),
+                      value: status,
+                      icon: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Colors.white.withValues(alpha: 0.5),
+                        size: 20,
                       ),
+                      style: const TextStyle(color: Colors.white, fontSize: 15),
+                      items: statusOptions.map((e) {
+                        Color statusColor;
+                        IconData statusIcon;
+                        switch (e) {
+                          case 'Active':
+                            statusColor = const Color(0xFF4ADE80);
+                            statusIcon = Icons.play_circle_outline_rounded;
+                            break;
+                          case 'Completed':
+                            statusColor = const Color(0xFF60A5FA);
+                            statusIcon = Icons.check_circle_outline_rounded;
+                            break;
+                          case 'Archived':
+                            statusColor = const Color(0xFF9CA3AF);
+                            statusIcon = Icons.archive_outlined;
+                            break;
+                          default:
+                            statusColor = Colors.white70;
+                            statusIcon = Icons.circle_outlined;
+                        }
+                        return DropdownMenuItem(
+                          value: e,
+                          child: Row(
+                            children: [
+                              Icon(statusIcon, color: statusColor, size: 18),
+                              const SizedBox(width: 10),
+                              Text(
+                                e,
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (v) => setState(() => status = v ?? 'Active'),
                     ),
-                    items: statusOptions.map((e) {
-                      Color statusColor;
-                      IconData statusIcon;
-                      switch (e) {
-                        case 'Active':
-                          statusColor = Colors.green;
-                          statusIcon = Icons.play_circle_outline;
-                          break;
-                        case 'Completed':
-                          statusColor = Colors.blue;
-                          statusIcon = Icons.check_circle_outline;
-                          break;
-                        case 'Archived':
-                          statusColor = Colors.grey;
-                          statusIcon = Icons.archive_outlined;
-                          break;
-                        default:
-                          statusColor = Colors.white;
-                          statusIcon = Icons.circle_outlined;
-                      }
-                      return DropdownMenuItem(
-                        value: e,
-                        child: Row(
-                          children: [
-                            Icon(statusIcon, color: statusColor, size: 18),
-                            const SizedBox(width: 8),
-                            Text(
-                              e,
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (v) => setState(() => status = v ?? 'Active'),
                   ),
                 ),
               ],

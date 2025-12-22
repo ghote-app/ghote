@@ -5,6 +5,7 @@ import '../models/question.dart';
 import '../models/note.dart';
 import '../services/content_search_service.dart';
 import '../utils/toast_utils.dart';
+import '../utils/app_locale.dart';
 import 'flashcards_screen.dart';
 import 'quiz_screen.dart';
 import 'notes_screen.dart';
@@ -157,7 +158,7 @@ class _ContentSearchScreenState extends State<ContentSearchScreen>
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: const Text('內容搜尋', style: TextStyle(color: Colors.white)),
+        title: Text(tr('search.title'), style: const TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(100),
@@ -173,7 +174,7 @@ class _ContentSearchScreenState extends State<ContentSearchScreen>
                   controller: _searchController,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    hintText: '搜尋抽認卡、題目、筆記...',
+                    hintText: tr('search.placeholder'),
                     hintStyle: TextStyle(
                       color: Colors.white.withValues(alpha: 0.5),
                     ),
@@ -222,19 +223,19 @@ class _ContentSearchScreenState extends State<ContentSearchScreen>
                 tabs: [
                   Tab(
                     text:
-                        '全部${_contentStats != null ? ' (${_contentStats!.totalCount})' : ''}',
+                        '${tr("search.all")}${_contentStats != null ? " (${_contentStats!.totalCount})" : ""}',
                   ),
                   Tab(
                     text:
-                        '抽認卡${_contentStats != null ? ' (${_contentStats!.flashcardsCount})' : ''}',
+                        '${tr("search.flashcards")}${_contentStats != null ? " (${_contentStats!.flashcardsCount})" : ""}',
                   ),
                   Tab(
                     text:
-                        '題目${_contentStats != null ? ' (${_contentStats!.questionsCount})' : ''}',
+                        '${tr("search.questions")}${_contentStats != null ? " (${_contentStats!.questionsCount})" : ""}',
                   ),
                   Tab(
                     text:
-                        '筆記${_contentStats != null ? ' (${_contentStats!.notesCount})' : ''}',
+                        '${tr("search.notes")}${_contentStats != null ? " (${_contentStats!.notesCount})" : ""}',
                   ),
                 ],
               ),
@@ -274,13 +275,13 @@ class _ContentSearchScreenState extends State<ContentSearchScreen>
           children: [
             // FR-10.3: 難度篩選
             _buildFilterDropdown(
-              label: '難度',
+              label: tr('search.difficulty'),
               value: _selectedDifficulty,
               items: [
-                const DropdownMenuItem(value: null, child: Text('全部')),
-                const DropdownMenuItem(value: 'easy', child: Text('簡單')),
-                const DropdownMenuItem(value: 'medium', child: Text('中等')),
-                const DropdownMenuItem(value: 'hard', child: Text('困難')),
+                DropdownMenuItem(value: null, child: Text(tr('search.all'))),
+                DropdownMenuItem(value: 'easy', child: Text(tr('search.easy'))),
+                DropdownMenuItem(value: 'medium', child: Text(tr('search.medium'))),
+                DropdownMenuItem(value: 'hard', child: Text(tr('search.hard'))),
               ],
               onChanged: (value) {
                 setState(() => _selectedDifficulty = value);
@@ -290,10 +291,10 @@ class _ContentSearchScreenState extends State<ContentSearchScreen>
             // FR-10.4: 標籤篩選
             if (_availableTags.isNotEmpty) ...[
               _buildFilterDropdown(
-                label: '標籤',
+                label: tr('search.tags'),
                 value: _selectedTag,
                 items: [
-                  const DropdownMenuItem(value: null, child: Text('全部')),
+                  DropdownMenuItem(value: null, child: Text(tr('search.all'))),
                   ..._availableTags
                       .take(20)
                       .map(
@@ -319,7 +320,7 @@ class _ContentSearchScreenState extends State<ContentSearchScreen>
                   });
                 },
                 icon: const Icon(Icons.clear, size: 18),
-                label: const Text('清除篩選'),
+                label: Text(tr('search.clearFilters')),
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.white.withValues(alpha: 0.7),
                 ),
@@ -387,7 +388,7 @@ class _ContentSearchScreenState extends State<ContentSearchScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              '找不到相關內容',
+              tr('search.noResults'),
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.6),
                 fontSize: 16,
@@ -435,15 +436,15 @@ class _ContentSearchScreenState extends State<ContentSearchScreen>
 
     // 組合所有結果
     if (results.flashcards.isNotEmpty) {
-      items.add(_buildSectionHeader('抽認卡', results.flashcards.length));
+      items.add(_buildSectionHeader(tr('search.flashcards'), results.flashcards.length));
       items.addAll(results.flashcards.map((f) => _buildFlashcardItem(f)));
     }
     if (results.questions.isNotEmpty) {
-      items.add(_buildSectionHeader('題目', results.questions.length));
+      items.add(_buildSectionHeader(tr('search.questions'), results.questions.length));
       items.addAll(results.questions.map((q) => _buildQuestionItem(q)));
     }
     if (results.notes.isNotEmpty) {
-      items.add(_buildSectionHeader('筆記', results.notes.length));
+      items.add(_buildSectionHeader(tr('search.notes'), results.notes.length));
       items.addAll(results.notes.map((n) => _buildNoteItem(n)));
     }
 
@@ -488,25 +489,25 @@ class _ContentSearchScreenState extends State<ContentSearchScreen>
       children: [
         // FR-10.2: 內容類型統計卡片
         _buildStatsCard(
-          '抽認卡',
+          tr('search.flashcards'),
           _contentStats!.flashcardsCount,
           Icons.style,
           Colors.blue,
         ),
         const SizedBox(height: 12),
         _buildStatsCard(
-          '題目',
+          tr('search.questions'),
           _contentStats!.questionsCount,
           Icons.quiz,
           Colors.orange,
           subtitle:
-              '單選 ${_contentStats!.mcqSingleCount} / '
-              '多選 ${_contentStats!.mcqMultipleCount} / '
-              '問答 ${_contentStats!.openEndedCount}',
+              '${tr("search.singleChoice")} ${_contentStats!.mcqSingleCount} / '
+              '${tr("search.multipleChoice")} ${_contentStats!.mcqMultipleCount} / '
+              '${tr("search.openEnded")} ${_contentStats!.openEndedCount}',
         ),
         const SizedBox(height: 12),
         _buildStatsCard(
-          '筆記',
+          tr('search.notes'),
           _contentStats!.notesCount,
           Icons.note,
           Colors.green,
@@ -514,9 +515,9 @@ class _ContentSearchScreenState extends State<ContentSearchScreen>
         const SizedBox(height: 24),
         // 標籤雲
         if (_availableTags.isNotEmpty) ...[
-          const Text(
-            '熱門標籤',
-            style: TextStyle(
+          Text(
+            tr('search.popularTags'),
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -695,7 +696,7 @@ class _ContentSearchScreenState extends State<ContentSearchScreen>
 
   Widget _buildFlashcardsList(List<Flashcard> flashcards) {
     if (flashcards.isEmpty) {
-      return _buildEmptyState('沒有抽認卡');
+      return _buildEmptyState(tr('search.noFlashcards'));
     }
 
     return ListView.builder(
@@ -707,7 +708,7 @@ class _ContentSearchScreenState extends State<ContentSearchScreen>
 
   Widget _buildQuestionsList(List<Question> questions) {
     if (questions.isEmpty) {
-      return _buildEmptyState('沒有題目');
+      return _buildEmptyState(tr('search.noQuestions'));
     }
 
     return ListView.builder(
@@ -719,7 +720,7 @@ class _ContentSearchScreenState extends State<ContentSearchScreen>
 
   Widget _buildNotesList(List<Note> notes) {
     if (notes.isEmpty) {
-      return _buildEmptyState('沒有筆記');
+      return _buildEmptyState(tr('search.noNotes'));
     }
 
     return ListView.builder(
@@ -839,13 +840,13 @@ class _ContentSearchScreenState extends State<ContentSearchScreen>
     String typeLabel;
     if (question.isMcqSingle) {
       typeColor = Colors.blue;
-      typeLabel = '單選';
+      typeLabel = tr('search.singleChoice');
     } else if (question.isMcqMultiple) {
       typeColor = Colors.orange;
-      typeLabel = '多選';
+      typeLabel = tr('search.multipleChoice');
     } else {
       typeColor = Colors.purple;
-      typeLabel = '問答';
+      typeLabel = tr('search.openEnded');
     }
 
     return GestureDetector(
