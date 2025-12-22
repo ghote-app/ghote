@@ -1,14 +1,23 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 限定只有特定開發者可寫入自身訂閱測試文件
-    match /users/{userId}/subscription/{docId} {
-      allow read: if isSignedIn() && request.auth.uid == userId;
-      allow write: if isSignedIn() && request.auth.uid == userId &&
-        request.auth.token.devSwitch == true && docId == 'current';
-    }
     function isSignedIn() {
       return request.auth != null;
+    }
+
+    // FR-1.8: 用戶記錄 - 用戶只能讀寫自己的記錄
+    match /users/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && request.auth.uid == userId;
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+      
+      // 用戶訂閱 - 限定只有特定開發者可寫入自身訂閱測試文件
+      match /subscription/{docId} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        allow write: if isSignedIn() && request.auth.uid == userId &&
+          request.auth.token.devSwitch == true && docId == 'current';
+      }
     }
 
     // NOTE: Replace with your real subscription path and checks when implemented
