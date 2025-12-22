@@ -4,7 +4,7 @@ import 'package:ghote/models/note.dart';
 void main() {
   group('Note Model', () {
     final testDate = DateTime(2024, 1, 15, 10, 30);
-    
+
     test('should create Note with required parameters', () {
       final note = Note(
         id: 'note_1',
@@ -248,6 +248,55 @@ void main() {
           createdAt: testDate,
         );
         expect(note.importanceLabel, '中');
+      });
+    });
+
+    group('Edge Cases', () {
+      test('should handle very long title', () {
+        final longTitle = 'A' * 1000;
+        final note = Note(
+          id: 'note_1',
+          projectId: 'project_1',
+          title: longTitle,
+          mainConcepts: [],
+          detailedExplanation: 'Explanation',
+          keywords: [],
+          createdAt: testDate,
+        );
+        expect(note.title.length, 1000);
+      });
+
+      test('should handle special characters in content', () {
+        final note = Note(
+          id: 'note_1',
+          projectId: 'project_1',
+          title: 'Special \n\t<>&"',
+          mainConcepts: ['概念 with émojis 🎉'],
+          detailedExplanation: 'Explanation with 中文',
+          keywords: ['key<>word'],
+          createdAt: testDate,
+        );
+        expect(note.title, contains('\n'));
+        expect(note.mainConcepts.first, contains('🎉'));
+      });
+
+      test('should handle copyWith with fileId changes', () {
+        final note = Note(
+          id: 'note_1',
+          projectId: 'project_1',
+          title: 'Test',
+          mainConcepts: [],
+          detailedExplanation: 'Test',
+          keywords: [],
+          createdAt: testDate,
+        );
+
+        final withFile = note.copyWith(fileId: 'file123');
+        expect(withFile.fileId, 'file123');
+
+        // copyWith preserves original when not changed
+        final again = withFile.copyWith(title: 'New Title');
+        expect(again.fileId, 'file123');
       });
     });
   });

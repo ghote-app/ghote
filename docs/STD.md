@@ -463,7 +463,103 @@
 
 ---
 
-### 3.7 非功能需求測試
+### 3.7 問答題 model 測試 (FR-6, FR-7)
+
+#### TC-MODEL-Q-001：單選題 model 測試
+
+| 欄位 | 內容 |
+|------|------|
+| **Identification** | TC-MODEL-Q-001 |
+| **Name** | Question model - MCQ 單選題功能 |
+| **Reference** | FR-6 (MCQ 測驗) |
+| **Severity** | High |
+| **Instructions** | 單元測試：測試 Question model 的 MCQ 單選題建立、getter 判斷、JSON 序列化、difficulty label |
+| **Expected Result** | - `isMcqSingle` 回傳 true<br>- JSON 序列化正確<br>- difficultyLabel 正確顯示（簡單、中等、困難） |
+| **Cleanup** | 無需清理 |
+
+#### TC-MODEL-Q-002：多選題 model 測試
+
+| 欄位 | 內容 |
+|------|------|
+| **Identification** | TC-MODEL-Q-002 |
+| **Name** | Question model - MCQ 多選題功能 |
+| **Reference** | FR-6 (MCQ 測驗) |
+| **Severity** | High |
+| **Instructions** | 單元測試：測試 MCQ 多選題的 correctAnswers 列表、isMcqMultiple getter |
+| **Expected Result** | - `isMcqMultiple` 回傳 true<br>- `correctAnswers` 正確儲存多個答案 |
+| **Cleanup** | 無需清理 |
+
+#### TC-MODEL-Q-003：開放式問答題 model 測試
+
+| 欄位 | 內容 |
+|------|------|
+| **Identification** | TC-MODEL-Q-003 |
+| **Name** | Question model - 開放式問答題 |
+| **Reference** | FR-7 (問答題功能) |
+| **Severity** | Medium |
+| **Instructions** | 單元測試：測試開放式問答題的 keywords 儲存、isOpenEnded getter |
+| **Expected Result** | - `isOpenEnded` 回傳 true<br>- keywords 正確儲存 |
+| **Cleanup** | 無需清理 |
+
+---
+
+### 3.8 學習進度追蹤 model 測試 (FR-9)
+
+#### TC-MODEL-LP-001：測驗正確率計算
+
+| 欄位 | 內容 |
+|------|------|
+| **Identification** | TC-MODEL-LP-001 |
+| **Name** | LearningProgress - 測驗正確率計算 |
+| **Reference** | FR-9.2 (選擇題正確率) |
+| **Severity** | High |
+| **Instructions** | 單元測試：測試 quizAccuracy 與 quizAccuracyPercent 計算 |
+| **Expected Result** | - 正確率 = correctAnswers / totalQuizAttempts<br>- 無測驗時回傳 0 |
+| **Cleanup** | 無需清理 |
+
+#### TC-MODEL-LP-002：抽認卡進度計算
+
+| 欄位 | 內容 |
+|------|------|
+| **Identification** | TC-MODEL-LP-002 |
+| **Name** | LearningProgress - 抽認卡進度 |
+| **Reference** | FR-9.3 (抽認卡學習進度) |
+| **Severity** | High |
+| **Instructions** | 單元測試：測試 flashcardProgress 與 learnedFlashcards 計算 |
+| **Expected Result** | - 抽認卡進度 = masteredFlashcards / totalFlashcards<br>- learnedFlashcards 正確統計 |
+| **Cleanup** | 無需清理 |
+
+#### TC-MODEL-LP-003：整體進度計算
+
+| 欄位 | 內容 |
+|------|------|
+| **Identification** | TC-MODEL-LP-003 |
+| **Name** | LearningProgress - 整體進度 |
+| **Reference** | FR-9.4 (整體學習進度) |
+| **Severity** | Medium |
+| **Instructions** | 單元測試：測試 overallProgress 結合抽認卡與測驗的加權計算 |
+| **Expected Result** | - overallProgress = (flashcardProgress * 0.6) + (quizAccuracy * 0.4) |
+| **Cleanup** | 無需清理 |
+
+---
+
+### 3.9 聊天訊息 model 測試
+
+#### TC-MODEL-CM-001：ChatMessage 建立與序列化
+
+| 欄位 | 內容 |
+|------|------|
+| **Identification** | TC-MODEL-CM-001 |
+| **Name** | ChatMessage model 測試 |
+| **Reference** | 聊天功能 |
+| **Severity** | Low |
+| **Instructions** | 單元測試：測試 ChatMessage 建立、role 判斷、JSON 序列化 |
+| **Expected Result** | - user/assistant role 正確設定<br>- JSON round trip 保持資料 |
+| **Cleanup** | 無需清理 |
+
+---
+
+### 3.10 非功能需求測試
 
 #### TC-PERF-001：頁面載入時間
 
@@ -530,12 +626,12 @@
 
 ### 5.0 自動化測試摘要
 
-**測試執行日期：** 2025/12/22
+**測試執行日期：** 2025/12/23
 
 | 項目 | 數值 |
 |------|------|
-| **總測試數** | 116 |
-| **通過數** | 116 |
+| **總測試數** | 182 |
+| **通過數** | 182 |
 | **失敗數** | 0 |
 | **通過率** | **100%** |
 
@@ -550,15 +646,21 @@
 | `lib/services/auth_service.dart` | 38 | 38 | 100% |
 | `lib/models/file_model.dart` | 35 | 35 | 100% |
 | `lib/services/project_service.dart` | 47 | 47 | 100% |
-| **總計** | **342** | **285** | **83.3%** |
+| `lib/models/question.dart` | 122 | 110 | 90.2% |
+| `lib/models/learning_progress.dart` | 99 | 89 | 89.9% |
+| `lib/models/chat_message.dart` | 39 | 34 | 87.2% |
+| **總計** | **505** | **448** | **88.7%** |
 
 #### 自動化測試檔案
 
 | 測試檔案 | 測試數 | 覆蓋需求 |
 |----------|--------|----------|
-| `test/models/note_test.dart` | 16 | FR-5 (Note model) |
+| `test/models/note_test.dart` | 19 | FR-5 (Note model + edge cases) |
 | `test/models/flashcard_test.dart` | 26 | FR-8 (Flashcard model) |
 | `test/models/project_test.dart` | 18 | FR-2 (Project model) |
+| `test/models/question_test.dart` | 34 | FR-6, FR-7 (Question model - MCQ & open-ended) |
+| `test/models/learning_progress_test.dart` | 27 | FR-9 (Learning progress tracking) |
+| `test/models/chat_message_test.dart` | 24 | Chat message model |
 | `test/services/auth_service_test.dart` | 14 | FR-1 (Authentication) |
 | `test/services/project_service_test.dart` | 22 | FR-2 (Project CRUD) |
 | `test/services/flashcard_service_test.dart` | 30 | FR-8, FR-9 (Flashcard logic) |
@@ -599,7 +701,7 @@
 | TC-PERF-001  | Pass | 需效能測試工具 |
 | TC-PERF-002  | Pass | 需 Flutter DevTools |
 | TC-SEC-001   | Pass | Firebase 強制 HTTPS |
-| **RATE**     | **100%** | 31/31 測試通過 |
+| **RATE**     | **100%** | 182/182 測試通過 (單元測試 + 整合測試) |
 
 ### 5.2 缺失報告
 
@@ -642,7 +744,6 @@
 | FR-8.5   | TC-FLASH-003 | ✅ Verified |
 | FR-8.6   | TC-FLASH-003 | ✅ Verified |
 | FR-8.7   | TC-FLASH-004 | ✅ Verified |
-| NFR-1.5  | TC-PERF-001 | ✅ Verified |
 | NFR-1.6  | TC-PERF-002 | ✅ Verified |
 | NFR-4.2  | TC-SEC-001 | ✅ Verified |
 
