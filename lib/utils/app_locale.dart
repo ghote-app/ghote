@@ -84,6 +84,9 @@ final Map<String, Map<String, String>> _strings = {
   'common.loading': {'en': 'Loading...', 'zh': '載入中...'},
   'common.error': {'en': 'Error', 'zh': '錯誤'},
   'common.success': {'en': 'Success', 'zh': '成功'},
+  'common.open': {'en': 'Open', 'zh': '開啟'},
+  'common.close': {'en': 'Close', 'zh': '關閉'},
+  'common.docs': {'en': 'docs', 'zh': '份文件'},
   
   // Dashboard
   'dashboard.title': {'en': 'Dashboard', 'zh': '專案總覽'},
@@ -118,6 +121,8 @@ final Map<String, Map<String, String>> _strings = {
   'project.localFiles': {'en': 'Local', 'zh': '本地'},
   'project.noFiles': {'en': 'No files yet', 'zh': '尚無檔案'},
   'project.uploadHint': {'en': 'Tap + to upload files', 'zh': '點擊 + 上傳檔案'},
+  'project.archive': {'en': 'Archive', 'zh': '封存'},
+  'project.unarchive': {'en': 'Unarchive', 'zh': '取消封存'},
   
   // AI Features
   'ai.features': {'en': 'AI Features', 'zh': 'AI 功能'},
