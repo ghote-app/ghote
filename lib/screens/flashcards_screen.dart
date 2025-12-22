@@ -5,6 +5,7 @@ import '../models/flashcard.dart';
 import '../services/flashcard_service.dart';
 import '../services/learning_progress_service.dart';
 import '../utils/toast_utils.dart';
+import '../utils/app_locale.dart';
 
 /// FR-8 抽認卡學習功能（整合版）
 /// FR-8.1: 查看文件對應的抽認卡集合
@@ -374,7 +375,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: const Text('抽認卡', style: TextStyle(color: Colors.white)),
+        title: Text(tr('flashcards.title'), style: const TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           PopupMenuButton<String>(
@@ -392,13 +393,13 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
             itemBuilder: (context) {
               final stats = _getProgressStats();
               return [
-                _buildFilterMenuItem('all', '全部', Icons.all_inclusive, Colors.blue, stats['total']!),
-                _buildFilterMenuItem('unlearned', '未學習', Icons.help_outline, Colors.grey, stats['unlearned']!),
-                _buildFilterMenuItem('mastered', '已掌握', Icons.check_circle, Colors.green, stats['mastered']!),
-                _buildFilterMenuItem('review', '需複習', Icons.refresh, Colors.orange, stats['review']!),
-                _buildFilterMenuItem('difficult', '困難', Icons.warning, Colors.red, stats['difficult']!),
+                _buildFilterMenuItem('all', tr('flashcards.all'), Icons.all_inclusive, Colors.blue, stats['total']!),
+                _buildFilterMenuItem('unlearned', tr('flashcards.unlearned'), Icons.help_outline, Colors.grey, stats['unlearned']!),
+                _buildFilterMenuItem('mastered', tr('flashcards.mastered'), Icons.check_circle, Colors.green, stats['mastered']!),
+                _buildFilterMenuItem('review', tr('flashcards.review'), Icons.refresh, Colors.orange, stats['review']!),
+                _buildFilterMenuItem('difficult', tr('flashcards.difficult'), Icons.warning, Colors.red, stats['difficult']!),
                 const PopupMenuDivider(),
-                _buildFilterMenuItem('favorites', '收藏', Icons.star, Colors.amber, stats['favorites']!),
+                _buildFilterMenuItem('favorites', tr('flashcards.favorites'), Icons.star, Colors.amber, stats['favorites']!),
               ];
             },
           ),
@@ -413,7 +414,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
               );
             },
           ),
-          IconButton(icon: const Icon(Icons.add, color: Colors.white), onPressed: _showGenerateConfirmation, tooltip: '生成抽認卡'),
+          IconButton(icon: const Icon(Icons.add, color: Colors.white), onPressed: _showGenerateConfirmation, tooltip: tr('flashcards.generate')),
         ],
       ),
       body: StreamBuilder<List<Flashcard>>(
@@ -493,12 +494,12 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
         children: [
           Icon(Icons.quiz_outlined, size: 64, color: Colors.white.withValues(alpha: 0.3)),
           const SizedBox(height: 16),
-          Text('還沒有抽認卡', style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 16)),
+          Text(tr('flashcards.empty'), style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 16)),
           const SizedBox(height: 16),
           ElevatedButton.icon(
             onPressed: _showGenerateConfirmation,
             icon: const Icon(Icons.add),
-            label: const Text('生成抽認卡'),
+            label: Text(tr('flashcards.generate')),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
           ),
         ],
@@ -530,7 +531,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
           TextButton.icon(
             onPressed: () => setState(() { _filterStatus = 'all'; _currentIndex = 0; _flashcards = _getFilteredCards(); }),
             icon: const Icon(Icons.filter_alt_off),
-            label: const Text('顯示全部'),
+            label: Text(tr('flashcards.showAll')),
             style: TextButton.styleFrom(foregroundColor: Colors.white70),
           ),
         ],
@@ -566,10 +567,10 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatItem('已掌握', stats['mastered']!, Colors.green),
-              _buildStatItem('需複習', stats['review']!, Colors.orange),
-              _buildStatItem('困難', stats['difficult']!, Colors.red),
-              _buildStatItem('未學習', stats['unlearned']!, Colors.grey),
+              _buildStatItem(tr('flashcards.mastered'), stats['mastered']!, Colors.green),
+              _buildStatItem(tr('flashcards.review'), stats['review']!, Colors.orange),
+              _buildStatItem(tr('flashcards.difficult'), stats['difficult']!, Colors.red),
+              _buildStatItem(tr('flashcards.unlearned'), stats['unlearned']!, Colors.grey),
             ],
           ),
         ],

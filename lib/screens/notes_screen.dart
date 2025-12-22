@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../models/note.dart';
 import '../services/note_service.dart';
 import '../utils/toast_utils.dart';
+import '../utils/app_locale.dart';
 
 class NotesScreen extends StatefulWidget {
   final String projectId;
@@ -274,7 +275,7 @@ class _NotesScreenState extends State<NotesScreen> {
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A1A1A),
-        title: const Text('重點筆記'),
+        title: Text(tr('notes.title')),
         actions: [
           // 重要性過濾
           PopupMenuButton<String>(
@@ -288,7 +289,7 @@ class _NotesScreenState extends State<NotesScreen> {
                     if (_filterImportance == 'all')
                       const Icon(Icons.check, size: 18),
                     const SizedBox(width: 8),
-                    const Text('全部'),
+                    Text(tr('notes.all')),
                   ],
                 ),
               ),
@@ -308,7 +309,7 @@ class _NotesScreenState extends State<NotesScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text('高重要性'),
+                    Text(tr('notes.high')),
                   ],
                 ),
               ),
@@ -328,7 +329,7 @@ class _NotesScreenState extends State<NotesScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text('中重要性'),
+                    Text(tr('notes.medium')),
                   ],
                 ),
               ),
@@ -348,7 +349,7 @@ class _NotesScreenState extends State<NotesScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text('低重要性'),
+                    Text(tr('notes.low')),
                   ],
                 ),
               ),
@@ -358,7 +359,7 @@ class _NotesScreenState extends State<NotesScreen> {
           IconButton(
             icon: const Icon(Icons.auto_awesome),
             onPressed: _showGenerateConfirmation,
-            tooltip: '生成重點筆記',
+            tooltip: tr('notes.generate'),
           ),
         ],
       ),

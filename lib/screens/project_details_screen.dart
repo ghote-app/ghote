@@ -19,11 +19,13 @@ import '../services/note_service.dart';
 import '../services/learning_progress_service.dart';
 import '../services/sync_service.dart';
 import '../utils/toast_utils.dart';
+import '../utils/app_locale.dart';
 import 'chat_screen.dart';
 import 'flashcards_screen.dart';
 import 'questions_screen.dart';
 import 'notes_screen.dart';
 import 'content_search_screen.dart';
+import '../features/project/presentation/widgets/widgets.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
   const ProjectDetailsScreen({super.key, required this.projectId, required this.title});
@@ -123,7 +125,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           // FR-10: 內容搜尋按鈕
           IconButton(
             icon: const Icon(Icons.search_rounded, color: Colors.white),
-            tooltip: '搜尋內容',
+            tooltip: tr('file.searchContent'),
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -139,7 +141,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.upload_file_rounded, color: Colors.white),
-            tooltip: '上傳檔案',
+            tooltip: tr('file.uploadFiles'),
             onPressed: _uploadFiles,
           ),
         ],
@@ -161,7 +163,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   Icon(Icons.error_outline_rounded, size: 64, color: Colors.red.withValues(alpha: 0.7)),
                   const SizedBox(height: 16),
                   Text(
-                    '載入錯誤',
+                    tr('file.loadError'),
                     style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 18, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
@@ -193,7 +195,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   Icon(Icons.folder_open_rounded, size: 80, color: Colors.white.withValues(alpha: 0.3)),
                   const SizedBox(height: 20),
                   Text(
-                    '尚無檔案',
+                    tr('file.noFiles'),
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 20,
@@ -202,7 +204,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '點擊右上角 + 開始上傳檔案',
+                    tr('file.uploadHint'),
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.5),
                       fontSize: 14,
@@ -221,7 +223,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 child: RepaintBoundary(
                   child: Padding(
                     padding: const EdgeInsets.all(20),
-                    child: _buildStatsCard(files),
+                    child: ProjectStatsCard(files: files),
                   ),
                 ),
               ),
@@ -231,7 +233,12 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 child: RepaintBoundary(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: _buildAIActionsBar(),
+                    child: AIActionsBar(
+                      onChatTap: _openChat,
+                      onNotesTap: _openNotes,
+                      onFlashcardsTap: _openFlashcards,
+                      onQuestionsTap: _openQuestions,
+                    ),
                   ),
                 ),
               ),
@@ -241,7 +248,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 child: RepaintBoundary(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                    child: _buildLearningProgressCard(),
+                    child: LearningProgressCard(projectId: widget.projectId),
                   ),
                 ),
               ),
@@ -274,7 +281,15 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                         child: Padding(
                           key: ValueKey(file.id),
                           padding: const EdgeInsets.only(bottom: 12),
-                          child: _buildFileCard(context, file),
+                          child: FileListItemWidget(
+                            file: file,
+                            onTap: _previewFile,
+                            onLongPress: _showFileOptions,
+                            getFileIcon: _getFileIcon,
+                            getFileColor: _getFileColor,
+                            getCategoryLabel: _getCategoryLabel,
+                            getCategoryColor: _getCategoryColor,
+                          ),
                         ),
                       );
                     },
@@ -745,7 +760,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   children: [
                     TextButton.icon(
                       icon: const Icon(Icons.open_in_new, color: Colors.white),
-                      label: const Text('用其他應用開啟', style: TextStyle(color: Colors.white)),
+                      label: Text(tr('file.openWith'), style: const TextStyle(color: Colors.white)),
                       onPressed: () {
                         Navigator.of(context).pop();
                         _openFile(context, file);
@@ -792,15 +807,15 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             fileBytes,
             fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) {
-              return const Center(
+              return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.broken_image, color: Colors.grey, size: 64),
-                    SizedBox(height: 16),
+                    const Icon(Icons.broken_image, color: Colors.grey, size: 64),
+                    const SizedBox(height: 16),
                     Text(
-                      '無法顯示圖片',
-                      style: TextStyle(color: Colors.white70),
+                      tr('file.cannotShowImage'),
+                      style: const TextStyle(color: Colors.white70),
                     ),
                   ],
                 ),
@@ -826,7 +841,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             Icon(_getFileIcon(fileType), color: Colors.grey, size: 64),
             const SizedBox(height: 16),
             Text(
-              '此檔案類型不支援預覽',
+              tr('file.cannotPreview'),
               style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
             ),
           ],
@@ -872,7 +887,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               context: context,
               builder: (context) => AlertDialog(
                 backgroundColor: Colors.black,
-                title: const Text('無法開啟檔案', style: TextStyle(color: Colors.white)),
+                title: Text(tr('file.cannotOpen'), style: const TextStyle(color: Colors.white)),
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -970,7 +985,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               const SizedBox(height: 20),
               ListTile(
                 leading: const Icon(Icons.open_in_new_rounded, color: Colors.blue),
-                title: const Text('開啟檔案', style: TextStyle(color: Colors.white)),
+                title: Text(tr('file.openFile'), style: const TextStyle(color: Colors.white)),
                 onTap: () {
                   Navigator.pop(context);
                   _openFile(context, file);
@@ -978,7 +993,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.info_outline_rounded, color: Colors.grey),
-                title: const Text('檔案資訊', style: TextStyle(color: Colors.white)),
+                title: Text(tr('file.fileInfo'), style: const TextStyle(color: Colors.white)),
                 onTap: () {
                   Navigator.pop(context);
                   _showFileInfo(context, file);
@@ -986,7 +1001,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.delete_outline_rounded, color: Colors.red),
-                title: const Text('刪除檔案', style: TextStyle(color: Colors.red)),
+                title: Text(tr('file.deleteFile'), style: const TextStyle(color: Colors.red)),
                 onTap: () {
                   Navigator.pop(context);
                   _confirmDeleteFile(context, file);
@@ -1006,26 +1021,26 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.black,
-        title: const Text('檔案資訊', style: TextStyle(color: Colors.white)),
+        title: Text(tr('file.fileInfo'), style: const TextStyle(color: Colors.white)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildInfoRow('檔案名稱', file.name),
-            _buildInfoRow('檔案類型', file.type.toUpperCase()),
-            _buildInfoRow('檔案大小', file.formattedSize),
-            _buildInfoRow('儲存位置', file.storageType == 'cloud' ? '雲端' : '本地'),
-            _buildInfoRow('上傳時間', _formatDateTime(file.uploadedAt)),
+            _buildInfoRow(tr('file.fileName'), file.name),
+            _buildInfoRow(tr('file.fileType'), file.type.toUpperCase()),
+            _buildInfoRow(tr('file.fileSize'), file.formattedSize),
+            _buildInfoRow(tr('file.storageLocation'), file.storageType == 'cloud' ? tr('file.cloud') : tr('file.local')),
+            _buildInfoRow(tr('file.uploadTime'), _formatDateTime(file.uploadedAt)),
             if (file.localPath != null)
-              _buildInfoRow('本地路徑', file.localPath!, isPath: true),
+                _buildInfoRow(tr('file.localPath'), file.localPath!, isPath: true),
             if (file.downloadUrl != null)
-              _buildInfoRow('下載網址', file.downloadUrl!, isPath: true),
+                _buildInfoRow(tr('file.downloadUrl'), file.downloadUrl!, isPath: true),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('關閉'),
+            child: Text(tr('common.close')),
           ),
         ],
       ),
@@ -1078,7 +1093,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: Colors.black,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('刪除檔案', style: TextStyle(color: Colors.white)),
+        title: Text(tr('file.deleteFile'), style: const TextStyle(color: Colors.white)),
         content: Text(
           '確定要刪除「${file.name}」嗎？\n\n⚠️ 此操作會同時刪除該文件生成的所有筆記、抽認卡和練習問題。',
           style: const TextStyle(color: Colors.white70),
@@ -1086,11 +1101,11 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
+            child: Text(tr('common.cancel')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('刪除', style: TextStyle(color: Colors.red)),
+            child: Text(tr('common.delete'), style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -1145,101 +1160,15 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     }
   }
 
-  Widget _buildStatsCard(List<FileModel> files) {
-    final totalSize = files.fold<int>(0, (sum, file) => sum + file.sizeBytes);
-    final cloudFiles = files.where((f) => f.storageType == 'cloud').length;
-    final localFiles = files.where((f) => f.storageType == 'local').length;
-
-    String formatSize(int bytes) {
-      const int kb = 1024;
-      const int mb = 1024 * 1024;
-      if (bytes >= mb) return '${(bytes / mb).toStringAsFixed(2)} MB';
-      if (bytes >= kb) return '${(bytes / kb).toStringAsFixed(2)} KB';
-      return '$bytes B';
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.analytics_outlined, color: Colors.white.withValues(alpha: 0.8), size: 20),
-              const SizedBox(width: 8),
-              const Text(
-                '專案統計',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatItem(
-                  '檔案數量',
-                  '${files.length}',
-                  Icons.description_outlined,
-                  Colors.blue,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatItem(
-                  '總大小',
-                  formatSize(totalSize),
-                  Icons.storage_rounded,
-                  Colors.purple,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatItem(
-                  '雲端',
-                  '$cloudFiles',
-                  Icons.cloud_outlined,
-                  Colors.green,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatItem(
-                  '本地',
-                  '$localFiles',
-                  Icons.phone_android_rounded,
-                  Colors.orange,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   // 分類篩選器
   Widget _buildCategoryFilter(List<FileModel> files) {
     final categories = {
-      'all': {'label': '全部', 'icon': Icons.apps_rounded, 'color': Colors.white},
-      'document': {'label': '文件', 'icon': Icons.description_rounded, 'color': Colors.blue},
-      'image': {'label': '圖片', 'icon': Icons.image_rounded, 'color': Colors.green},
-      'video': {'label': '影片', 'icon': Icons.video_file_rounded, 'color': Colors.purple},
-      'audio': {'label': '音訊', 'icon': Icons.audio_file_rounded, 'color': Colors.orange},
-      'other': {'label': '其他', 'icon': Icons.insert_drive_file_rounded, 'color': Colors.grey},
+      'all': {'label': tr('file.all'), 'icon': Icons.apps_rounded},
+      'document': {'label': tr('file.document'), 'icon': Icons.description_rounded},
+      'image': {'label': tr('file.image'), 'icon': Icons.image_rounded},
+      'video': {'label': tr('file.video'), 'icon': Icons.video_file_rounded},
+      'audio': {'label': tr('file.audio'), 'icon': Icons.audio_file_rounded},
+      'other': {'label': tr('file.other'), 'icon': Icons.insert_drive_file_rounded},
     };
 
     // 計算每個分類的數量
@@ -1266,38 +1195,30 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             padding: const EdgeInsets.only(right: 8),
             child: FilterChip(
               selected: isSelected,
+              showCheckmark: false,
               label: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     categoryData['icon'] as IconData,
-                    size: 16,
-                    color: isSelected ? Colors.white : (categoryData['color'] as Color).withValues(alpha: 0.7),
+                    size: 15,
+                    color: Colors.white.withValues(alpha: isSelected ? 0.9 : 0.5),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     '${categoryData['label']}',
                     style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.7),
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      color: Colors.white.withValues(alpha: isSelected ? 0.9 : 0.6),
+                      fontSize: 13,
+                      fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
                     ),
                   ),
                   const SizedBox(width: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: isSelected 
-                          ? Colors.white.withValues(alpha: 0.2)
-                          : Colors.white.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '$count',
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.6),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  Text(
+                    '$count',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: isSelected ? 0.7 : 0.4),
+                      fontSize: 12,
                     ),
                   ),
                 ],
@@ -1307,290 +1228,14 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   _selectedCategory = entry.key;
                 });
               },
-              backgroundColor: Colors.white.withValues(alpha: 0.05),
-              selectedColor: (categoryData['color'] as Color).withValues(alpha: 0.25),
-              checkmarkColor: Colors.white,
-              side: BorderSide(
-                color: isSelected
-                    ? (categoryData['color'] as Color).withValues(alpha: 0.5)
-                    : Colors.white.withValues(alpha: 0.1),
-                width: 1.5,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              backgroundColor: Colors.white.withValues(alpha: 0.04),
+              selectedColor: Colors.white.withValues(alpha: 0.12),
+              side: BorderSide.none,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             ),
           );
         }).toList(),
       ),
-    );
-  }
-
-  Widget _buildStatItem(String label, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.6),
-                    fontSize: 11,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFileCard(BuildContext context, FileModel file) {
-    final isCloud = file.storageType == 'cloud';
-    
-    // FR-3.5: 處理狀態
-    Widget? statusWidget;
-    if (file.extractionStatus == 'processing') {
-      statusWidget = Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 12,
-            height: 12,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.withValues(alpha: 0.8)),
-            ),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '處理中',
-            style: TextStyle(
-              color: Colors.blue.withValues(alpha: 0.8),
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      );
-    } else if (file.extractionStatus == 'extracted') {
-      statusWidget = Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.check_circle_rounded,
-            size: 14,
-            color: Colors.green.withValues(alpha: 0.8),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '已完成',
-            style: TextStyle(
-              color: Colors.green.withValues(alpha: 0.8),
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      );
-    } else if (file.extractionStatus == 'failed') {
-      statusWidget = Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.error_rounded,
-            size: 14,
-            color: Colors.red.withValues(alpha: 0.8),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '處理失敗',
-            style: TextStyle(
-              color: Colors.red.withValues(alpha: 0.8),
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      );
-    }
-    
-    return RepaintBoundary(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: () => _previewFile(context, file),
-            onLongPress: () => _showFileOptions(context, file),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  // 檔案圖示
-                  Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: _getFileColor(file.type).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _getFileColor(file.type).withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Icon(
-                    _getFileIcon(file.type),
-                    color: _getFileColor(file.type),
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                
-                // 檔案信息
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        file.name,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Wrap(
-                        spacing: 4,
-                        runSpacing: 4,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          // 分類標籤
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: _getCategoryColor(file.category).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(
-                                color: _getCategoryColor(file.category).withValues(alpha: 0.3),
-                              ),
-                            ),
-                            child: Text(
-                              _getCategoryLabel(file.category),
-                              style: TextStyle(
-                                color: _getCategoryColor(file.category),
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            '•',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.4),
-                              fontSize: 12,
-                            ),
-                          ),
-                          Text(
-                            file.type.toUpperCase(),
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.6),
-                              fontSize: 12,
-                            ),
-                          ),
-                          Text(
-                            '•',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.4),
-                              fontSize: 12,
-                            ),
-                          ),
-                          Text(
-                            file.formattedSize,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.6),
-                              fontSize: 12,
-                            ),
-                          ),
-                          Text(
-                            '•',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.4),
-                              fontSize: 12,
-                            ),
-                          ),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                isCloud ? Icons.cloud_done_rounded : Icons.phone_android_rounded,
-                                size: 14,
-                                color: isCloud ? Colors.green : Colors.orange,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                isCloud ? '雲端' : '本地',
-                                style: TextStyle(
-                                  color: isCloud ? Colors.green : Colors.orange,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                          // FR-3.5: 處理狀態顯示
-                          if (statusWidget != null) ...[
-                            Text(
-                              '•',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.4),
-                                fontSize: 12,
-                              ),
-                            ),
-                            statusWidget,
-                          ],
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                
-                // 箭頭圖示
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: Colors.white.withValues(alpha: 0.4),
-                  size: 24,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ),
     );
   }
 
@@ -1690,307 +1335,6 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       default:
         return Colors.grey;
     }
-  }
-
-  Widget _buildAIActionsBar() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.auto_awesome, color: Colors.blue.withValues(alpha: 0.8), size: 20),
-              const SizedBox(width: 8),
-              const Text(
-                'AI 功能',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildActionButton(
-                icon: Icons.chat_bubble_outline,
-                label: 'AI 聊天',
-                color: Colors.blue,
-                onTap: () => _openChat(),
-              ),
-              _buildActionButton(
-                icon: Icons.notes,
-                label: '重點筆記',
-                color: Colors.teal,
-                onTap: () => _openNotes(),
-              ),
-              _buildActionButton(
-                icon: Icons.quiz_outlined,
-                label: '抽認卡',
-                color: Colors.orange,
-                onTap: () => _openFlashcards(),
-              ),
-              _buildActionButton(
-                icon: Icons.help_outline,
-                label: '練習問題',
-                color: Colors.purple,
-                onTap: () => _openQuestions(),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// FR-9.4: 學習進度卡片
-  Widget _buildLearningProgressCard() {
-    final progressService = LearningProgressService();
-    
-    return StreamBuilder<LearningProgress?>(
-      stream: progressService.watchProgress(widget.projectId),
-      builder: (context, snapshot) {
-        final progress = snapshot.data;
-        
-        // 如果沒有任何學習進度，顯示引導訊息
-        if (progress == null || 
-            (progress.totalFlashcards == 0 && progress.totalQuizAttempts == 0)) {
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.school_outlined,
-                  color: Colors.white.withValues(alpha: 0.4),
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    '開始學習抽認卡或練習問題來追蹤進度',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-        
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.blue.withValues(alpha: 0.15),
-                Colors.purple.withValues(alpha: 0.1),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.school, color: Colors.blue.withValues(alpha: 0.8), size: 20),
-                  const SizedBox(width: 8),
-                  const Text(
-                    '學習進度',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Spacer(),
-                  // 整體進度
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      progress.overallProgressPercent,
-                      style: const TextStyle(
-                        color: Colors.green,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // 抽認卡進度
-              if (progress.totalFlashcards > 0) ...[
-                _buildProgressItem(
-                  icon: Icons.quiz_outlined,
-                  label: '抽認卡',
-                  value: '${progress.masteredFlashcards}/${progress.totalFlashcards} 已掌握',
-                  progress: progress.flashcardProgress,
-                  color: Colors.orange,
-                ),
-                const SizedBox(height: 12),
-              ],
-              // 測驗正確率
-              if (progress.totalQuizAttempts > 0)
-                _buildProgressItem(
-                  icon: Icons.check_circle_outline,
-                  label: '測驗正確率',
-                  value: '${progress.correctAnswers}/${progress.totalQuizAttempts} 題',
-                  progress: progress.quizAccuracy,
-                  color: Colors.purple,
-                ),
-              // 最後學習時間
-              if (progress.lastFlashcardStudyAt != null || progress.lastQuizAt != null) ...[
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.access_time,
-                      color: Colors.white.withValues(alpha: 0.5),
-                      size: 14,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '最後學習: ${_formatLastStudyTime(progress)}',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildProgressItem({
-    required IconData icon,
-    required String label,
-    required String value,
-    required double progress,
-    required Color color,
-  }) {
-    return Row(
-      children: [
-        Icon(icon, color: color, size: 18),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.8),
-            fontSize: 13,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: Colors.white.withValues(alpha: 0.1),
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-              minHeight: 6,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Text(
-          value,
-          style: TextStyle(
-            color: color,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-
-  String _formatLastStudyTime(LearningProgress progress) {
-    DateTime? lastTime;
-    
-    if (progress.lastFlashcardStudyAt != null && progress.lastQuizAt != null) {
-      lastTime = progress.lastFlashcardStudyAt!.isAfter(progress.lastQuizAt!)
-          ? progress.lastFlashcardStudyAt
-          : progress.lastQuizAt;
-    } else {
-      lastTime = progress.lastFlashcardStudyAt ?? progress.lastQuizAt;
-    }
-    
-    if (lastTime == null) return '無紀錄';
-    
-    final now = DateTime.now();
-    final diff = now.difference(lastTime);
-    
-    if (diff.inMinutes < 1) return '剛剛';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} 分鐘前';
-    if (diff.inHours < 24) return '${diff.inHours} 小時前';
-    if (diff.inDays < 7) return '${diff.inDays} 天前';
-    
-    return '${lastTime.month}/${lastTime.day}';
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   void _openChat() {
