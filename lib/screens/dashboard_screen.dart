@@ -19,7 +19,6 @@ import 'project_details_screen.dart';
 
 // sample projects removed; now binding to Firestore only
 
-
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, this.userName, this.onLogout});
   final String? userName;
@@ -133,7 +132,6 @@ class _DashboardScreenState extends State<DashboardScreen>
         physics: const BouncingScrollPhysics(),
         slivers: <Widget>[
           _buildSliverAppBar(),
-          _buildStatsSection(),
           _buildFilterChips(),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
@@ -301,217 +299,106 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildStatsSection() {
+  Widget _buildFilterChips() {
     final user = FirebaseAuth.instance.currentUser;
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-        child: user == null
-            ? Row(
-                children: <Widget>[
-                  Expanded(
-                    child: _buildStatCard(
-                      'Active',
-                      '0',
-                      Icons.play_circle_outline_rounded,
-                      Colors.green,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildStatCard(
-                      'Completed',
-                      '0',
-                      Icons.check_circle_outline_rounded,
-                      Colors.blue,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildStatCard(
-                      'Archived',
-                      '0',
-                      Icons.archive_outlined,
-                      Colors.grey,
-                    ),
-                  ),
-                ],
-              )
-            : StreamBuilder<List<Project>>(
-                stream: ProjectService().watchProjectsByOwner(user.uid),
-                builder: (context, snapshot) {
-                  final projects = snapshot.data ?? <Project>[];
-                  final active = projects
-                      .where((p) => p.status == 'Active')
-                      .length;
-                  final completed = projects
-                      .where((p) => p.status == 'Completed')
-                      .length;
-                  final archived = projects
-                      .where((p) => p.status == 'Archived')
-                      .length;
-                  return Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: _buildStatCard(
-                          'Active',
-                          '$active',
-                          Icons.play_circle_outline_rounded,
-                          Colors.green,
-                        ),
+        child: SizedBox(
+          height: 44,
+          child: Row(
+            children: [
+              // Scrollable filter chips
+              Expanded(
+                child: user == null
+                    ? _buildFilterChipsList(null)
+                    : StreamBuilder<List<Project>>(
+                        stream: ProjectService().watchProjectsByOwner(user.uid),
+                        builder: (context, snapshot) {
+                          final projects = snapshot.data ?? <Project>[];
+                          return _buildFilterChipsList(projects);
+                        },
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildStatCard(
-                          'Completed',
-                          '$completed',
-                          Icons.check_circle_outline_rounded,
-                          Colors.blue,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildStatCard(
-                          'Archived',
-                          '$archived',
-                          Icons.archive_outlined,
-                          Colors.grey,
-                        ),
-                      ),
-                    ],
-                  );
-                },
               ),
-      ),
-    );
-  }
-
-  Widget _buildStatCard(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      height: 120, // 固定高度確保所有區塊大小一致
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(icon, color: color, size: 24),
-            Flexible(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.5,
-                      height: 1.0,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.6),
-                      fontSize: 12,
-                      letterSpacing: 0.3,
-                      height: 1.0,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ],
+              const SizedBox(width: 12),
+              // Sort button
+              _buildSortButton(),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildFilterChips() {
+  Widget _buildFilterChipsList(List<Project>? projects) {
     final filters = [
-      {'key': 'All', 'label': tr('dashboard.all')},
-      {'key': 'Active', 'label': tr('dashboard.active')},
-      {'key': 'Completed', 'label': tr('dashboard.completed')},
-      {'key': 'Archived', 'label': tr('dashboard.archived')},
+      {'key': 'All', 'label': tr('dashboard.all'), 'color': Colors.white},
+      {'key': 'Active', 'label': tr('dashboard.active'), 'color': Colors.green},
+      {
+        'key': 'Completed',
+        'label': tr('dashboard.completed'),
+        'color': Colors.blue,
+      },
+      {
+        'key': 'Archived',
+        'label': tr('dashboard.archived'),
+        'color': Colors.orange,
+      },
     ];
-    return SliverToBoxAdapter(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Sort options row
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  tr('dashboard.sort'),
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.5),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                _buildSortButton(),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          // Filter chips row
-          SizedBox(
-            height: 44,
-            child: ValueListenableBuilder<String>(
-              valueListenable: _selectedFilterNotifier,
-              builder: (context, selectedFilter, _) {
-                return ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: filters.length,
-                  itemBuilder: (context, index) {
-                    final filter = filters[index];
-                    final isSelected = selectedFilter == filter['key'];
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 10),
-                      child: _buildFilterChip(filter['key']!, filter['label']!, isSelected),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 8),
-        ],
-      ),
+
+    // Calculate counts
+    final counts = {
+      'All': projects?.length ?? 0,
+      'Active': projects?.where((p) => p.status == 'Active').length ?? 0,
+      'Completed': projects?.where((p) => p.status == 'Completed').length ?? 0,
+      'Archived': projects?.where((p) => p.status == 'Archived').length ?? 0,
+    };
+
+    return ValueListenableBuilder<String>(
+      valueListenable: _selectedFilterNotifier,
+      builder: (context, selectedFilter, _) {
+        return ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: filters.length,
+          itemBuilder: (context, index) {
+            final filter = filters[index];
+            final isSelected = selectedFilter == filter['key'];
+            final count = counts[filter['key'] as String] ?? 0;
+            return Padding(
+              padding: EdgeInsets.only(
+                right: index < filters.length - 1 ? 10 : 0,
+              ),
+              child: _buildFilterChip(
+                filter['key'] as String,
+                filter['label'] as String,
+                count,
+                filter['color'] as Color,
+                isSelected,
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
   Widget _buildSortButton() {
     final sortOptions = [
-      {'key': 'lastUpdated', 'icon': Icons.update_rounded, 'tooltip': tr('dashboard.lastUpdated')},
+      {
+        'key': 'lastUpdated',
+        'icon': Icons.update_rounded,
+        'tooltip': tr('dashboard.lastUpdated'),
+      },
       {
         'key': 'createdAt',
         'icon': Icons.calendar_today_rounded,
         'tooltip': tr('dashboard.createdAt'),
       },
-      {'key': 'title', 'icon': Icons.sort_by_alpha_rounded, 'tooltip': tr('dashboard.nameAZ')},
+      {
+        'key': 'title',
+        'icon': Icons.sort_by_alpha_rounded,
+        'tooltip': tr('dashboard.nameAZ'),
+      },
     ];
 
     return ValueListenableBuilder<String>(
@@ -561,35 +448,66 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildFilterChip(String key, String label, bool isSelected) {
+  Widget _buildFilterChip(
+    String key,
+    String label,
+    int count,
+    Color chipColor,
+    bool isSelected,
+  ) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: () => _selectedFilterNotifier.value = key,
         borderRadius: BorderRadius.circular(30),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(30),
-            color: (isSelected ? Colors.white : Colors.white24).withValues(
-              alpha: 0.08,
-            ),
+            color: isSelected
+                ? chipColor.withValues(alpha: 0.2)
+                : chipColor.withValues(alpha: 0.08),
             border: Border.all(
               color: isSelected
-                  ? Colors.white.withValues(alpha: 0.4)
-                  : Colors.white.withValues(alpha: 0.15),
+                  ? chipColor.withValues(alpha: 0.5)
+                  : chipColor.withValues(alpha: 0.2),
               width: 1.5,
             ),
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: isSelected
-                  ? Colors.white
-                  : Colors.white.withValues(alpha: 0.7),
-              fontSize: 14,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected
+                      ? Colors.white
+                      : Colors.white.withValues(alpha: 0.5),
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? chipColor.withValues(alpha: 0.3)
+                      : chipColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    color: isSelected
+                        ? Colors.white
+                        : Colors.white.withValues(alpha: 0.5),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -681,12 +599,15 @@ class _DashboardScreenState extends State<DashboardScreen>
                   switch (sortBy) {
                     case 'title':
                       projects.sort(
-                        (a, b) =>
-                            a.title.toLowerCase().compareTo(b.title.toLowerCase()),
+                        (a, b) => a.title.toLowerCase().compareTo(
+                          b.title.toLowerCase(),
+                        ),
                       );
                       break;
                     case 'createdAt':
-                      projects.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+                      projects.sort(
+                        (a, b) => b.createdAt.compareTo(a.createdAt),
+                      );
                       break;
                     case 'lastUpdated':
                     default:
@@ -740,61 +661,69 @@ class _DashboardScreenState extends State<DashboardScreen>
                     ),
                     itemCount: projects.length,
                     itemBuilder: (context, index) {
-              final p = projects[index];
+                      final p = projects[index];
 
-              // 使用 StreamBuilder 獲取實時文件數量
-              return StreamBuilder<List<FileModel>>(
-                stream: ProjectService().watchFiles(p.id),
-                builder: (context, fileSnapshot) {
-                  final fileCount = fileSnapshot.hasData
-                      ? fileSnapshot.data!.length
-                      : 0;
+                      // 使用 StreamBuilder 獲取實時文件數量
+                      return StreamBuilder<List<FileModel>>(
+                        stream: ProjectService().watchFiles(p.id),
+                        builder: (context, fileSnapshot) {
+                          final fileCount = fileSnapshot.hasData
+                              ? fileSnapshot.data!.length
+                              : 0;
 
-                  final item = ProjectItem(
-                    id: p.id,
-                    title: p.title,
-                    status: p.status,
-                    documentCount: fileCount,
-                    lastUpdated: _formatRelative(p.lastUpdatedAt),
-                    image: 'assets/AppIcon/Ghote_icon_black_background.png',
-                    progress: p.status == 'Completed' ? 1.0 : 0.5,
-                    category: p.category ?? 'General',
-                    colorTag: p.colorTag,
-                    description: p.description,
-                  );
+                          final item = ProjectItem(
+                            id: p.id,
+                            title: p.title,
+                            status: p.status,
+                            documentCount: fileCount,
+                            lastUpdated: _formatRelative(p.lastUpdatedAt),
+                            image:
+                                'assets/AppIcon/Ghote_icon_black_background.png',
+                            progress: p.status == 'Completed' ? 1.0 : 0.5,
+                            category: p.category ?? 'General',
+                            colorTag: p.colorTag,
+                            description: p.description,
+                          );
 
-                  return AnimatedBuilder(
-                    animation: _animationController,
-                    builder: (context, child) {
-                      final delay = index * 0.08;
-                      final animationPercent = Curves.easeOutCubic.transform(
-                        math.max(
-                          0.0,
-                          (_animationController.value - delay) / (1.0 - delay),
-                        ),
-                      );
-                      return Opacity(
-                        opacity: animationPercent,
-                        child: Transform.translate(
-                          offset: Offset(0, 30 * (1 - animationPercent)),
-                          child: Transform.scale(
-                            scale: 0.95 + (0.05 * animationPercent),
-                            child: ProjectCard(
-                              item: item,
-                              onDelete: () => _confirmDeleteProject(item.id),
-                              onTap: () => _navigateToProjectDetails(item),
-                              onArchive: () =>
-                                  _archiveProject(item.id, item.status),
-                            ),
-                          ),
-                        ),
+                          return AnimatedBuilder(
+                            animation: _animationController,
+                            builder: (context, child) {
+                              final delay = index * 0.08;
+                              final animationPercent = Curves.easeOutCubic
+                                  .transform(
+                                    math.max(
+                                      0.0,
+                                      (_animationController.value - delay) /
+                                          (1.0 - delay),
+                                    ),
+                                  );
+                              return Opacity(
+                                opacity: animationPercent,
+                                child: Transform.translate(
+                                  offset: Offset(
+                                    0,
+                                    30 * (1 - animationPercent),
+                                  ),
+                                  child: Transform.scale(
+                                    scale: 0.95 + (0.05 * animationPercent),
+                                    child: ProjectCard(
+                                      item: item,
+                                      onDelete: () =>
+                                          _confirmDeleteProject(item.id),
+                                      onTap: () =>
+                                          _navigateToProjectDetails(item),
+                                      onArchive: () =>
+                                          _archiveProject(item.id, item.status),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
                       );
                     },
                   );
-                },
-              );
-            },
-          );
                 },
               );
             },
@@ -1122,7 +1051,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                         if (mounted) {
                           showDialog(
                             context: this.context,
-                            builder: (ctx) => const CreateProjectDialog(onCreated: null),
+                            builder: (ctx) =>
+                                const CreateProjectDialog(onCreated: null),
                           );
                         }
                       }
