@@ -114,7 +114,7 @@ final Map<String, Map<String, String>> _strings = {
   'project.status': {'en': 'Status', 'zh': '狀態'},
   
   // Project Details
-  'project.stats': {'en': 'Project Statistics', 'zh': '專案統計'},
+  'project.stats': {'en': 'Project Files', 'zh': '專案檔案'},
   'project.fileCount': {'en': 'Files', 'zh': '檔案數量'},
   'project.totalSize': {'en': 'Total Size', 'zh': '總大小'},
   'project.cloudFiles': {'en': 'Cloud', 'zh': '雲端'},
@@ -245,7 +245,7 @@ final Map<String, Map<String, String>> _strings = {
   'project.descHint': {'en': 'Enter project description', 'zh': '輸入專案描述'},
   'project.colorTag': {'en': 'Color tag', 'zh': '顏色標籤'},
   'project.updated': {'en': 'Project info updated', 'zh': '專案資訊已更新'},
-  'project.stats': {'en': 'Project Statistics', 'zh': '專案統計'},
+  'project.stats': {'en': 'Project Files', 'zh': '專案檔案'},
   'project.fileCount': {'en': 'Files', 'zh': '檔案數量'},
   'project.totalSize': {'en': 'Total Size', 'zh': '總大小'},
   'project.cloudFiles': {'en': 'Cloud', 'zh': '雲端'},
