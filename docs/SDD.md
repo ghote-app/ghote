@@ -18,7 +18,9 @@
 | 0.1 | 初版 | 2025/11/15 |
 | 0.2 | 修正架構為 Serverless (Firebase) | 2025/11/20 |
 | 1.0 | 正式版 | 2025/11/26 |
-| 1.1 | 加入 Clean Architecture 與 SOLID 設計原則 | 2025/12/23 |
+| 1.1 | feat: implement Clean Architecture and SOLID principles (a5f5886) | 2025/12/23 |
+| 1.2 | feat: extract quiz widgets - QuizFeedback, QuizTypeLabel, QuizDifficultyLabel (1408629) | 2025/12/23 |
+| 1.3 | feat: extract DashboardStatCard and FlashcardProgressHeader widgets (18154d3) | 2025/12/23 |
 
 ---
 

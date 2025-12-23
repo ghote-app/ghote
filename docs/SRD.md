@@ -20,6 +20,9 @@
 | 0.3  | 詳細定義 AI 生成內容格式 (JSON Schema) | 2025/11/01 |
 | 0.4  | 優化使用者介面流程與互動設計 | 2025/11/15 |
 | 1.0  | 正式版需求確認 (與實作一致) | 2025/11/26 |
+| 1.1  | docs: add SDD and SRD documentation (7209406) | 2025/12/22 |
+| 1.2  | feat: add unit test infrastructure and tests (9f1a4a6) | 2025/12/22 |
+| 1.3  | feat: implement Clean Architecture and SOLID principles (a5f5886) | 2025/12/23 |
 
 ---
 
