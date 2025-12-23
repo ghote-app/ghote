@@ -39,6 +39,9 @@ pubspec.lock
 .env.local
 .env.*.local
 
+# Keystores (sensitive)
+keystores/
+
 # Symbolication related
 app.*.symbols
 
