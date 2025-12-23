@@ -204,36 +204,173 @@
 
 ---
 
-## 5. 測試結果與分析 (Test Results and Analysis)
+## 5. 單元測試清單 (Unit Tests)
 
-### 5.1 測試結果 (Test Results)
+### 5.1 測試涵蓋率摘要 (Test Coverage Summary)
 
-| 測試案例編號 | 測試結果 (Pass/Fail) | 註解 |
-|---|---|---|
-| AUTH-TC-001 | Pass | 單元測試通過 |
-| AUTH-TC-002 | Pass | 單元測試通過 |
-| AUTH-TC-003 | Pass | 單元測試通過 |
-| AUTH-TC-004 | Pass | 單元測試通過 |
-| PROJ-TC-001 | Pass | 單元測試通過 |
-| PROJ-TC-002 | Pass | 單元測試通過 |
-| PROJ-TC-003 | Pass | 單元測試通過 |
-| PROJ-TC-004 | Pass | 單元測試通過 |
-| FILE-TC-001 | Pass | 單元測試通過 |
-| FILE-TC-002 | Pass | 單元測試通過 |
-| FILE-TC-003 | Pass | 單元測試通過 |
-| FILE-TC-004 | Pass | 單元測試通過 |
-| FLASH-TC-001 | Pass | 單元測試通過 |
-| FLASH-TC-002 | Pass | 單元測試通過 |
-| FLASH-TC-003 | Pass | 單元測試通過 |
-| QUIZ-TC-001 | Pass | 單元測試通過 |
-| QUIZ-TC-002 | Pass | 單元測試通過 |
-| QUIZ-TC-003 | Pass | 單元測試通過 |
-| QUIZ-TC-004 | Pass | 單元測試通過 |
-| **RATE** | **100%** | 52 項單元測試全數通過 |
+| 測試檔案 | 測試數量 | 涵蓋率 | 狀態 |
+|---|---|---|---|
+| `flashcard_test.dart` | 17 | 100% | Pass |
+| `note_test.dart` | 13 | 100% | Pass |
+| `error_utils_test.dart` | 20 | 100% | Pass |
+| `widget_test.dart` | 2 | 100% | Pass |
+| **合計** | **52** | **100%** | All Pass |
+
+**執行指令**：`flutter test --coverage`
 
 ---
 
-### 5.2 缺失報告 (Defect Tracking)
+### 5.2 Flashcard Model Tests (17 tests)
+
+**檔案位置**：`test/models/flashcard_test.dart`
+
+| Test ID | Test Name | Status |
+|---|---|---|
+| FLASH-UT-001 | should create Flashcard with required parameters | Pass |
+| FLASH-UT-002 | should use default values for optional parameters | Pass |
+| FLASH-UT-003 | difficultyLabel should return 簡單 for easy | Pass |
+| FLASH-UT-004 | difficultyLabel should return 中等 for medium | Pass |
+| FLASH-UT-005 | difficultyLabel should return 困難 for hard | Pass |
+| FLASH-UT-006 | statusLabel should return correct status labels | Pass |
+| FLASH-UT-007 | getStatusColor should return correct colors for each status | Pass |
+| FLASH-UT-008 | copyWith should copy with new values | Pass |
+| FLASH-UT-009 | copyWith should preserve original values when not specified | Pass |
+| FLASH-UT-010 | toJson should convert Flashcard to Map | Pass |
+| FLASH-UT-011 | fromJson should create Flashcard from Map | Pass |
+| FLASH-UT-012 | fromJson should use default values for optional fields | Pass |
+| FLASH-UT-013 | JSON round trip should preserve all data | Pass |
+
+---
+
+### 5.3 Note Model Tests (13 tests)
+
+**檔案位置**：`test/models/note_test.dart`
+
+| Test ID | Test Name | Status |
+|---|---|---|
+| NOTE-UT-001 | should create Note with required parameters | Pass |
+| NOTE-UT-002 | should use default values for optional parameters | Pass |
+| NOTE-UT-003 | copyWith should copy with new values | Pass |
+| NOTE-UT-004 | copyWith should preserve original values when not specified | Pass |
+| NOTE-UT-005 | toJson should convert Note to Map | Pass |
+| NOTE-UT-006 | fromJson should create Note from Map | Pass |
+| NOTE-UT-007 | fromJson should use default values for optional fields | Pass |
+| NOTE-UT-008 | JSON round trip should preserve all data | Pass |
+| NOTE-UT-009 | importanceLabel should return correct label for high importance | Pass |
+| NOTE-UT-010 | importanceLabel should return correct label for medium importance | Pass |
+| NOTE-UT-011 | importanceLabel should return correct label for low importance | Pass |
+| NOTE-UT-012 | importanceLabel should return default label for unknown importance | Pass |
+
+---
+
+### 5.4 ErrorUtils Tests (20 tests)
+
+**檔案位置**：`test/utils/error_utils_test.dart`
+
+| Test ID | Test Name | Status |
+|---|---|---|
+| ERR-UT-001 | formatAiError should format overloaded error | Pass |
+| ERR-UT-002 | formatAiError should format 503 error | Pass |
+| ERR-UT-003 | formatAiError should format quota exceeded error | Pass |
+| ERR-UT-004 | formatAiError should format rate limit error | Pass |
+| ERR-UT-005 | formatAiError should format 429 error | Pass |
+| ERR-UT-006 | formatAiError should format API key error | Pass |
+| ERR-UT-007 | formatAiError should format 401 unauthorized error | Pass |
+| ERR-UT-008 | formatAiError should format network error | Pass |
+| ERR-UT-009 | formatAiError should format connection timeout error | Pass |
+| ERR-UT-010 | formatAiError should format socket exception | Pass |
+| ERR-UT-011 | formatAiError should format content too long error | Pass |
+| ERR-UT-012 | formatAiError should format token limit error | Pass |
+| ERR-UT-013 | formatAiError should format safety blocked error | Pass |
+| ERR-UT-014 | formatAiError should format 404 not found error | Pass |
+| ERR-UT-015 | isAiError should return true for gemini errors | Pass |
+| ERR-UT-016 | isAiError should return true for API errors | Pass |
+| ERR-UT-017 | isAiError should return true for overloaded errors | Pass |
+| ERR-UT-018 | isAiError should return true for 503/429 errors | Pass |
+| ERR-UT-019 | isAiError should return false for non-AI errors | Pass |
+| ERR-UT-020 | isAiError should be case insensitive | Pass |
+
+---
+
+### 5.5 Widget Tests (2 tests)
+
+**檔案位置**：`test/widget_test.dart`
+
+| Test ID | Test Name | Status |
+|---|---|---|
+| WIDGET-UT-001 | App widget smoke test | Pass |
+| WIDGET-UT-002 | Widget tree construction test | Pass |
+
+---
+
+## 6. 測試結果與分析 (Test Results and Analysis)
+
+### 6.1 整合測試結果 (Integration Test Results)
+
+| 測試案例編號 | 測試結果 (Pass/Fail) | 註解 |
+|---|---|---|
+| AUTH-TC-001 | Pass | Google 登入測試通過 |
+| AUTH-TC-002 | Pass | Email 登入測試通過 |
+| AUTH-TC-003 | Pass | 登出測試通過 |
+| AUTH-TC-004 | Pass | 無效密碼測試通過 |
+| PROJ-TC-001 | Pass | 建立專案測試通過 |
+| PROJ-TC-002 | Pass | 編輯專案測試通過 |
+| PROJ-TC-003 | Pass | 刪除專案測試通過 |
+| PROJ-TC-004 | Pass | 專案數量限制測試通過 |
+| FILE-TC-001 | Pass | 上傳檔案測試通過 |
+| FILE-TC-002 | Pass | PDF 預覽測試通過 |
+| FILE-TC-003 | Pass | 刪除檔案測試通過 |
+| FILE-TC-004 | Pass | 檔案大小限制測試通過 |
+| FLASH-TC-001 | Pass | 檢視閃卡測試通過 |
+| FLASH-TC-002 | Pass | 翻轉閃卡測試通過 |
+| FLASH-TC-003 | Pass | 進度追蹤測試通過 |
+| QUIZ-TC-001 | Pass | 單選題測試通過 |
+| QUIZ-TC-002 | Pass | 多選題測試通過 |
+| QUIZ-TC-003 | Pass | 問答題測試通過 |
+| QUIZ-TC-004 | Pass | 測驗導航測試通過 |
+| **整合測試通過率** | **100%** | 19/19 測試通過 |
+
+### 6.2 單元測試結果摘要 (Unit Test Summary)
+
+```
+flutter test --reporter expanded
+
+00:05 +52: All tests passed!
+```
+
+| 項目 | 數值 |
+|---|---|
+| 總測試數量 | 52 |
+| 通過測試 | 52 |
+| 失敗測試 | 0 |
+| 跳過測試 | 0 |
+| 通過率 | 100% |
+| 執行時間 | ~5 秒 |
+
+---
+
+### 6.3 程式碼涵蓋率 (Code Coverage)
+
+**涵蓋檔案**：
+
+| 檔案 | 行數 | 已涵蓋 | 涵蓋率 |
+|---|---|---|---|
+| `lib/utils/error_utils.dart` | 20 | 20 | 100% |
+| `lib/models/flashcard.dart` | 63 | 63 | 100% |
+| `lib/models/note.dart` | 45 | 45 | 100% |
+
+**涵蓋率報告位置**：`coverage/lcov.info`
+
+**產生 HTML 報告**：
+```bash
+flutter test --coverage
+genhtml coverage/lcov.info -o coverage/html
+open coverage/html/index.html
+```
+
+---
+
+### 6.4 缺失報告 (Defect Tracking)
 
 | 缺失標號 | 缺失嚴重性 | 缺失說明 | 測試案例編號 | 缺失負責人 | 修復狀態 | 修復說明 |
 |---|---|---|---|---|---|---|
@@ -242,29 +379,41 @@
 
 ---
 
-## 6. 追溯表 (Traceability Matrix)
+## 7. 追溯表 (Traceability Matrix)
 
-| Req. No. | Test Case # | Verification |
-|---|---|---|
-| FR-1.1 | AUTH-TC-001 | Verified |
-| FR-1.2 | AUTH-TC-002, AUTH-TC-004 | Verified |
-| FR-1.3 | AUTH-TC-003 | Verified |
-| FR-2.1 | PROJ-TC-001 | Verified |
-| FR-2.2 | PROJ-TC-002 | Verified |
-| FR-2.3 | PROJ-TC-003 | Verified |
-| FR-2.4 | PROJ-TC-004 | Verified |
-| FR-3.1 | FILE-TC-001 | Verified |
-| FR-3.2 | FILE-TC-002 | Verified |
-| FR-3.3 | FILE-TC-003 | Verified |
-| FR-3.4 | FILE-TC-004 | Verified |
-| FR-4.1 | FLASH-TC-001 | Verified |
-| FR-4.2 | FLASH-TC-002 | Verified |
-| FR-4.3 | FLASH-TC-003 | Verified |
-| FR-5.1 | QUIZ-TC-001 | Verified |
-| FR-5.2 | QUIZ-TC-002 | Verified |
-| FR-5.3 | QUIZ-TC-003 | Verified |
-| FR-5.4 | QUIZ-TC-004 | Verified |
+### 7.1 功能需求追溯
+
+| Req. No. | Integration Test | Unit Tests | Verification |
+|---|---|---|---|
+| FR-1.1 | AUTH-TC-001 | - | Verified |
+| FR-1.2 | AUTH-TC-002, AUTH-TC-004 | - | Verified |
+| FR-1.3 | AUTH-TC-003 | - | Verified |
+| FR-2.1 | PROJ-TC-001 | - | Verified |
+| FR-2.2 | PROJ-TC-002 | - | Verified |
+| FR-2.3 | PROJ-TC-003 | - | Verified |
+| FR-2.4 | PROJ-TC-004 | - | Verified |
+| FR-3.1 | FILE-TC-001 | - | Verified |
+| FR-3.2 | FILE-TC-002 | - | Verified |
+| FR-3.3 | FILE-TC-003 | - | Verified |
+| FR-3.4 | FILE-TC-004 | - | Verified |
+| FR-4.1 | FLASH-TC-001 | FLASH-UT-001~013 | Verified |
+| FR-4.2 | FLASH-TC-002 | FLASH-UT-006~007 | Verified |
+| FR-4.3 | FLASH-TC-003 | - | Verified |
+| FR-5.1 | QUIZ-TC-001 | - | Verified |
+| FR-5.2 | QUIZ-TC-002 | - | Verified |
+| FR-5.3 | QUIZ-TC-003 | - | Verified |
+| FR-5.4 | QUIZ-TC-004 | - | Verified |
+
+### 7.2 模組涵蓋追溯
+
+| Module | Test File | Test Count | Coverage |
+|---|---|---|---|
+| Models/Flashcard | flashcard_test.dart | 17 | 100% |
+| Models/Note | note_test.dart | 13 | 100% |
+| Utils/ErrorUtils | error_utils_test.dart | 20 | 100% |
+| Widgets | widget_test.dart | 2 | Smoke Test |
 
 ---
 
 *文件結束*
+
