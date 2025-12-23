@@ -55,6 +55,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   void initState() {
     super.initState();
     _currentTitle = widget.title;
+    // FR-3.4: 自動開始處理未處理的檔案
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _autoExtractText();
+    });
   }
 
   @override
