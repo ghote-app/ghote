@@ -36,6 +36,17 @@ jobs:
     - name: Install dependencies
       run: flutter pub get
     
+    - name: Output Debug Keystore SHA-1
+      run: |
+        echo "=== DEBUG KEYSTORE SHA-1 FOR FIREBASE ==="
+        keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android 2>/dev/null | grep -E "(SHA1|SHA256)" || echo "No debug keystore found, creating one..."
+        if [ ! -f ~/.android/debug.keystore ]; then
+          mkdir -p ~/.android
+          keytool -genkey -v -keystore ~/.android/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
+          keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep -E "(SHA1|SHA256)"
+        fi
+        echo "=========================================="
+    
     - name: Create .env file
       run: echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
     
