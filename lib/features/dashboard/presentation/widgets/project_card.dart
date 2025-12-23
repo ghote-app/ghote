@@ -24,7 +24,7 @@ class ProjectCard extends StatelessWidget {
       case 'Completed':
         return Colors.blue;
       case 'Archived':
-        return Colors.grey;
+        return Colors.orange;
       default:
         return Colors.purple;
     }
