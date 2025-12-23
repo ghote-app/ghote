@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'i18n.dart';
 import 'widgets/dot_grid_background.dart';
 import 'widgets/scroll_text_animation.dart';
@@ -310,7 +311,10 @@ class _HomePageState extends State<HomePage> {
               color: Colors.transparent,
               child: InkWell(
                 onTap: () {
-                  // Navigate to app store
+                  launchUrl(
+                    Uri.parse('https://github.com/ghote-app/ghote/releases'),
+                    mode: LaunchMode.externalApplication,
+                  );
                 },
                 borderRadius: BorderRadius.circular(16),
                 child: Container(
