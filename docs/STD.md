@@ -2,7 +2,7 @@
 
 - **系統名稱**：Ghote 智慧學習平台
 - **專案名稱**：Ghote - AI-Powered Study Assistant
-- **撰寫日期**：2025/12/23
+- **撰寫日期**：2025/12/21
 - **發展者**：Ghote Development Team
 
 ---
