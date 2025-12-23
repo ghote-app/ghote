@@ -44,7 +44,7 @@ jobs:
           cache: true
           architecture: x64
 
-      - name: Create .env for CI
+      - name: Create .env file for CI
         run: echo "GEMINI_API_KEY=" > .env
 
       - name: Install dependencies
@@ -75,7 +75,7 @@ jobs:
           cache: true
           architecture: x64
 
-      - name: Create .env for CI
+      - name: Create .env file for CI
         run: echo "GEMINI_API_KEY=" > .env
 
       - name: Install dependencies
@@ -110,7 +110,7 @@ jobs:
           cache: true
           architecture: x64
 
-      - name: Create .env for CI
+      - name: Create .env file for CI
         run: echo "GEMINI_API_KEY=" > .env
 
       - name: Install dependencies
