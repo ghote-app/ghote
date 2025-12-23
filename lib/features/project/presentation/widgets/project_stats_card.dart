@@ -1,70 +1,88 @@
 import 'package:flutter/material.dart';
-
-import '../../../../models/file_model.dart';
 import '../../../../utils/app_locale.dart';
 
-/// Widget for displaying project file statistics
-/// Extracted from project_details_screen.dart for Clean Architecture
+/// Widget for displaying project file stats header
+/// Refined to only show title, total size, and icon-only upload button
 class ProjectStatsCard extends StatelessWidget {
-  final List<FileModel> files;
+  final VoidCallback onUpload;
+  final int totalSize;
 
   const ProjectStatsCard({
     super.key,
-    required this.files,
+    required this.onUpload,
+    required this.totalSize,
   });
 
   @override
   Widget build(BuildContext context) {
-    final totalSize = files.fold<int>(0, (sum, file) => sum + file.sizeBytes);
-    final cloudFiles = files.where((f) => f.storageType == 'cloud').length;
-    final localFiles = files.where((f) => f.storageType == 'local').length;
-
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(14),
       ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
         children: [
+          Icon(
+            Icons.analytics_outlined,
+            color: Colors.white.withValues(alpha: 0.6),
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            tr('project.stats'),
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const Spacer(),
+          // Total Size Text
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.analytics_outlined, color: Colors.white.withValues(alpha: 0.6), size: 18),
-              const SizedBox(width: 8),
-              Text(
-                tr('project.stats'),
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.storage_outlined,
+                    color: Colors.white.withValues(alpha: 0.6),
+                    size: 18,
+                  ),
+                  Text(
+                    _formatSize(totalSize),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 12),
+            ],
+          ),
+          // Icon-only Upload Button
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onUpload,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.withValues(alpha: 0.5)),
+                ),
+                child: const Icon(
+                  Icons.upload_file_rounded,
+                  color: Colors.blue,
+                  size: 18,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatItem(tr('project.fileCount'), '${files.length}', Icons.description_outlined),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildStatItem(tr('project.totalSize'), _formatSize(totalSize), Icons.storage_rounded),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatItem(tr('project.cloudFiles'), '$cloudFiles', Icons.cloud_outlined),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildStatItem(tr('project.localFiles'), '$localFiles', Icons.phone_android_rounded),
-              ),
-            ],
+            ),
           ),
         ],
       ),
@@ -77,54 +95,5 @@ class ProjectStatsCard extends StatelessWidget {
     if (bytes >= mb) return '${(bytes / mb).toStringAsFixed(2)} MB';
     if (bytes >= kb) return '${(bytes / kb).toStringAsFixed(2)} KB';
     return '$bytes B';
-  }
-
-  Widget _buildStatItem(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: Colors.white.withValues(alpha: 0.6), size: 18),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.5),
-                    fontSize: 11,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
