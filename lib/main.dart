@@ -12,6 +12,7 @@ import 'firebase_options.dart';
 import 'website/main.dart' as website;
 import 'services/sync_service.dart';
 import 'services/auth_service.dart';
+import 'utils/app_locale.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,6 +42,9 @@ void main() async {
   // FR-11: 初始化資料同步服務
   await SyncService().initialize();
   
+  // Initialize locale with device language detection
+  await appLocale.initialize();
+  
   // Set platform-specific system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
     SystemUiOverlayStyle(
@@ -61,13 +65,19 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Ghote',
-      theme: buildLightTheme(),
-      darkTheme: buildDarkTheme(),
-      themeMode: ThemeMode.dark, // Force dark theme for consistency
-      debugShowCheckedModeBanner: false,
-      home: const _RootNavigator(),
+    // Rebuild app when language changes
+    return ListenableBuilder(
+      listenable: appLocale,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'Ghote',
+          theme: buildLightTheme(),
+          darkTheme: buildDarkTheme(),
+          themeMode: ThemeMode.dark, // Force dark theme for consistency
+          debugShowCheckedModeBanner: false,
+          home: const _RootNavigator(),
+        );
+      },
     );
   }
 }

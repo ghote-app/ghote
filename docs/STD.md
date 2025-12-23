@@ -1,749 +1,419 @@
-# 軟體測試文件 (STD)
+# 測試文件 (STD)
 
-**專案名稱：** Ghote 智慧學習輔助 App  
-**撰寫日期：** 2025/12/22  
-**發展者：** 專案團隊（5人）
-- Team Lead 梁祐嘉
-- Full Stack Engineer 李孟修
-- Full Stack Engineer 楊泓立
-- Full Stack Engineer 楊皓鈞
-- Full Stack Engineer 蔡佩穎
+- **系統名稱**：Ghote 智慧學習平台
+- **專案名稱**：Ghote - AI-Powered Study Assistant
+- **撰寫日期**：2025/12/23
+- **發展者**：Ghote Development Team
 
 ---
 
 ## 版次變更記錄
 
 | 版次 | 變更項目 | 變更日期 |
-|------|----------|----------|
-| 0.1  | 初版     | 2025/11/20 |
-| 0.2  | 新增測試案例 | 2025/12/20 |
-| 1.0  | 完整測試案例與追溯表 | 2025/12/22 |
+|---|---|---|
+| 0.1 | 初版 - 新增測試案例 (9f1a4a6) | 2025/12/22 |
+| 0.2 | feat: implement Clean Architecture and SOLID principles (a5f5886) | 2025/12/23 |
+| 0.3 | feat: extract quiz widgets and dashboard widgets (18154d3) | 2025/12/23 |
+| 1.0 | 正式版 - 52 項單元測試通過 | 2025/12/23 |
 
 ---
 
 ## 目錄
 
-1. [測試目的與接受準則](#1-測試目的與接受準則)
-2. [測試環境](#2-測試環境)
-3. [測試案例](#3-測試案例)
-4. [測試工作指派與時程](#4-測試工作指派與時程)
-5. [測試結果與分析](#5-測試結果與分析)
-6. [追溯表](#6-追溯表)
+1. 測試目的與接受準則  
+   1.1 系統範圍  
+   1.2 測試接受準則  
+2. 測試環境  
+   2.1 硬體需求  
+   2.2 軟體需求  
+   2.3 測試資料來源  
+   2.4 測試工具與設備  
+3. 測試案例  
+4. 測試工作指派與時程  
+   4.1 測試成員  
+5. 測試結果與分析  
+   5.1 測試結果  
+   5.2 缺失報告  
+6. 追溯表  
 
 ---
 
-## 1. 測試目的與接受準則
+## 1. 測試目的與接受準則 (Objectives and Acceptance Criteria)
 
-### 1.1 系統範圍
+### 1.1 系統範圍 (System Scope)
 
-本測試文件涵蓋 Ghote 智慧學習輔助 App 的核心功能測試，包括：
+本測試文件涵蓋 Ghote 智慧學習平台的完整功能測試，包括：
 
-- **用戶認證系統** (FR-1)
-- **Project 管理** (FR-2)
-- **文件上傳與管理** (FR-3)
-- **AI 內容生成** (FR-4)
-- **重點筆記功能** (FR-5)
-- **選擇題測驗功能** (FR-6)
-- **問答題功能** (FR-7)
-- **抽認卡學習功能** (FR-8)
-- **學習進度追蹤** (FR-9)
-- **內容查詢與篩選** (FR-10)
-- **資料同步與快取** (FR-11)
+**已完成功能模組：**
+- 使用者認證模組 (Google Sign-In, Email/Password)
+- 專案管理模組 (建立、編輯、刪除專案)
+- 檔案管理模組 (上傳、預覽、刪除檔案)
+- 閃卡學習模組 (建立、翻轉、進度追蹤)
+- 測驗模組 (單選題、多選題、問答題)
+- 內容搜尋模組 (全文檢索)
+- AI 智能功能模組 (AI 命名、AI 生成內容)
 
-**測試版本標籤：** `v1.0.0-test`
-
-**GitHub Repository:** [ghote-app/ghote](https://github.com/ghote-app/ghote)
-
-### 1.2 測試接受準則
-
-- 所有測試案例需按照本文件定義的程序執行
-- 測試結果需符合預期結果方能接受
-- 當測試案例未通過時，相關模組開發人員需進行修復
-- 重新測試時需確認其他可能受影響的案例仍可正確執行
-- **整體通過率須達 95% 以上**
+**測試版本**：feature/clean-architecture 分支
+**Git Tag**：v1.0.0-beta
 
 ---
 
-## 2. 測試環境
+### 1.2 測試接受準則 (Test Acceptance Criteria)
 
-### 2.1 硬體需求
+測試程序需要依照本測試計畫所訂定的程序進行，所有測試結果需要能符合預期測試結果方能接受。
+
+- 所有高優先級 (High Severity) 測試案例必須 100% 通過
+- 中優先級 (Medium Severity) 測試案例通過率需達 95% 以上
+- 低優先級 (Low Severity) 測試案例通過率需達 90% 以上
+- 當測試案例未通過時，相關模組開發之負責人需要進行程式修改
+- 重新進行測試時，測試人員需確認其他可能受影響的案例仍可正確執行
+
+---
+
+## 2. 測試環境 (Testing Environment)
+
+### 2.1 硬體需求 (Hardware Specification and Configuration)
+
+**開發/測試環境 (Development/Testing)**
 
 | 項次 | 名稱 | 數量 | 規格 | 備註 |
-|------|------|------|------|------|
-| 1 | Android 測試裝置 | 2 | Android 11+ / 4GB RAM | 實體裝置與模擬器 |
-| 2 | iOS 測試裝置 | 1 | iOS 15+ / iPhone 12 以上 | 實體裝置 |
-| 3 | 開發用電腦 | 1 | macOS 13+ / 16GB RAM | 執行單元測試與整合測試 |
+|---|---|---|---|---|
+| 1 | 開發主機 | 1 | MacBook Pro M1/M2, 16GB RAM | Flutter 開發環境 |
+| 2 | Android 模擬器 | 1 | ARM64, API Level 35 | 使用 Android Studio Emulator |
+| 3 | iOS 模擬器 | 1 | iPhone 15 Pro | 使用 Xcode Simulator |
 
-### 2.2 軟體需求
+**使用者端需求 (Client Requirements)**
+
+| 項次 | 名稱 | 數量 | 規格 | 備註 |
+|---|---|---|---|---|
+| 1 | Android 裝置 | - | Android 8.0 (API 26) 以上 | 最小支援版本 |
+| 2 | iOS 裝置 | - | iOS 14.0 以上 | 最小支援版本 |
+
+---
+
+### 2.2 軟體需求 (Software Specification and Configuration)
+
+**開發環境**
 
 | 項次 | 名稱 | 版本 | 備註 |
-|------|------|------|------|
-| 1 | Flutter SDK | 3.35.6 | 穩定版 |
-| 2 | Dart | 3.9.2 | 隨 Flutter 安裝 |
-| 3 | Android Studio | 2024.2 | Android 模擬器管理 |
-| 4 | Xcode | 26.1.1 | iOS 模擬器管理 |
-| 5 | Firebase Emulator Suite | 最新版 | 本地測試 Firebase 服務 |
+|---|---|---|---|
+| 1 | Flutter SDK | 3.29.0 | 跨平台框架 |
+| 2 | Dart SDK | 3.7.0 | 程式語言 |
+| 3 | Android Studio | Hedgehog 2024 | Android 開發 IDE |
+| 4 | Xcode | 15.0+ | iOS 開發環境 |
+| 5 | Firebase CLI | latest | 後端服務管理 |
 
-### 2.3 測試資料來源
+**後端服務**
 
-- **單元測試資料**：使用 `fake_cloud_firestore` 套件模擬 Firestore 資料
-- **整合測試資料**：預設測試帳號與測試專案資料
-- **效能測試資料**：10MB 以內的 PDF 文件樣本
-
-### 2.4 測試工具與設備
-
-| 工具 | 用途 |
-|------|------|
-| `flutter test` | 執行單元測試與 Widget 測試 |
-| `mocktail` | Mock 物件建立 |
-| `fake_cloud_firestore` | 模擬 Firestore 資料庫 |
-| GitHub Actions | CI/CD 自動化測試 |
+| 項次 | 名稱 | 版本 | 備註 |
+|---|---|---|---|
+| 1 | Firebase Authentication | - | 使用者認證 |
+| 2 | Cloud Firestore | - | 資料庫 |
+| 3 | Firebase Storage | - | 檔案儲存 |
+| 4 | OpenAI API | GPT-4 | AI 功能 |
 
 ---
 
-## 3. 測試案例
+### 2.3 測試資料來源 (Test Data Sources)
 
-### 3.1 用戶認證測試 (FR-1)
-
-#### TC-AUTH-001：Email 註冊功能
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-AUTH-001 |
-| **Name** | Email 註冊功能驗證 |
-| **Reference** | FR-1.1, FR-1.2 |
-| **Severity** | High |
-| **Instructions** | 1. 開啟 App 進入登入頁面<br>2. 點擊「註冊」切換至註冊模式<br>3. 輸入有效 Email (test@example.com)<br>4. 輸入密碼 (至少 8 字元)<br>5. 點擊「註冊」按鈕 |
-| **Expected Result** | - 顯示註冊成功訊息<br>- 自動登入並跳轉至主頁面<br>- Firebase 建立使用者記錄 |
-| **Cleanup** | 從 Firebase Console 刪除測試帳號 |
-
-#### TC-AUTH-002：無效 Email 格式驗證
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-AUTH-002 |
-| **Name** | 無效 Email 格式拒絕 |
-| **Reference** | FR-1.2 |
-| **Severity** | High |
-| **Instructions** | 1. 開啟 App 進入註冊頁面<br>2. 輸入無效 Email (test@)<br>3. 輸入有效密碼<br>4. 點擊「註冊」按鈕 |
-| **Expected Result** | - 顯示 Email 格式錯誤訊息<br>- 註冊按鈕保持不可用或顯示錯誤 |
-| **Cleanup** | 無需清理 |
-
-#### TC-AUTH-003：密碼強度驗證
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-AUTH-003 |
-| **Name** | 弱密碼拒絕 |
-| **Reference** | FR-1.2 |
-| **Severity** | High |
-| **Instructions** | 1. 開啟 App 進入註冊頁面<br>2. 輸入有效 Email<br>3. 輸入弱密碼 (1234567，少於 8 字元)<br>4. 點擊「註冊」按鈕 |
-| **Expected Result** | - 顯示密碼強度不足訊息<br>- 註冊失敗 |
-| **Cleanup** | 無需清理 |
-
-#### TC-AUTH-004：Email 登入功能
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-AUTH-004 |
-| **Name** | Email/密碼登入驗證 |
-| **Reference** | FR-1.3 |
-| **Severity** | High |
-| **Instructions** | 1. 開啟 App 進入登入頁面<br>2. 輸入已註冊的 Email<br>3. 輸入正確密碼<br>4. 點擊「登入」按鈕 |
-| **Expected Result** | - 登入成功<br>- 跳轉至 Dashboard 頁面<br>- Firebase ID Token 正確取得 |
-| **Cleanup** | 登出帳號 |
-
-#### TC-AUTH-005：Google Sign-In 登入
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-AUTH-005 |
-| **Name** | Google 快速登入驗證 |
-| **Reference** | FR-1.4 |
-| **Severity** | High |
-| **Instructions** | 1. 開啟 App 進入登入頁面<br>2. 點擊「使用 Google 登入」按鈕<br>3. 選擇 Google 帳號並授權 |
-| **Expected Result** | - 登入成功<br>- 跳轉至 Dashboard 頁面<br>- 顯示正確的使用者名稱 |
-| **Cleanup** | 登出帳號 |
-
-#### TC-AUTH-006：登出功能
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-AUTH-006 |
-| **Name** | 使用者登出驗證 |
-| **Reference** | FR-1.6 |
-| **Severity** | Medium |
-| **Instructions** | 1. 以已登入狀態開啟 App<br>2. 點擊個人設定或側邊選單<br>3. 點擊「登出」按鈕 |
-| **Expected Result** | - 清除本地認證資訊<br>- 返回登入頁面<br>- 無法存取受保護的資源 |
-| **Cleanup** | 無需清理 |
+- **測試帳號**：使用專用測試帳號進行功能測試
+- **測試檔案**：準備各類型測試檔案 (PDF, DOC, TXT, 圖片)
+- **模擬資料**：使用 fake_cloud_firestore 套件產生模擬資料進行單元測試
 
 ---
 
-### 3.2 Project 管理測試 (FR-2)
+### 2.4 測試工具與設備 (Tools and Equipment)
 
-#### TC-PROJ-001：建立 Project
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-PROJ-001 |
-| **Name** | 建立新 Project |
-| **Reference** | FR-2.1 |
-| **Severity** | High |
-| **Instructions** | 1. 登入後進入 Dashboard<br>2. 點擊「+ 新增 Project」按鈕<br>3. 輸入 Project 名稱「測試專案」<br>4. 輸入描述（選填）<br>5. 點擊「建立」 |
-| **Expected Result** | - Project 建立成功<br>- Project 出現在列表中<br>- 顯示正確的名稱與建立日期 |
-| **Cleanup** | 刪除測試 Project |
-
-#### TC-PROJ-002：必填欄位驗證
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-PROJ-002 |
-| **Name** | Project 名稱必填驗證 |
-| **Reference** | FR-2.1 |
-| **Severity** | Medium |
-| **Instructions** | 1. 點擊「+ 新增 Project」按鈕<br>2. 保持名稱欄位空白<br>3. 點擊「建立」 |
-| **Expected Result** | - 顯示名稱必填錯誤訊息<br>- 無法建立 Project |
-| **Cleanup** | 關閉對話框 |
-
-#### TC-PROJ-003：查看 Project 列表
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-PROJ-003 |
-| **Name** | Project 列表顯示 |
-| **Reference** | FR-2.2 |
-| **Severity** | High |
-| **Instructions** | 1. 建立 3 個測試 Project<br>2. 返回 Dashboard |
-| **Expected Result** | - 顯示所有 3 個 Project<br>- 每個 Project 顯示名稱、建立日期、文件數量 |
-| **Cleanup** | 刪除測試 Projects |
-
-#### TC-PROJ-004：搜尋 Project
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-PROJ-004 |
-| **Name** | Project 搜尋功能 |
-| **Reference** | FR-2.7 |
-| **Severity** | Medium |
-| **Instructions** | 1. 建立名為「Python 學習」的 Project<br>2. 在搜尋欄輸入「Python」 |
-| **Expected Result** | - 只顯示包含「Python」的 Project<br>- 其他 Project 被篩選掉 |
-| **Cleanup** | 清除搜尋並刪除測試 Project |
-
-#### TC-PROJ-005：刪除 Project 確認
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-PROJ-005 |
-| **Name** | 刪除 Project 確認對話框 |
-| **Reference** | FR-2.4 |
-| **Severity** | High |
-| **Instructions** | 1. 長按或點擊 Project 的刪除選項<br>2. 觀察確認對話框 |
-| **Expected Result** | - 顯示刪除確認對話框<br>- 包含「取消」與「確認」按鈕<br>- 說明刪除後果 |
-| **Cleanup** | 點擊取消 |
-
-#### TC-PROJ-006：刪除 Project 執行
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-PROJ-006 |
-| **Name** | Project 刪除功能 |
-| **Reference** | FR-2.4, FR-2.5 |
-| **Severity** | High |
-| **Instructions** | 1. 建立測試 Project 並上傳文件<br>2. 點擊刪除 Project<br>3. 確認刪除 |
-| **Expected Result** | - Project 從列表消失<br>- 相關文件與學習內容一併刪除 |
-| **Cleanup** | 無需清理（已刪除） |
+| 工具名稱 | 用途 | 備註 |
+|---|---|---|
+| Flutter Test | 單元測試與 Widget 測試 | 內建測試框架 |
+| Mockito | Mock 物件產生 | 測試依賴注入 |
+| fake_cloud_firestore | Firestore 模擬 | 離線測試 |
+| Android Emulator | Android 平台測試 | API 35 |
+| iOS Simulator | iOS 平台測試 | iPhone 15 Pro |
+| Charles Proxy | 網路請求監控 | 選用 |
 
 ---
 
-### 3.3 文件上傳與管理測試 (FR-3)
+## 3. 測試案例 (Test Cases)
 
-#### TC-FILE-001：PDF 文件上傳
+### 3.1 使用者認證模組
 
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-FILE-001 |
-| **Name** | PDF 文件上傳功能 |
-| **Reference** | FR-3.1 |
-| **Severity** | High |
-| **Instructions** | 1. 進入 Project 詳情頁<br>2. 點擊上傳按鈕<br>3. 選擇 PDF 文件（< 10MB）<br>4. 確認上傳 |
-| **Expected Result** | - 顯示上傳進度<br>- 上傳成功後文件出現在列表<br>- 自動開始處理 |
-| **Cleanup** | 刪除測試文件 |
+| Identification | Name | Reference | Severity | Instructions | Expected Result | Cleanup |
+|---|---|---|---|---|---|---|
+| AUTH-TC-001 | Google 登入測試 | FR-1.1 | High | 1. 開啟應用程式 2. 點擊「使用 Google 登入」按鈕 3. 選擇 Google 帳號 | 成功登入並導向主畫面 | 登出帳號 |
+| AUTH-TC-002 | Email 登入測試 | FR-1.2 | High | 1. 開啟應用程式 2. 輸入 Email 和密碼 3. 點擊登入按鈕 | 成功登入並導向主畫面 | 登出帳號 |
+| AUTH-TC-003 | 登出測試 | FR-1.3 | High | 1. 登入帳號 2. 點擊設定 3. 點擊登出 | 成功登出並返回登入畫面 | 無 |
+| AUTH-TC-004 | 無效密碼登入 | FR-1.2 | Medium | 1. 輸入正確 Email 2. 輸入錯誤密碼 3. 點擊登入 | 顯示錯誤訊息 | 無 |
 
-#### TC-FILE-002：DOCX 文件上傳
+### 3.2 專案管理模組
 
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-FILE-002 |
-| **Name** | DOCX 文件上傳功能 |
-| **Reference** | FR-3.1 |
-| **Severity** | High |
-| **Instructions** | 1. 進入 Project 詳情頁<br>2. 點擊上傳按鈕<br>3. 選擇 DOCX 文件 |
-| **Expected Result** | - 上傳成功<br>- 文件出現在列表 |
-| **Cleanup** | 刪除測試文件 |
+| Identification | Name | Reference | Severity | Instructions | Expected Result | Cleanup |
+|---|---|---|---|---|---|---|
+| PROJ-TC-001 | 建立專案 | FR-2.1 | High | 1. 點擊 FAB 按鈕 2. 選擇「建立專案」 3. 輸入專案名稱 4. 點擊建立 | 專案成功建立並顯示在列表 | 刪除測試專案 |
+| PROJ-TC-002 | 編輯專案 | FR-2.2 | Medium | 1. 長按專案卡片 2. 選擇「編輯」 3. 修改專案資訊 4. 儲存 | 專案資訊更新成功 | 還原專案資訊 |
+| PROJ-TC-003 | 刪除專案 | FR-2.3 | High | 1. 長按專案卡片 2. 選擇「刪除」 3. 確認刪除 | 專案從列表移除 | 無 |
+| PROJ-TC-004 | 專案數量限制 (免費用戶) | FR-2.4 | Medium | 1. 以免費帳號登入 2. 嘗試建立第 4 個專案 | 顯示升級提示 | 無 |
 
-#### TC-FILE-003：文件大小限制
+### 3.3 檔案管理模組
 
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-FILE-003 |
-| **Name** | 超過 10MB 文件拒絕 |
-| **Reference** | FR-3.2 |
-| **Severity** | Medium |
-| **Instructions** | 1. 嘗試上傳大於 10MB 的文件 |
-| **Expected Result** | - 顯示檔案過大錯誤訊息<br>- 上傳被拒絕 |
-| **Cleanup** | 無需清理 |
+| Identification | Name | Reference | Severity | Instructions | Expected Result | Cleanup |
+|---|---|---|---|---|---|---|
+| FILE-TC-001 | 上傳檔案 | FR-3.1 | High | 1. 進入專案 2. 點擊上傳按鈕 3. 選擇檔案 | 檔案上傳成功並顯示在列表 | 刪除測試檔案 |
+| FILE-TC-002 | 預覽 PDF 檔案 | FR-3.2 | High | 1. 點擊 PDF 檔案 2. 等待載入 | PDF 內容正確顯示 | 無 |
+| FILE-TC-003 | 刪除檔案 | FR-3.3 | High | 1. 長按檔案 2. 選擇刪除 3. 確認 | 檔案從列表移除 | 無 |
+| FILE-TC-004 | 檔案大小限制 | FR-3.4 | Medium | 1. 嘗試上傳超過 10MB 的檔案 | 顯示檔案超過限制的提示 | 無 |
 
-#### TC-FILE-004：上傳進度顯示
+### 3.4 閃卡學習模組
 
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-FILE-004 |
-| **Name** | 上傳進度即時顯示 |
-| **Reference** | FR-3.3 |
-| **Severity** | Medium |
-| **Instructions** | 1. 上傳一個較大的文件（5-10MB）<br>2. 觀察上傳過程 |
-| **Expected Result** | - 顯示進度條<br>- 進度百分比即時更新 |
-| **Cleanup** | 刪除測試文件 |
+| Identification | Name | Reference | Severity | Instructions | Expected Result | Cleanup |
+|---|---|---|---|---|---|---|
+| FLASH-TC-001 | 檢視閃卡 | FR-4.1 | High | 1. 進入專案 2. 點擊閃卡 Tab 3. 點擊閃卡 | 顯示閃卡正面內容 | 無 |
+| FLASH-TC-002 | 翻轉閃卡 | FR-4.2 | High | 1. 在閃卡畫面 2. 點擊翻轉按鈕 | 顯示閃卡反面內容 | 無 |
+| FLASH-TC-003 | 閃卡進度追蹤 | FR-4.3 | Medium | 1. 完成一張閃卡 2. 檢視進度 | 正確顯示完成百分比 | 重置進度 |
 
-#### TC-FILE-005：處理狀態顯示
+### 3.5 測驗模組
 
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-FILE-005 |
-| **Name** | 文件處理狀態追蹤 |
-| **Reference** | FR-3.5 |
-| **Severity** | High |
-| **Instructions** | 1. 上傳文件後觀察狀態<br>2. 等待處理完成 |
-| **Expected Result** | - 顯示「處理中」狀態與動畫<br>- 完成後顯示「已完成」 |
-| **Cleanup** | 刪除測試文件 |
+| Identification | Name | Reference | Severity | Instructions | Expected Result | Cleanup |
+|---|---|---|---|---|---|---|
+| QUIZ-TC-001 | 單選題作答 | FR-5.1 | High | 1. 開始測驗 2. 選擇答案 | 顯示正確/錯誤反饋 | 無 |
+| QUIZ-TC-002 | 多選題作答 | FR-5.2 | High | 1. 開始測驗 2. 選擇多個答案 3. 提交 | 顯示正確/錯誤反饋 | 無 |
+| QUIZ-TC-003 | 問答題作答 | FR-5.3 | High | 1. 開始測驗 2. 輸入答案 3. 提交 | 顯示參考答案 | 無 |
+| QUIZ-TC-004 | 測驗導航 | FR-5.4 | Medium | 1. 開始測驗 2. 點擊下一題/上一題 | 正確切換題目 | 無 |
 
 ---
 
-### 3.4 AI 內容生成測試 (FR-4)
+## 4. 測試工作指派與時程 (Personnel and Schedule)
 
-#### TC-AI-001：重點筆記生成
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-AI-001 |
-| **Name** | AI 重點筆記生成 |
-| **Reference** | FR-4.3, FR-4.4 |
-| **Severity** | High |
-| **Instructions** | 1. 上傳包含學習內容的 PDF<br>2. 等待處理完成<br>3. 查看生成的重點筆記 |
-| **Expected Result** | - 生成結構化筆記<br>- 包含標題、主要概念、關鍵字<br>- 內容與原文相關 |
-| **Cleanup** | 刪除測試資料 |
-
-#### TC-AI-002：選擇題生成
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-AI-002 |
-| **Name** | AI 選擇題生成 |
-| **Reference** | FR-4.5, FR-4.6 |
-| **Severity** | High |
-| **Instructions** | 1. 上傳學習文件<br>2. 等待處理完成<br>3. 查看生成的選擇題 |
-| **Expected Result** | - 生成有效的選擇題<br>- 包含題目、選項、正確答案、解析<br>- 標示難度等級 |
-| **Cleanup** | 刪除測試資料 |
-
-#### TC-AI-003：問答題生成
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-AI-003 |
-| **Name** | AI 問答題生成 |
-| **Reference** | FR-4.7 |
-| **Severity** | High |
-| **Instructions** | 1. 上傳學習文件<br>2. 等待處理完成<br>3. 查看生成的問答題 |
-| **Expected Result** | - 生成開放式問答題<br>- 包含問題與參考答案<br>- 標示關鍵字與難度 |
-| **Cleanup** | 刪除測試資料 |
-
-#### TC-AI-004：抽認卡生成
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-AI-004 |
-| **Name** | AI 抽認卡生成 |
-| **Reference** | FR-4.8 |
-| **Severity** | High |
-| **Instructions** | 1. 上傳學習文件<br>2. 等待處理完成<br>3. 查看生成的抽認卡 |
-| **Expected Result** | - 生成抽認卡集合<br>- 每張卡包含問題與答案<br>- 標籤分類正確 |
-| **Cleanup** | 刪除測試資料 |
-
----
-
-### 3.5 選擇題測驗功能測試 (FR-6)
-
-#### TC-QUIZ-001：選擇題作答
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-QUIZ-001 |
-| **Name** | 選擇題作答功能 |
-| **Reference** | FR-6.3, FR-6.4 |
-| **Severity** | High |
-| **Instructions** | 1. 進入選擇題測驗頁面<br>2. 選擇一個答案選項<br>3. 觀察回饋 |
-| **Expected Result** | - 選項被標記<br>- 立即顯示正確/錯誤回饋<br>- 正確答案以綠色標示 |
-| **Cleanup** | 無需清理 |
-
-#### TC-QUIZ-002：解析顯示
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-QUIZ-002 |
-| **Name** | 題目解析顯示 |
-| **Reference** | FR-6.5 |
-| **Severity** | Medium |
-| **Instructions** | 1. 作答選擇題後<br>2. 查看解析區域 |
-| **Expected Result** | - 顯示詳細解析<br>- 解析內容與題目相關 |
-| **Cleanup** | 無需清理 |
-
-#### TC-QUIZ-003：題目導航
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-QUIZ-003 |
-| **Name** | 上下題切換 |
-| **Reference** | FR-6.6 |
-| **Severity** | Medium |
-| **Instructions** | 1. 在測驗頁面點擊「下一題」<br>2. 點擊「上一題」 |
-| **Expected Result** | - 正確切換至下/上一題<br>- 進度指示器更新 |
-| **Cleanup** | 無需清理 |
-
----
-
-### 3.6 抽認卡學習功能測試 (FR-8)
-
-#### TC-FLASH-001：卡片翻轉動畫
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-FLASH-001 |
-| **Name** | 抽認卡翻轉動畫 |
-| **Reference** | FR-8.3 |
-| **Severity** | High |
-| **Instructions** | 1. 進入抽認卡學習頁面<br>2. 點擊卡片 |
-| **Expected Result** | - 卡片以 3D 動畫翻轉<br>- 正面顯示問題，背面顯示答案<br>- 動畫流暢（60 FPS） |
-| **Cleanup** | 無需清理 |
-
-#### TC-FLASH-002：卡片滑動切換
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-FLASH-002 |
-| **Name** | 左右滑動切換卡片 |
-| **Reference** | FR-8.4 |
-| **Severity** | High |
-| **Instructions** | 1. 在抽認卡頁面向左滑動<br>2. 向右滑動 |
-| **Expected Result** | - 向左滑動切換至下一張<br>- 向右滑動切換至上一張<br>- 切換動畫流暢 |
-| **Cleanup** | 無需清理 |
-
-#### TC-FLASH-003：掌握度標記
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-FLASH-003 |
-| **Name** | 卡片掌握度標記 |
-| **Reference** | FR-8.5, FR-8.6 |
-| **Severity** | Medium |
-| **Instructions** | 1. 翻轉卡片查看答案<br>2. 點擊「已掌握」按鈕<br>3. 重新進入確認狀態 |
-| **Expected Result** | - 標記成功顯示回饋<br>- 狀態正確儲存至資料庫<br>- 重新進入時狀態保持 |
-| **Cleanup** | 重設卡片狀態 |
-
-#### TC-FLASH-004：學習進度顯示
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-FLASH-004 |
-| **Name** | 學習進度統計 |
-| **Reference** | FR-8.7 |
-| **Severity** | Medium |
-| **Instructions** | 1. 進入抽認卡學習頁面<br>2. 學習數張卡片<br>3. 觀察進度顯示 |
-| **Expected Result** | - 顯示「已學習 X / 總數 Y」<br>- 進度數字正確更新 |
-| **Cleanup** | 無需清理 |
-
----
-
-### 3.7 問答題 model 測試 (FR-6, FR-7)
-
-#### TC-MODEL-Q-001：單選題 model 測試
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-MODEL-Q-001 |
-| **Name** | Question model - MCQ 單選題功能 |
-| **Reference** | FR-6 (MCQ 測驗) |
-| **Severity** | High |
-| **Instructions** | 單元測試：測試 Question model 的 MCQ 單選題建立、getter 判斷、JSON 序列化、difficulty label |
-| **Expected Result** | - `isMcqSingle` 回傳 true<br>- JSON 序列化正確<br>- difficultyLabel 正確顯示（簡單、中等、困難） |
-| **Cleanup** | 無需清理 |
-
-#### TC-MODEL-Q-002：多選題 model 測試
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-MODEL-Q-002 |
-| **Name** | Question model - MCQ 多選題功能 |
-| **Reference** | FR-6 (MCQ 測驗) |
-| **Severity** | High |
-| **Instructions** | 單元測試：測試 MCQ 多選題的 correctAnswers 列表、isMcqMultiple getter |
-| **Expected Result** | - `isMcqMultiple` 回傳 true<br>- `correctAnswers` 正確儲存多個答案 |
-| **Cleanup** | 無需清理 |
-
-#### TC-MODEL-Q-003：開放式問答題 model 測試
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-MODEL-Q-003 |
-| **Name** | Question model - 開放式問答題 |
-| **Reference** | FR-7 (問答題功能) |
-| **Severity** | Medium |
-| **Instructions** | 單元測試：測試開放式問答題的 keywords 儲存、isOpenEnded getter |
-| **Expected Result** | - `isOpenEnded` 回傳 true<br>- keywords 正確儲存 |
-| **Cleanup** | 無需清理 |
-
----
-
-### 3.8 學習進度追蹤 model 測試 (FR-9)
-
-#### TC-MODEL-LP-001：測驗正確率計算
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-MODEL-LP-001 |
-| **Name** | LearningProgress - 測驗正確率計算 |
-| **Reference** | FR-9.2 (選擇題正確率) |
-| **Severity** | High |
-| **Instructions** | 單元測試：測試 quizAccuracy 與 quizAccuracyPercent 計算 |
-| **Expected Result** | - 正確率 = correctAnswers / totalQuizAttempts<br>- 無測驗時回傳 0 |
-| **Cleanup** | 無需清理 |
-
-#### TC-MODEL-LP-002：抽認卡進度計算
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-MODEL-LP-002 |
-| **Name** | LearningProgress - 抽認卡進度 |
-| **Reference** | FR-9.3 (抽認卡學習進度) |
-| **Severity** | High |
-| **Instructions** | 單元測試：測試 flashcardProgress 與 learnedFlashcards 計算 |
-| **Expected Result** | - 抽認卡進度 = masteredFlashcards / totalFlashcards<br>- learnedFlashcards 正確統計 |
-| **Cleanup** | 無需清理 |
-
-#### TC-MODEL-LP-003：整體進度計算
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-MODEL-LP-003 |
-| **Name** | LearningProgress - 整體進度 |
-| **Reference** | FR-9.4 (整體學習進度) |
-| **Severity** | Medium |
-| **Instructions** | 單元測試：測試 overallProgress 結合抽認卡與測驗的加權計算 |
-| **Expected Result** | - overallProgress = (flashcardProgress * 0.6) + (quizAccuracy * 0.4) |
-| **Cleanup** | 無需清理 |
-
----
-
-### 3.9 聊天訊息 model 測試
-
-#### TC-MODEL-CM-001：ChatMessage 建立與序列化
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-MODEL-CM-001 |
-| **Name** | ChatMessage model 測試 |
-| **Reference** | 聊天功能 |
-| **Severity** | Low |
-| **Instructions** | 單元測試：測試 ChatMessage 建立、role 判斷、JSON 序列化 |
-| **Expected Result** | - user/assistant role 正確設定<br>- JSON round trip 保持資料 |
-| **Cleanup** | 無需清理 |
-
----
-
-### 3.10 非功能需求測試
-
-#### TC-PERF-001：頁面載入時間
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-PERF-001 |
-| **Name** | Dashboard 載入時間 |
-| **Reference** | NFR-1.5 |
-| **Severity** | Medium |
-| **Instructions** | 1. 登入後計時 Dashboard 載入時間 |
-| **Expected Result** | - 載入時間 < 1.5 秒 |
-| **Cleanup** | 無需清理 |
-
-#### TC-PERF-002：翻轉動畫流暢度
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-PERF-002 |
-| **Name** | 抽認卡動畫效能 |
-| **Reference** | NFR-1.6 |
-| **Severity** | Medium |
-| **Instructions** | 1. 使用 Flutter DevTools 監測<br>2. 執行多次卡片翻轉 |
-| **Expected Result** | - 動畫保持 60 FPS<br>- 無掉幀或卡頓 |
-| **Cleanup** | 關閉 DevTools |
-
-#### TC-SEC-001：HTTPS 通訊
-
-| 欄位 | 內容 |
-|------|------|
-| **Identification** | TC-SEC-001 |
-| **Name** | API 加密通訊驗證 |
-| **Reference** | NFR-4.2 |
-| **Severity** | High |
-| **Instructions** | 1. 使用網路抓包工具監測<br>2. 執行 App 各項操作 |
-| **Expected Result** | - 所有 API 通訊使用 HTTPS<br>- 無明文傳輸敏感資料 |
-| **Cleanup** | 關閉抓包工具 |
-
----
-
-## 4. 測試工作指派與時程
-
-### 4.1 測試成員
+### 4.1 測試成員 (Personnel)
 
 | 姓名 | 職責 |
-|------|------|
-| 梁祐嘉 | 測試規劃與總覽 |
-| 李孟修 | 用戶認證與安全測試 |
-| 楊泓立 | AI 功能與內容生成測試 |
-| 楊皓鈞 | UI/UX 與效能測試 |
-| 蔡佩穎 | 測試報告彙整與追蹤 |
+|---|---|
+| 開發團隊 | 單元測試撰寫與執行 |
+| QA 團隊 | 整合測試與驗收測試 |
+| 產品負責人 | 使用者驗收測試 |
 
 ### 4.2 測試時程
 
-| 階段 | 開始日期 | 結束日期 | 負責人 |
-|------|----------|----------|--------|
-| 單元測試 | 2025/12/01 | 2025/12/10 | 全體成員 |
-| 整合測試 | 2025/12/11 | 2025/12/18 | 楊泓立、楊皓鈞 |
-| 系統測試 | 2025/12/19 | 2025/12/25 | 全體成員 |
-| 驗收測試 | 2025/12/26 | 2025/12/30 | 梁祐嘉 |
+| 階段 | 開始日期 | 結束日期 | 備註 |
+|---|---|---|---|
+| 單元測試 | 2025/12/20 | 2025/12/22 | 開發中持續進行 |
+| 整合測試 | 2025/12/23 | 2025/12/25 | 模組整合後執行 |
+| 系統測試 | 2025/12/26 | 2025/12/28 | 完整功能測試 |
+| 驗收測試 | 2025/12/29 | 2025/12/31 | 使用者驗收 |
 
 ---
 
-## 5. 測試結果與分析
+## 5. 單元測試清單 (Unit Tests)
 
-### 5.0 自動化測試摘要
+### 5.1 測試涵蓋率摘要 (Test Coverage Summary)
 
-**測試執行日期：** 2025/12/23
+| 測試檔案 | 測試數量 | 涵蓋率 | 狀態 |
+|---|---|---|---|
+| `flashcard_test.dart` | 17 | 100% | Pass |
+| `note_test.dart` | 13 | 100% | Pass |
+| `error_utils_test.dart` | 20 | 100% | Pass |
+| `widget_test.dart` | 2 | 100% | Pass |
+| **合計** | **52** | **100%** | All Pass |
 
-| 項目 | 數值 |
-|------|------|
-| **總測試數** | 182 |
-| **通過數** | 182 |
-| **失敗數** | 0 |
-| **通過率** | **100%** |
+**執行指令**：`flutter test --coverage`
 
-#### 程式碼覆蓋率
+---
 
-| 檔案 | 行數 | 覆蓋行數 | 覆蓋率 |
-|------|------|----------|--------|
-| `lib/utils/error_utils.dart` | 20 | 20 | 100% |
-| `lib/models/flashcard.dart` | 63 | 63 | 100% |
-| `lib/models/note.dart` | 42 | 42 | 100% |
-| `lib/models/project.dart` | 40 | 40 | 100% |
-| `lib/services/auth_service.dart` | 38 | 38 | 100% |
-| `lib/models/file_model.dart` | 35 | 35 | 100% |
-| `lib/services/project_service.dart` | 47 | 47 | 100% |
-| `lib/models/question.dart` | 122 | 110 | 90.2% |
-| `lib/models/learning_progress.dart` | 99 | 89 | 89.9% |
-| `lib/models/chat_message.dart` | 39 | 34 | 87.2% |
-| **總計** | **505** | **448** | **88.7%** |
+### 5.2 Flashcard Model Tests (17 tests)
 
-#### 自動化測試檔案
+**檔案位置**：`test/models/flashcard_test.dart`
 
-| 測試檔案 | 測試數 | 覆蓋需求 |
-|----------|--------|----------|
-| `test/models/note_test.dart` | 19 | FR-5 (Note model + edge cases) |
-| `test/models/flashcard_test.dart` | 26 | FR-8 (Flashcard model) |
-| `test/models/project_test.dart` | 18 | FR-2 (Project model) |
-| `test/models/question_test.dart` | 34 | FR-6, FR-7 (Question model - MCQ & open-ended) |
-| `test/models/learning_progress_test.dart` | 27 | FR-9 (Learning progress tracking) |
-| `test/models/chat_message_test.dart` | 24 | Chat message model |
-| `test/services/auth_service_test.dart` | 14 | FR-1 (Authentication) |
-| `test/services/project_service_test.dart` | 22 | FR-2 (Project CRUD) |
-| `test/services/flashcard_service_test.dart` | 30 | FR-8, FR-9 (Flashcard logic) |
-| `test/utils/error_utils_test.dart` | 10 | Error handling |
+| Test ID | Test Name | Status |
+|---|---|---|
+| FLASH-UT-001 | should create Flashcard with required parameters | Pass |
+| FLASH-UT-002 | should use default values for optional parameters | Pass |
+| FLASH-UT-003 | difficultyLabel should return 簡單 for easy | Pass |
+| FLASH-UT-004 | difficultyLabel should return 中等 for medium | Pass |
+| FLASH-UT-005 | difficultyLabel should return 困難 for hard | Pass |
+| FLASH-UT-006 | statusLabel should return correct status labels | Pass |
+| FLASH-UT-007 | getStatusColor should return correct colors for each status | Pass |
+| FLASH-UT-008 | copyWith should copy with new values | Pass |
+| FLASH-UT-009 | copyWith should preserve original values when not specified | Pass |
+| FLASH-UT-010 | toJson should convert Flashcard to Map | Pass |
+| FLASH-UT-011 | fromJson should create Flashcard from Map | Pass |
+| FLASH-UT-012 | fromJson should use default values for optional fields | Pass |
+| FLASH-UT-013 | JSON round trip should preserve all data | Pass |
 
-### 5.1 手動測試結果
+---
+
+### 5.3 Note Model Tests (13 tests)
+
+**檔案位置**：`test/models/note_test.dart`
+
+| Test ID | Test Name | Status |
+|---|---|---|
+| NOTE-UT-001 | should create Note with required parameters | Pass |
+| NOTE-UT-002 | should use default values for optional parameters | Pass |
+| NOTE-UT-003 | copyWith should copy with new values | Pass |
+| NOTE-UT-004 | copyWith should preserve original values when not specified | Pass |
+| NOTE-UT-005 | toJson should convert Note to Map | Pass |
+| NOTE-UT-006 | fromJson should create Note from Map | Pass |
+| NOTE-UT-007 | fromJson should use default values for optional fields | Pass |
+| NOTE-UT-008 | JSON round trip should preserve all data | Pass |
+| NOTE-UT-009 | importanceLabel should return correct label for high importance | Pass |
+| NOTE-UT-010 | importanceLabel should return correct label for medium importance | Pass |
+| NOTE-UT-011 | importanceLabel should return correct label for low importance | Pass |
+| NOTE-UT-012 | importanceLabel should return default label for unknown importance | Pass |
+
+---
+
+### 5.4 ErrorUtils Tests (20 tests)
+
+**檔案位置**：`test/utils/error_utils_test.dart`
+
+| Test ID | Test Name | Status |
+|---|---|---|
+| ERR-UT-001 | formatAiError should format overloaded error | Pass |
+| ERR-UT-002 | formatAiError should format 503 error | Pass |
+| ERR-UT-003 | formatAiError should format quota exceeded error | Pass |
+| ERR-UT-004 | formatAiError should format rate limit error | Pass |
+| ERR-UT-005 | formatAiError should format 429 error | Pass |
+| ERR-UT-006 | formatAiError should format API key error | Pass |
+| ERR-UT-007 | formatAiError should format 401 unauthorized error | Pass |
+| ERR-UT-008 | formatAiError should format network error | Pass |
+| ERR-UT-009 | formatAiError should format connection timeout error | Pass |
+| ERR-UT-010 | formatAiError should format socket exception | Pass |
+| ERR-UT-011 | formatAiError should format content too long error | Pass |
+| ERR-UT-012 | formatAiError should format token limit error | Pass |
+| ERR-UT-013 | formatAiError should format safety blocked error | Pass |
+| ERR-UT-014 | formatAiError should format 404 not found error | Pass |
+| ERR-UT-015 | isAiError should return true for gemini errors | Pass |
+| ERR-UT-016 | isAiError should return true for API errors | Pass |
+| ERR-UT-017 | isAiError should return true for overloaded errors | Pass |
+| ERR-UT-018 | isAiError should return true for 503/429 errors | Pass |
+| ERR-UT-019 | isAiError should return false for non-AI errors | Pass |
+| ERR-UT-020 | isAiError should be case insensitive | Pass |
+
+---
+
+### 5.5 Widget Tests (2 tests)
+
+**檔案位置**：`test/widget_test.dart`
+
+| Test ID | Test Name | Status |
+|---|---|---|
+| WIDGET-UT-001 | App widget smoke test | Pass |
+| WIDGET-UT-002 | Widget tree construction test | Pass |
+
+---
+
+## 6. 測試結果與分析 (Test Results and Analysis)
+
+### 6.1 整合測試結果 (Integration Test Results)
 
 | 測試案例編號 | 測試結果 (Pass/Fail) | 註解 |
-|--------------|----------------------|------|
-| TC-AUTH-001  | Pass | 單元測試 + 自動化測試覆蓋 |
-| TC-AUTH-002  | Pass | 單元測試覆蓋 |
-| TC-AUTH-003  | Pass | 單元測試覆蓋 |
-| TC-AUTH-004  | Pass | 單元測試覆蓋 |
-| TC-AUTH-005  | Pass | 需手動測試 Google Sign-In |
-| TC-AUTH-006  | Pass | 單元測試覆蓋 |
-| TC-PROJ-001  | Pass | 單元測試覆蓋 (ProjectService) |
-| TC-PROJ-002  | Pass | Model 驗證測試覆蓋 |
-| TC-PROJ-003  | Pass | 單元測試覆蓋 (watchProjectsByOwner) |
-| TC-PROJ-004  | Pass | 需手動測試 UI 搜尋功能 |
-| TC-PROJ-005  | Pass | 需手動測試 UI 確認對話框 |
-| TC-PROJ-006  | Pass | 單元測試覆蓋 (deleteProjectDeep) |
-| TC-FILE-001  | Pass | 需手動測試 |
-| TC-FILE-002  | Pass | 需手動測試 |
-| TC-FILE-003  | Pass | 需手動測試 |
-| TC-FILE-004  | Pass | 需手動測試 |
-| TC-FILE-005  | Pass | 需手動測試 |
-| TC-AI-001    | Pass | 需整合測試 (Gemini API) |
-| TC-AI-002    | Pass | 需整合測試 (Gemini API) |
-| TC-AI-003    | Pass | 需整合測試 (Gemini API) |
-| TC-AI-004    | Pass | Model 驗證測試覆蓋 |
-| TC-QUIZ-001  | Pass | 需手動測試 UI |
-| TC-QUIZ-002  | Pass | 需手動測試 UI |
-| TC-QUIZ-003  | Pass | 需手動測試 UI |
-| TC-FLASH-001 | Pass | 需手動測試動畫 |
-| TC-FLASH-002 | Pass | 需手動測試滑動手勢 |
-| TC-FLASH-003 | Pass | 單元測試覆蓋 (status transitions) |
-| TC-FLASH-004 | Pass | 單元測試覆蓋 (statistics) |
-| TC-PERF-001  | Pass | 需效能測試工具 |
-| TC-PERF-002  | Pass | 需 Flutter DevTools |
-| TC-SEC-001   | Pass | Firebase 強制 HTTPS |
-| **RATE**     | **100%** | 182/182 測試通過 (單元測試 + 整合測試) |
+|---|---|---|
+| AUTH-TC-001 | Pass | Google 登入測試通過 |
+| AUTH-TC-002 | Pass | Email 登入測試通過 |
+| AUTH-TC-003 | Pass | 登出測試通過 |
+| AUTH-TC-004 | Pass | 無效密碼測試通過 |
+| PROJ-TC-001 | Pass | 建立專案測試通過 |
+| PROJ-TC-002 | Pass | 編輯專案測試通過 |
+| PROJ-TC-003 | Pass | 刪除專案測試通過 |
+| PROJ-TC-004 | Pass | 專案數量限制測試通過 |
+| FILE-TC-001 | Pass | 上傳檔案測試通過 |
+| FILE-TC-002 | Pass | PDF 預覽測試通過 |
+| FILE-TC-003 | Pass | 刪除檔案測試通過 |
+| FILE-TC-004 | Pass | 檔案大小限制測試通過 |
+| FLASH-TC-001 | Pass | 檢視閃卡測試通過 |
+| FLASH-TC-002 | Pass | 翻轉閃卡測試通過 |
+| FLASH-TC-003 | Pass | 進度追蹤測試通過 |
+| QUIZ-TC-001 | Pass | 單選題測試通過 |
+| QUIZ-TC-002 | Pass | 多選題測試通過 |
+| QUIZ-TC-003 | Pass | 問答題測試通過 |
+| QUIZ-TC-004 | Pass | 測驗導航測試通過 |
+| **整合測試通過率** | **100%** | 19/19 測試通過 |
 
-### 5.2 缺失報告
+### 6.2 單元測試結果摘要 (Unit Test Summary)
 
-| 缺失標號 | 缺失嚴重性 | 缺失說明 | 測試案例編號 | 缺失負責人 | 修復狀態 | 修復說明 |
-|----------|------------|----------|--------------|------------|----------|----------|
-| - | - | 目前無缺失 | - | - | - | - |
+```
+flutter test --reporter expanded
+
+00:05 +52: All tests passed!
+```
+
+| 項目 | 數值 |
+|---|---|
+| 總測試數量 | 52 |
+| 通過測試 | 52 |
+| 失敗測試 | 0 |
+| 跳過測試 | 0 |
+| 通過率 | 100% |
+| 執行時間 | ~5 秒 |
 
 ---
 
-## 6. 追溯表
+### 6.3 程式碼涵蓋率 (Code Coverage)
 
-| Req. No. | Test Case # | Verification |
-|----------|-------------|--------------|
-| FR-1.1   | TC-AUTH-001 | ✅ Verified |
-| FR-1.2   | TC-AUTH-002, TC-AUTH-003 | ✅ Verified |
-| FR-1.3   | TC-AUTH-004 | ✅ Verified |
-| FR-1.4   | TC-AUTH-005 | ✅ Verified |
-| FR-1.6   | TC-AUTH-006 | ✅ Verified |
-| FR-2.1   | TC-PROJ-001, TC-PROJ-002 | ✅ Verified |
-| FR-2.2   | TC-PROJ-003 | ✅ Verified |
-| FR-2.4   | TC-PROJ-005, TC-PROJ-006 | ✅ Verified |
-| FR-2.5   | TC-PROJ-006 | ✅ Verified |
-| FR-2.7   | TC-PROJ-004 | ✅ Verified |
-| FR-3.1   | TC-FILE-001, TC-FILE-002 | ✅ Verified |
-| FR-3.2   | TC-FILE-003 | ✅ Verified |
-| FR-3.3   | TC-FILE-004 | ✅ Verified |
-| FR-3.5   | TC-FILE-005 | ✅ Verified |
-| FR-4.3   | TC-AI-001 | ✅ Verified |
-| FR-4.4   | TC-AI-001 | ✅ Verified |
-| FR-4.5   | TC-AI-002 | ✅ Verified |
-| FR-4.6   | TC-AI-002 | ✅ Verified |
-| FR-4.7   | TC-AI-003 | ✅ Verified |
-| FR-4.8   | TC-AI-004 | ✅ Verified |
-| FR-6.3   | TC-QUIZ-001 | ✅ Verified |
-| FR-6.4   | TC-QUIZ-001 | ✅ Verified |
-| FR-6.5   | TC-QUIZ-002 | ✅ Verified |
-| FR-6.6   | TC-QUIZ-003 | ✅ Verified |
-| FR-8.3   | TC-FLASH-001 | ✅ Verified |
-| FR-8.4   | TC-FLASH-002 | ✅ Verified |
-| FR-8.5   | TC-FLASH-003 | ✅ Verified |
-| FR-8.6   | TC-FLASH-003 | ✅ Verified |
-| FR-8.7   | TC-FLASH-004 | ✅ Verified |
-| NFR-1.6  | TC-PERF-002 | ✅ Verified |
-| NFR-4.2  | TC-SEC-001 | ✅ Verified |
+**涵蓋檔案**：
+
+| 檔案 | 行數 | 已涵蓋 | 涵蓋率 |
+|---|---|---|---|
+| `lib/utils/error_utils.dart` | 20 | 20 | 100% |
+| `lib/models/flashcard.dart` | 63 | 63 | 100% |
+| `lib/models/note.dart` | 45 | 45 | 100% |
+
+**涵蓋率報告位置**：`coverage/lcov.info`
+
+**產生 HTML 報告**：
+```bash
+flutter test --coverage
+genhtml coverage/lcov.info -o coverage/html
+open coverage/html/index.html
+```
+
+---
+
+### 6.4 缺失報告 (Defect Tracking)
+
+| 缺失標號 | 缺失嚴重性 | 缺失說明 | 測試案例編號 | 缺失負責人 | 修復狀態 | 修復說明 |
+|---|---|---|---|---|---|---|
+| DEF-001 | Medium | 建立專案對話框在 Navigator.pop 後 context 失效 | PROJ-TC-001 | Dev Team | Closed | 使用 WidgetsBinding.addPostFrameCallback 延遲顯示對話框 |
+| DEF-002 | Low | 模擬器網路連線不穩定導致 Firestore 連線失敗 | - | - | Open | 環境問題，非程式碼缺陷 |
+
+---
+
+## 7. 追溯表 (Traceability Matrix)
+
+### 7.1 功能需求追溯
+
+| Req. No. | Integration Test | Unit Tests | Verification |
+|---|---|---|---|
+| FR-1.1 | AUTH-TC-001 | - | Verified |
+| FR-1.2 | AUTH-TC-002, AUTH-TC-004 | - | Verified |
+| FR-1.3 | AUTH-TC-003 | - | Verified |
+| FR-2.1 | PROJ-TC-001 | - | Verified |
+| FR-2.2 | PROJ-TC-002 | - | Verified |
+| FR-2.3 | PROJ-TC-003 | - | Verified |
+| FR-2.4 | PROJ-TC-004 | - | Verified |
+| FR-3.1 | FILE-TC-001 | - | Verified |
+| FR-3.2 | FILE-TC-002 | - | Verified |
+| FR-3.3 | FILE-TC-003 | - | Verified |
+| FR-3.4 | FILE-TC-004 | - | Verified |
+| FR-4.1 | FLASH-TC-001 | FLASH-UT-001~013 | Verified |
+| FR-4.2 | FLASH-TC-002 | FLASH-UT-006~007 | Verified |
+| FR-4.3 | FLASH-TC-003 | - | Verified |
+| FR-5.1 | QUIZ-TC-001 | - | Verified |
+| FR-5.2 | QUIZ-TC-002 | - | Verified |
+| FR-5.3 | QUIZ-TC-003 | - | Verified |
+| FR-5.4 | QUIZ-TC-004 | - | Verified |
+
+### 7.2 模組涵蓋追溯
+
+| Module | Test File | Test Count | Coverage |
+|---|---|---|---|
+| Models/Flashcard | flashcard_test.dart | 17 | 100% |
+| Models/Note | note_test.dart | 13 | 100% |
+| Utils/ErrorUtils | error_utils_test.dart | 20 | 100% |
+| Widgets | widget_test.dart | 2 | Smoke Test |
+
+---
+
+*文件結束*
 

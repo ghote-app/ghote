@@ -18,25 +18,30 @@
 | 0.1 | 初版 | 2025/11/15 |
 | 0.2 | 修正架構為 Serverless (Firebase) | 2025/11/20 |
 | 1.0 | 正式版 | 2025/11/26 |
+| 1.1 | feat: implement Clean Architecture and SOLID principles (a5f5886) | 2025/12/23 |
+| 1.2 | feat: extract quiz widgets - QuizFeedback, QuizTypeLabel, QuizDifficultyLabel (1408629) | 2025/12/23 |
+| 1.3 | feat: extract DashboardStatCard and FlashcardProgressHeader widgets (18154d3) | 2025/12/23 |
 
 ---
 
 ## 目錄
 
 1. [系統模型與架構 (System Model / System Architecture)](#1-系統模型與架構-System-Model--System-Architecture)
-2. [介面需求與設計 (Interface Requirement and Design)](#2-介面需求與設計-Interface-Requirement-and-Design)
-3. [流程設計 (Process Design)](#3-流程設計-Process-Design)
-4. [使用者畫面設計 (User Interface Design)](#4-使用者畫面設計-User-Interface-Design)
-5. [資料設計 (Data Design)](#5-資料設計-Data-Design)
-6. [類別圖設計 (Class Diagram)](#6-類別圖設計-Class-Diagram)
-7. [實作方案 (Implementation Languages and Platforms)](#7-實作方案-Implementation-Languages-and-Platforms)
-8. [設計議題 (Design Issue)](#8-設計議題-Design-Issue)
+2. [Clean Architecture 與 SOLID 設計](#2-clean-architecture-與-solid-設計)
+3. [介面需求與設計 (Interface Requirement and Design)](#3-介面需求與設計-Interface-Requirement-and-Design)
+4. [流程設計 (Process Design)](#4-流程設計-Process-Design)
+5. [使用者畫面設計 (User Interface Design)](#5-使用者畫面設計-User-Interface-Design)
+6. [資料設計 (Data Design)](#6-資料設計-Data-Design)
+7. [類別圖設計 (Class Diagram)](#7-類別圖設計-Class-Diagram)
+8. [實作方案 (Implementation Languages and Platforms)](#8-實作方案-Implementation-Languages-and-Platforms)
+9. [設計議題 (Design Issue)](#9-設計議題-Design-Issue)
 
 ---
 
 ## 1. 系統模型與架構 (System Model / System Architecture)
 
 本系統採用 **Serverless (無伺服器)** 架構，以前端 Flutter 應用程式為核心，直接整合 **Firebase** 提供的後端即服務 (BaaS) 進行身份驗證、資料儲存與檔案管理。AI 功能透過 Google Generative AI SDK 直接在客戶端調用 Gemini API，實現去中心化的運算模式。
+
 
 ### 系統架構圖 (System Architecture Diagram)
 
@@ -70,7 +75,64 @@ graph TD
 
 ---
 
-## 2. 介面需求與設計 (Interface Requirement and Design)
+## 2. Clean Architecture 與 SOLID 設計
+
+本專案遵循 **Clean Architecture** 架構模式與 **SOLID** 設計原則，將業務邏輯與 UI/資料層分離，提升可測試性與維護性。
+
+### 2.1 專案結構 (Project Structure)
+
+```
+lib/
+├── core/
+│   └── di/                        # 依賴注入
+│       └── service_locator.dart   # ServiceLocator (DI Container)
+├── features/
+│   └── project/                   # Feature Module
+│       ├── presentation/
+│       │   └── widgets/           # 可重用 UI 元件
+│       │       ├── file_list_item_widget.dart
+│       │       ├── project_stats_card.dart
+│       │       ├── ai_actions_bar.dart
+│       │       └── learning_progress_card.dart
+│       ├── domain/
+│       │   ├── repositories/      # Repository 抽象介面
+│       │   │   └── project_repository.dart
+│       │   └── usecases/          # Use Cases (單一職責)
+│       │       ├── delete_file_usecase.dart
+│       │       ├── watch_files_usecase.dart
+│       │       └── upload_file_usecase.dart
+│       └── data/
+│           └── repositories/      # Repository 實作 (Firebase)
+│               └── project_repository_impl.dart
+├── models/                        # 資料模型
+├── services/                      # 業務服務層
+├── screens/                       # 頁面 UI
+└── utils/                         # 工具類
+```
+
+### 2.2 SOLID 原則應用
+
+| 原則 | 應用說明 |
+|------|----------|
+| **S**ingle Responsibility | 每個 Use Case 只負責一項操作 (如 `DeleteFileUseCase`) |
+| **O**pen/Closed | Widget 透過 callback props 擴展功能，無需修改內部實作 |
+| **L**iskov Substitution | `ProjectRepositoryImpl` 可被任何實作 `ProjectRepository` 的類替換 |
+| **I**nterface Segregation | Repository 介面只包含相關方法，不強迫實作不需要的功能 |
+| **D**ependency Inversion | 高層模組 (Screens) 依賴抽象介面 (Repository)，而非具體實作 |
+
+### 2.3 依賴注入 (Dependency Injection)
+
+透過 `ServiceLocator` 管理單例實例：
+
+```dart
+// 使用方式
+final deleteFileUseCase = sl.deleteFileUseCase;
+await deleteFileUseCase(projectId: 'xxx', fileId: 'yyy');
+```
+
+---
+
+## 3. 介面需求與設計 (Interface Requirement and Design)
 
 ### 2.1 外部介面 (External Interfaces)
 

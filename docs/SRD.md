@@ -20,6 +20,9 @@
 | 0.3  | 詳細定義 AI 生成內容格式 (JSON Schema) | 2025/11/01 |
 | 0.4  | 優化使用者介面流程與互動設計 | 2025/11/15 |
 | 1.0  | 正式版需求確認 (與實作一致) | 2025/11/26 |
+| 1.1  | docs: add SDD and SRD documentation (7209406) | 2025/12/22 |
+| 1.2  | feat: add unit test infrastructure and tests (9f1a4a6) | 2025/12/22 |
+| 1.3  | feat: implement Clean Architecture and SOLID principles (a5f5886) | 2025/12/23 |
 
 ---
 
@@ -400,11 +403,11 @@ Project 詳情頁面 ←→ 文件上傳頁面
 - 主要操作按鈕
 
 **已實作功能（參考 login_screen.dart）：**
-- ✅ Email/Password 登入與註冊
-- ✅ Google Sign-In 整合
-- ✅ 響應式設計
-- ✅ 動畫效果
-- ✅ 錯誤處理
+- Email/Password 登入與註冊
+- Google Sign-In 整合
+- 響應式設計
+- 動畫效果
+- 錯誤處理
 
 #### 2. Project 列表頁面
 **設計要點：**
@@ -421,11 +424,11 @@ Project 詳情頁面 ←→ 文件上傳頁面
 - 空狀態提示（無 Project 時）
 
 **已實作功能（參考 dashboard_screen.dart）：**
-- ✅ Project 卡片顯示
-- ✅ 搜尋功能
-- ✅ 篩選功能（All/Active/Completed/Archived）
-- ✅ 統計資訊顯示
-- ✅ 動畫效果
+- Project 卡片顯示
+- 搜尋功能
+- 篩選功能（All/Active/Completed/Archived）
+- 統計資訊顯示
+- 動畫效果
 
 #### 3. Project 詳情頁面
 **設計要點：**
@@ -1194,19 +1197,19 @@ dependencies:
 
 ## 專案當前狀態
 
-### ✅ 已完成功能（參考 GitHub）
+### 已完成功能（參考 GitHub）
 
 **前端 (Flutter):**
-- ✅ Firebase Authentication 整合
-- ✅ Google Sign-In
-- ✅ 登入/註冊頁面 UI
-- ✅ Dashboard 頁面 UI
-- ✅ Splash Screen 動畫
-- ✅ 響應式設計
-- ✅ 深色主題
-- ✅ Project 列表顯示（假資料）
-- ✅ 搜尋與篩選功能
-- ✅ GitHub Actions CI/CD
+- Firebase Authentication 整合
+- Google Sign-In
+- 登入/註冊頁面 UI
+- Dashboard 頁面 UI
+- Splash Screen 動畫
+- 響應式設計
+- 深色主題
+- Project 列表顯示（假資料）
+- 搜尋與篩選功能
+- GitHub Actions CI/CD
 
 **後端:**
 - ⏳ 待開發（依照本文件規劃）
@@ -1274,7 +1277,7 @@ dependencies:
 
 **文件結束**
 
-> 📝 **版本資訊**: v0.3 - 2025/10/12
+> **版本資訊**: v0.3 - 2025/10/12
 > 
 > 本文件會隨專案進展持續更新，請定期檢查最新版本。部「上傳文件」按鈕
 - 每個文件卡片顯示四種內容類型的數量

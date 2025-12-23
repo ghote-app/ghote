@@ -7,6 +7,7 @@ import '../services/api_key_service.dart';
 import '../services/sync_service.dart';
 import '../models/subscription.dart';
 import '../utils/toast_utils.dart';
+import '../utils/app_locale.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -25,7 +26,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: const Text('Settings', style: TextStyle(color: Colors.white)),
+        title: Text(tr('settings.title'), style: const TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: FutureBuilder<Subscription>(
@@ -38,7 +39,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           return ListView(
         children: <Widget>[
           const SizedBox(height: 8),
-          _sectionTitle('Plan'),
+          _sectionTitle(tr('settings.plan')),
           _planTile(planLabel, storageText, aiText, context),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -49,31 +50,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: _planCompareCard(context),
           ),
           const Divider(color: Colors.white24, height: 1),
-          _sectionTitle('Usage'),
+          _sectionTitle(tr('settings.usage')),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: _usageSection(sub),
           ),
           const Divider(color: Colors.white24, height: 1),
-          _sectionTitle('Account'),
+          _sectionTitle(tr('settings.account')),
           _tile(
             context,
             icon: Icons.person_outline,
-            title: 'Change display name',
+            title: tr('settings.changeDisplayName'),
             onTap: () => _changeDisplayName(context),
           ),
           _tile(
             context,
             icon: Icons.image_outlined,
-            title: 'Change avatar',
+            title: tr('settings.changeAvatar'),
             onTap: () => _changeAvatar(context),
           ),
           const Divider(color: Colors.white24, height: 1),
-          _sectionTitle('Ghote Pro'),
+          _sectionTitle(tr('settings.ghotePro')),
           _tile(
             context,
             icon: Icons.workspace_premium_rounded,
-            title: 'Upgrade to Ghote Pro',
+            title: tr('settings.upgradePro'),
             trailing: const Icon(Icons.chevron_right, color: Colors.white54),
             onTap: () {
               Navigator.of(context).push(
@@ -82,24 +83,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           const Divider(color: Colors.white24, height: 1),
-          _sectionTitle('AI Settings'),
+          _sectionTitle(tr('settings.aiSettings')),
           _tile(
             context,
             icon: Icons.key_rounded,
-            title: 'Gemini API Key',
+            title: tr('settings.geminiApiKey'),
             trailing: const Icon(Icons.chevron_right, color: Colors.white54),
             onTap: () => _manageGeminiApiKey(context),
           ),
           const Divider(color: Colors.white24, height: 1),
           // FR-11.4: 資料同步設定
-          _sectionTitle('Data Sync'),
+          _sectionTitle(tr('settings.dataSync')),
           _buildSyncSection(),
           const Divider(color: Colors.white24, height: 1),
-          _sectionTitle('Security'),
+          _sectionTitle(tr('settings.language')),
+          _buildLanguageSection(),
+          const Divider(color: Colors.white24, height: 1),
+          _sectionTitle(tr('settings.security')),
           _tile(
             context,
             icon: Icons.logout_rounded,
-            title: 'Sign out',
+            title: tr('settings.logout'),
             onTap: () async {
               await FirebaseAuth.instance.signOut();
               if (context.mounted) Navigator.of(context).pop();
@@ -481,11 +485,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 color: isOnline ? Colors.green : Colors.orange,
               ),
               title: Text(
-                isOnline ? '已連線' : '離線模式',
+                isOnline ? tr('sync.connected') : tr('sync.offline'),
                 style: const TextStyle(color: Colors.white),
               ),
               subtitle: Text(
-                status?.message ?? (isOnline ? '資料會自動同步到雲端' : '資料將在網路恢復時同步'),
+                status?.message ?? (isOnline ? tr('sync.autoSync') : tr('sync.pendingSync')),
                 style: const TextStyle(color: Colors.white70),
               ),
               trailing: status?.status == SyncState.syncing
@@ -517,7 +521,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           }
                         },
                   icon: const Icon(Icons.sync),
-                  label: const Text('手動同步'),
+                  label: Text(tr('sync.manualSync')),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
                     foregroundColor: Colors.white,
@@ -556,6 +560,87 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
           ],
+        );
+      },
+    );
+  }
+
+  /// Language selection section
+  Widget _buildLanguageSection() {
+    return ListenableBuilder(
+      listenable: appLocale,
+      builder: (context, _) {
+        final isEnglish = appLocale.language == AppLanguage.en;
+        
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => appLocale.setLanguage(AppLanguage.en),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isEnglish
+                            ? Colors.white.withValues(alpha: 0.12)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'English',
+                          style: TextStyle(
+                            color: isEnglish
+                                ? Colors.white
+                                : Colors.white.withValues(alpha: 0.5),
+                            fontWeight: isEnglish
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => appLocale.setLanguage(AppLanguage.zhTW),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: !isEnglish
+                            ? Colors.white.withValues(alpha: 0.12)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '繁體中文',
+                          style: TextStyle(
+                            color: !isEnglish
+                                ? Colors.white
+                                : Colors.white.withValues(alpha: 0.5),
+                            fontWeight: !isEnglish
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
