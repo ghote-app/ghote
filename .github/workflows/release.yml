@@ -36,21 +36,21 @@ jobs:
     - name: Install dependencies
       run: flutter pub get
     
-    - name: Output Debug Keystore SHA-1
+    - name: Setup Release Keystore
       run: |
-        echo "=== DEBUG KEYSTORE SHA-1 FOR FIREBASE ==="
-        keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android 2>/dev/null | grep -E "(SHA1|SHA256)" || echo "No debug keystore found, creating one..."
-        if [ ! -f ~/.android/debug.keystore ]; then
-          mkdir -p ~/.android
-          keytool -genkey -v -keystore ~/.android/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
-          keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep -E "(SHA1|SHA256)"
-        fi
-        echo "=========================================="
+        echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 --decode > $HOME/release.keystore
+        echo "Keystore SHA-1 for Firebase:"
+        keytool -list -v -keystore $HOME/release.keystore -alias ghote-release -storepass ${{ secrets.KEYSTORE_PASSWORD }} 2>/dev/null | grep "SHA1" || true
     
     - name: Create .env file
       run: echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
     
     - name: Build APK
+      env:
+        KEYSTORE_PATH: /home/runner/release.keystore
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_ALIAS: ghote-release
+        KEY_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
       run: flutter build apk --release
     
     - name: Rename APK
