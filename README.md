@@ -100,6 +100,7 @@ flutter emulators
 open -a Simulator
 
 # Run the app
+#hello i am yang
 flutter run
 ```
 
