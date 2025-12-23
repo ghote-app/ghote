@@ -28,7 +28,11 @@ import 'content_search_screen.dart';
 import '../features/project/presentation/widgets/widgets.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
-  const ProjectDetailsScreen({super.key, required this.projectId, required this.title});
+  const ProjectDetailsScreen({
+    super.key,
+    required this.projectId,
+    required this.title,
+  });
 
   final String projectId;
   final String title;
@@ -38,11 +42,12 @@ class ProjectDetailsScreen extends StatefulWidget {
 }
 
 class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
-  String _selectedCategory = 'all'; // 'all', 'document', 'image', 'video', 'audio', 'other'
+  String _selectedCategory =
+      'all'; // 'all', 'document', 'image', 'video', 'audio', 'other'
   final ScrollController _scrollController = ScrollController();
   final ScrollController _categoryScrollController = ScrollController();
   String _currentTitle = '';
-  
+
   // FR-3.3: 上傳進度回調
   void Function(int count, String fileName)? _uploadProgressCallback;
 
@@ -64,27 +69,60 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   // 根據副檔名判斷檔案分類
   String _getCategoryFromExtension(String extension) {
     final ext = extension.toLowerCase().replaceAll('.', '');
-    
+
     // 文件類型
-    if (['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt', 'xls', 'xlsx', 'ppt', 'pptx', 'csv'].contains(ext)) {
+    if ([
+      'pdf',
+      'doc',
+      'docx',
+      'txt',
+      'rtf',
+      'odt',
+      'xls',
+      'xlsx',
+      'ppt',
+      'pptx',
+      'csv',
+    ].contains(ext)) {
       return 'document';
     }
-    
+
     // 圖片類型
-    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp', 'ico', 'tiff', 'heic'].contains(ext)) {
+    if ([
+      'jpg',
+      'jpeg',
+      'png',
+      'gif',
+      'bmp',
+      'svg',
+      'webp',
+      'ico',
+      'tiff',
+      'heic',
+    ].contains(ext)) {
       return 'image';
     }
-    
+
     // 影片類型
-    if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm', 'm4v', '3gp'].contains(ext)) {
+    if ([
+      'mp4',
+      'avi',
+      'mov',
+      'wmv',
+      'flv',
+      'mkv',
+      'webm',
+      'm4v',
+      '3gp',
+    ].contains(ext)) {
       return 'video';
     }
-    
+
     // 音訊類型
     if (['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma'].contains(ext)) {
       return 'audio';
     }
-    
+
     return 'other';
   }
 
@@ -104,7 +142,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               Flexible(
                 child: Text(
                   _currentTitle,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -129,20 +170,11 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => ContentSearchScreen(projectId: widget.projectId),
+                  builder: (_) =>
+                      ContentSearchScreen(projectId: widget.projectId),
                 ),
               );
             },
-          ),
-          IconButton(
-            icon: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
-            tooltip: 'AI 智能命名',
-            onPressed: _aiGenerateName,
-          ),
-          IconButton(
-            icon: const Icon(Icons.upload_file_rounded, color: Colors.white),
-            tooltip: tr('file.uploadFiles'),
-            onPressed: _uploadFiles,
           ),
         ],
       ),
@@ -150,7 +182,8 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         stream: projectService.watchFiles(widget.projectId),
         builder: (context, snapshot) {
           // 保留上次的數據，避免閃爍
-          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              !snapshot.hasData) {
             return const Center(
               child: CircularProgressIndicator(color: Colors.white),
             );
@@ -160,18 +193,29 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline_rounded, size: 64, color: Colors.red.withValues(alpha: 0.7)),
+                  Icon(
+                    Icons.error_outline_rounded,
+                    size: 64,
+                    color: Colors.red.withValues(alpha: 0.7),
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     tr('file.loadError'),
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 18, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: Text(
                       '${snapshot.error}',
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 14),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.6),
+                        fontSize: 14,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -179,20 +223,24 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               ),
             );
           }
-          
+
           final files = snapshot.data ?? <FileModel>[];
-          
+
           // 根據分類篩選檔案
           final filteredFiles = _selectedCategory == 'all'
               ? files
               : files.where((f) => f.category == _selectedCategory).toList();
-          
+
           if (files.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.folder_open_rounded, size: 80, color: Colors.white.withValues(alpha: 0.3)),
+                  Icon(
+                    Icons.folder_open_rounded,
+                    size: 80,
+                    color: Colors.white.withValues(alpha: 0.3),
+                  ),
                   const SizedBox(height: 20),
                   Text(
                     tr('file.noFiles'),
@@ -218,43 +266,38 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           return CustomScrollView(
             controller: _scrollController,
             slivers: [
-              // 檔案統計區域
+              // FR-9.4: 學習進度區塊 (Move to top)
               SliverToBoxAdapter(
                 child: RepaintBoundary(
                   child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: ProjectStatsCard(files: files),
-                  ),
-                ),
-              ),
-              
-              // AI 功能操作欄
-              SliverToBoxAdapter(
-                child: RepaintBoundary(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: AIActionsBar(
-                      onChatTap: _openChat,
-                      onNotesTap: _openNotes,
-                      onFlashcardsTap: _openFlashcards,
-                      onQuestionsTap: _openQuestions,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
                     ),
-                  ),
-                ),
-              ),
-              
-              // FR-9.4: 學習進度區塊
-              SliverToBoxAdapter(
-                child: RepaintBoundary(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                     child: LearningProgressCard(projectId: widget.projectId),
                   ),
                 ),
               ),
-              
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
-              
+
+              // 檔案統計區域 (Refined as List Header)
+              SliverToBoxAdapter(
+                child: RepaintBoundary(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
+                    child: ProjectStatsCard(
+                      onUpload: _uploadFiles,
+                      totalSize: files.fold<int>(
+                        0,
+                        (sum, file) => sum + file.sizeBytes,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
               // 分類篩選器 - 使用 SliverPersistentHeader 固定
               SliverPersistentHeader(
                 pinned: true,
@@ -262,13 +305,17 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   child: RepaintBoundary(
                     child: Container(
                       color: Colors.black,
-                      padding: const EdgeInsets.only(left: 20, right: 20, bottom: 12),
+                      padding: const EdgeInsets.only(
+                        left: 20,
+                        right: 20,
+                        bottom: 12,
+                      ),
                       child: _buildCategoryFilter(files),
                     ),
                   ),
                 ),
               ),
-              
+
               // 檔案列表
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -296,13 +343,32 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                     childCount: filteredFiles.length,
                     findChildIndexCallback: (Key key) {
                       final valueKey = key as ValueKey<String>;
-                      return filteredFiles.indexWhere((file) => file.id == valueKey.value);
+                      return filteredFiles.indexWhere(
+                        (file) => file.id == valueKey.value,
+                      );
                     },
                   ),
                 ),
               ),
-              
-              const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+              // AI 功能操作欄 (Moved to bottom)
+              SliverToBoxAdapter(
+                child: RepaintBoundary(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: AIActionsBar(
+                      onChatTap: _openChat,
+                      onNotesTap: _openNotes,
+                      onFlashcardsTap: _openFlashcards,
+                      onQuestionsTap: _openQuestions,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 30)),
             ],
           );
         },
@@ -324,7 +390,21 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       final result = await FilePicker.platform.pickFiles(
         allowMultiple: true,
         type: FileType.custom,
-        allowedExtensions: ['jpg', 'png', 'pdf', 'txt', 'doc', 'docx', 'mp3', 'wav', 'm4a', 'ogg', 'flac', 'aac', 'wma'],
+        allowedExtensions: [
+          'jpg',
+          'png',
+          'pdf',
+          'txt',
+          'doc',
+          'docx',
+          'mp3',
+          'wav',
+          'm4a',
+          'ogg',
+          'flac',
+          'aac',
+          'wma',
+        ],
       );
 
       if (result == null || result.files.isEmpty) return;
@@ -342,11 +422,15 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       // 獲取訂閱和當前檔案數量（添加重試機制）
       int retryCount = 0;
       const maxRetries = 3;
-      
+
       while (retryCount < maxRetries) {
         try {
-          final subscription = await SubscriptionService().getUserSubscription(user.uid);
-          final currentFileCount = await ProjectService().getProjectFileCount(widget.projectId);
+          final subscription = await SubscriptionService().getUserSubscription(
+            user.uid,
+          );
+          final currentFileCount = await ProjectService().getProjectFileCount(
+            widget.projectId,
+          );
 
           // 檢查檔案數量限制 (免費/Plus: 10個)
           if (subscription.isFree || subscription.isPlus) {
@@ -356,7 +440,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 context: context,
                 builder: (context) => AlertDialog(
                   backgroundColor: Colors.black,
-                  title: const Text('File Limit Reached', style: TextStyle(color: Colors.white)),
+                  title: const Text(
+                    'File Limit Reached',
+                    style: TextStyle(color: Colors.white),
+                  ),
                   content: const Text(
                     '免費/Plus 方案每個專案最多 10 個文件。請升級到 Ghote Pro 享受無限文件上傳。',
                     style: TextStyle(color: Colors.white70),
@@ -399,7 +486,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(false),
-                    child: const Text('取消', style: TextStyle(color: Colors.white54)),
+                    child: const Text(
+                      '取消',
+                      style: TextStyle(color: Colors.white54),
+                    ),
                   ),
                   ElevatedButton(
                     onPressed: () => Navigator.of(context).pop(true),
@@ -412,7 +502,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 ],
               ),
             );
-            
+
             if (shouldContinue == true) {
               // 用戶選擇重試，遞歸調用
               return _uploadFiles();
@@ -427,7 +517,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       int uploadedCount = 0;
       final totalFiles = result.files.length;
       String currentFileName = '';
-      
+
       if (!mounted) return;
       showDialog(
         context: context,
@@ -444,12 +534,14 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 });
               }
             };
-            
+
             return PopScope(
               canPop: false,
               child: AlertDialog(
                 backgroundColor: const Color(0xFF1A1A1A),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -461,10 +553,16 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                           width: 60,
                           height: 60,
                           child: CircularProgressIndicator(
-                            value: totalFiles > 0 ? uploadedCount / totalFiles : null,
+                            value: totalFiles > 0
+                                ? uploadedCount / totalFiles
+                                : null,
                             strokeWidth: 4,
-                            backgroundColor: Colors.white.withValues(alpha: 0.1),
-                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.1,
+                            ),
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              Colors.blue,
+                            ),
                           ),
                         ),
                         Text(
@@ -480,13 +578,20 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                     const SizedBox(height: 16),
                     Text(
                       '正在上傳...',
-                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     if (currentFileName.isNotEmpty)
                       Text(
                         currentFileName,
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 13),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.6),
+                          fontSize: 13,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -495,9 +600,13 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
-                        value: totalFiles > 0 ? uploadedCount / totalFiles : null,
+                        value: totalFiles > 0
+                            ? uploadedCount / totalFiles
+                            : null,
                         backgroundColor: Colors.white.withValues(alpha: 0.1),
-                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          Colors.blue,
+                        ),
                         minHeight: 6,
                       ),
                     ),
@@ -520,15 +629,15 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           failCount++;
           continue;
         }
-        
+
         // 更新進度
         _uploadProgressCallback?.call(successCount + failCount, f.name);
-        
+
         try {
           final file = File(f.path!);
           final now = DateTime.now();
           final fileId = '${now.microsecondsSinceEpoch}-${f.name}';
-          
+
           // 一律儲存到本地
           final localPath = await storage.saveToLocal(file, widget.projectId);
 
@@ -552,7 +661,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           bool metadataSaved = false;
           int metadataRetry = 0;
           const maxMetadataRetries = 3;
-          
+
           while (!metadataSaved && metadataRetry < maxMetadataRetries) {
             try {
               await projectService.addFileMetadata(widget.projectId, meta);
@@ -561,7 +670,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             } catch (metaError) {
               metadataRetry++;
               if (metadataRetry >= maxMetadataRetries) {
-                print('保存檔案元數據 ${f.name} 失敗（已重試 $maxMetadataRetries 次）: $metaError');
+                print(
+                  '保存檔案元數據 ${f.name} 失敗（已重試 $maxMetadataRetries 次）: $metaError',
+                );
                 failCount++;
               } else {
                 // 等待後重試
@@ -582,10 +693,13 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
 
       if (!mounted) return;
       if (failCount > 0) {
-        ToastUtils.warning(context, '✅ 成功上傳 $successCount 個檔案\n❌ $failCount 個檔案上傳失敗');
+        ToastUtils.warning(
+          context,
+          '✅ 成功上傳 $successCount 個檔案\n❌ $failCount 個檔案上傳失敗',
+        );
       } else {
         ToastUtils.success(context, '✅ 成功上傳 $successCount 個檔案');
-        
+
         // FR-3.4: 上傳成功後自動開始處理（文字提取）
         if (successCount > 0) {
           _autoExtractText();
@@ -601,62 +715,96 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   Future<void> _autoExtractText() async {
     final projectService = ProjectService();
     final extractionService = const DocumentExtractionService();
-    
+
     try {
       final files = await projectService.watchFiles(widget.projectId).first;
-      
+
       // 找出尚未提取的可提取文件
       final pendingFiles = files.where((f) {
         final type = f.type.toLowerCase();
-        return ['pdf', 'docx', 'txt', 'jpg', 'jpeg', 'png', 'bmp', 'gif', 'mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma'].contains(type) &&
-               (f.extractionStatus == null || f.extractionStatus == 'pending');
+        return [
+              'pdf',
+              'docx',
+              'txt',
+              'jpg',
+              'jpeg',
+              'png',
+              'bmp',
+              'gif',
+              'mp3',
+              'wav',
+              'ogg',
+              'flac',
+              'aac',
+              'm4a',
+              'wma',
+            ].contains(type) &&
+            (f.extractionStatus == null || f.extractionStatus == 'pending');
       }).toList();
-      
+
       if (pendingFiles.isEmpty) return;
-      
+
       // 在背景處理，不阻擋用戶
       for (final file in pendingFiles) {
         // 在處理每個文件前，重新檢查文件是否仍然存在（可能已被用戶刪除）
-        final currentFiles = await projectService.watchFiles(widget.projectId).first;
+        final currentFiles = await projectService
+            .watchFiles(widget.projectId)
+            .first;
         final fileStillExists = currentFiles.any((f) => f.id == file.id);
-        
+
         if (!fileStillExists) {
           print('文件 ${file.name} 已被刪除，跳過提取');
           continue;
         }
-        
+
         try {
           // 更新狀態為處理中
-          await extractionService.updateExtractionStatus(file.id, widget.projectId, 'processing');
-          
+          await extractionService.updateExtractionStatus(
+            file.id,
+            widget.projectId,
+            'processing',
+          );
+
           // 提取文字
           final text = await extractionService.extractText(file);
-          
+
           // 再次檢查文件是否仍存在（提取過程中可能被刪除）
-          final stillExists = (await projectService.watchFiles(widget.projectId).first)
-              .any((f) => f.id == file.id);
-          
+          final stillExists =
+              (await projectService.watchFiles(widget.projectId).first).any(
+                (f) => f.id == file.id,
+              );
+
           if (!stillExists) {
             print('文件 ${file.name} 在提取過程中被刪除');
             continue;
           }
-          
+
           // 保存提取結果
-          await extractionService.saveExtractedText(file.id, widget.projectId, text);
-          
+          await extractionService.saveExtractedText(
+            file.id,
+            widget.projectId,
+            text,
+          );
+
           // FR-3.6: 處理完成通知（簡化版 - 使用 Toast）
           if (mounted) {
             ToastUtils.success(context, '📄 「${file.name}」文字提取完成');
           }
         } catch (e) {
           // 檢查是否因文件被刪除導致錯誤
-          final stillExists = (await projectService.watchFiles(widget.projectId).first)
-              .any((f) => f.id == file.id);
-          
+          final stillExists =
+              (await projectService.watchFiles(widget.projectId).first).any(
+                (f) => f.id == file.id,
+              );
+
           if (stillExists) {
             // 文件仍存在，更新狀態為失敗
             try {
-              await extractionService.updateExtractionStatus(file.id, widget.projectId, 'failed');
+              await extractionService.updateExtractionStatus(
+                file.id,
+                widget.projectId,
+                'failed',
+              );
             } catch (_) {}
           }
           print('自動提取 ${file.name} 失敗: $e');
@@ -672,9 +820,17 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   Future<void> _previewFile(BuildContext context, FileModel file) async {
     try {
       // 檢查是否為可預覽的文件類型
-      final previewableTypes = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'txt'];
+      final previewableTypes = [
+        'pdf',
+        'jpg',
+        'jpeg',
+        'png',
+        'gif',
+        'webp',
+        'txt',
+      ];
       final fileType = file.type.toLowerCase();
-      
+
       if (!previewableTypes.contains(fileType)) {
         // 如果不是可預覽類型，直接打開文件
         await _openFile(context, file);
@@ -684,7 +840,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       // 獲取文件內容
       final storage = const StorageService();
       Uint8List fileBytes;
-      
+
       if (file.storageType == 'local' && file.localPath != null) {
         final localFile = File(file.localPath!);
         if (await localFile.exists()) {
@@ -714,7 +870,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   border: Border(
-                    bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                    bottom: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.1),
+                    ),
                   ),
                 ),
                 child: Row(
@@ -760,7 +918,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   children: [
                     TextButton.icon(
                       icon: const Icon(Icons.open_in_new, color: Colors.white),
-                      label: Text(tr('file.openWith'), style: const TextStyle(color: Colors.white)),
+                      label: Text(
+                        tr('file.openWith'),
+                        style: const TextStyle(color: Colors.white),
+                      ),
                       onPressed: () {
                         Navigator.of(context).pop();
                         _openFile(context, file);
@@ -780,7 +941,11 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   }
 
   // 構建文件預覽組件
-  Widget _buildFilePreview(String fileType, Uint8List fileBytes, String fileName) {
+  Widget _buildFilePreview(
+    String fileType,
+    Uint8List fileBytes,
+    String fileName,
+  ) {
     if (fileType == 'pdf') {
       return Center(
         child: Column(
@@ -811,7 +976,11 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.broken_image, color: Colors.grey, size: 64),
+                    const Icon(
+                      Icons.broken_image,
+                      color: Colors.grey,
+                      size: 64,
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       tr('file.cannotShowImage'),
@@ -868,11 +1037,11 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         // 本地檔案：使用 OpenFilex (支援 Android FileProvider)
         if (file.localPath != null) {
           final result = await OpenFilex.open(file.localPath!);
-          
+
           // 檢查開啟結果
           if (result.type != ResultType.done) {
             if (!context.mounted) return;
-            
+
             // 顯示錯誤訊息
             String errorMessage = '無法開啟檔案';
             if (result.type == ResultType.noAppToOpen) {
@@ -882,12 +1051,15 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             } else if (result.type == ResultType.permissionDenied) {
               errorMessage = '權限被拒絕';
             }
-            
+
             await showDialog(
               context: context,
               builder: (context) => AlertDialog(
                 backgroundColor: Colors.black,
-                title: Text(tr('file.cannotOpen'), style: const TextStyle(color: Colors.white)),
+                title: Text(
+                  tr('file.cannotOpen'),
+                  style: const TextStyle(color: Colors.white),
+                ),
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -899,18 +1071,12 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                     const SizedBox(height: 12),
                     const Text(
                       '檔案路徑：',
-                      style: TextStyle(
-                        color: Colors.white60,
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: Colors.white60, fontSize: 12),
                     ),
                     const SizedBox(height: 4),
                     SelectableText(
                       file.localPath!,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
                     ),
                   ],
                 ),
@@ -984,24 +1150,42 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               ),
               const SizedBox(height: 20),
               ListTile(
-                leading: const Icon(Icons.open_in_new_rounded, color: Colors.blue),
-                title: Text(tr('file.openFile'), style: const TextStyle(color: Colors.white)),
+                leading: const Icon(
+                  Icons.open_in_new_rounded,
+                  color: Colors.blue,
+                ),
+                title: Text(
+                  tr('file.openFile'),
+                  style: const TextStyle(color: Colors.white),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   _openFile(context, file);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.info_outline_rounded, color: Colors.grey),
-                title: Text(tr('file.fileInfo'), style: const TextStyle(color: Colors.white)),
+                leading: const Icon(
+                  Icons.info_outline_rounded,
+                  color: Colors.grey,
+                ),
+                title: Text(
+                  tr('file.fileInfo'),
+                  style: const TextStyle(color: Colors.white),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   _showFileInfo(context, file);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.delete_outline_rounded, color: Colors.red),
-                title: Text(tr('file.deleteFile'), style: const TextStyle(color: Colors.red)),
+                leading: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Colors.red,
+                ),
+                title: Text(
+                  tr('file.deleteFile'),
+                  style: const TextStyle(color: Colors.red),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   _confirmDeleteFile(context, file);
@@ -1021,7 +1205,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.black,
-        title: Text(tr('file.fileInfo'), style: const TextStyle(color: Colors.white)),
+        title: Text(
+          tr('file.fileInfo'),
+          style: const TextStyle(color: Colors.white),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1029,12 +1216,26 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             _buildInfoRow(tr('file.fileName'), file.name),
             _buildInfoRow(tr('file.fileType'), file.type.toUpperCase()),
             _buildInfoRow(tr('file.fileSize'), file.formattedSize),
-            _buildInfoRow(tr('file.storageLocation'), file.storageType == 'cloud' ? tr('file.cloud') : tr('file.local')),
-            _buildInfoRow(tr('file.uploadTime'), _formatDateTime(file.uploadedAt)),
+            _buildInfoRow(
+              tr('file.storageLocation'),
+              file.storageType == 'cloud' ? tr('file.cloud') : tr('file.local'),
+            ),
+            _buildInfoRow(
+              tr('file.uploadTime'),
+              _formatDateTime(file.uploadedAt),
+            ),
             if (file.localPath != null)
-                _buildInfoRow(tr('file.localPath'), file.localPath!, isPath: true),
+              _buildInfoRow(
+                tr('file.localPath'),
+                file.localPath!,
+                isPath: true,
+              ),
             if (file.downloadUrl != null)
-                _buildInfoRow(tr('file.downloadUrl'), file.downloadUrl!, isPath: true),
+              _buildInfoRow(
+                tr('file.downloadUrl'),
+                file.downloadUrl!,
+                isPath: true,
+              ),
           ],
         ),
         actions: [
@@ -1064,17 +1265,11 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           isPath
               ? SelectableText(
                   value,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
                 )
               : Text(
                   value,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
                 ),
         ],
       ),
@@ -1093,7 +1288,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: Colors.black,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(tr('file.deleteFile'), style: const TextStyle(color: Colors.white)),
+        title: Text(
+          tr('file.deleteFile'),
+          style: const TextStyle(color: Colors.white),
+        ),
         content: Text(
           '確定要刪除「${file.name}」嗎？\n\n⚠️ 此操作會同時刪除該文件生成的所有筆記、抽認卡和練習問題。',
           style: const TextStyle(color: Colors.white70),
@@ -1105,7 +1303,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(tr('common.delete'), style: const TextStyle(color: Colors.red)),
+            child: Text(
+              tr('common.delete'),
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -1117,23 +1318,21 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         final flashcardService = FlashcardService();
         final questionService = QuestionService();
         final noteService = NoteService();
-        
+
         final deletedNotes = await noteService.deleteNotesByFileId(
           widget.projectId,
           file.id,
         );
-        final deletedFlashcards = await flashcardService.deleteFlashcardsByFileId(
-          widget.projectId, 
-          file.id,
-        );
+        final deletedFlashcards = await flashcardService
+            .deleteFlashcardsByFileId(widget.projectId, file.id);
         final deletedQuestions = await questionService.deleteQuestionsByFileId(
-          widget.projectId, 
+          widget.projectId,
           file.id,
         );
-        
+
         // 刪除文件元資料
         await ProjectService().deleteFileMetadata(widget.projectId, file.id);
-        
+
         // 如果是本地檔案，嘗試刪除實體檔案
         if (file.storageType == 'local' && file.localPath != null) {
           try {
@@ -1147,10 +1346,11 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         }
 
         if (!context.mounted) return;
-        
+
         String message = '✅ 檔案已刪除';
         if (deletedNotes > 0 || deletedFlashcards > 0 || deletedQuestions > 0) {
-          message += '\n已清除 $deletedNotes 份筆記、$deletedFlashcards 張抽認卡、$deletedQuestions 道練習題';
+          message +=
+              '\n已清除 $deletedNotes 份筆記、$deletedFlashcards 張抽認卡、$deletedQuestions 道練習題';
         }
         ToastUtils.success(context, message);
       } catch (e) {
@@ -1164,11 +1364,17 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   Widget _buildCategoryFilter(List<FileModel> files) {
     final categories = {
       'all': {'label': tr('file.all'), 'icon': Icons.apps_rounded},
-      'document': {'label': tr('file.document'), 'icon': Icons.description_rounded},
+      'document': {
+        'label': tr('file.document'),
+        'icon': Icons.description_rounded,
+      },
       'image': {'label': tr('file.image'), 'icon': Icons.image_rounded},
       'video': {'label': tr('file.video'), 'icon': Icons.video_file_rounded},
       'audio': {'label': tr('file.audio'), 'icon': Icons.audio_file_rounded},
-      'other': {'label': tr('file.other'), 'icon': Icons.insert_drive_file_rounded},
+      'other': {
+        'label': tr('file.other'),
+        'icon': Icons.insert_drive_file_rounded,
+      },
     };
 
     // 計算每個分類的數量
@@ -1190,7 +1396,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           final isSelected = _selectedCategory == entry.key;
           final count = counts[entry.key] ?? 0;
           final categoryData = entry.value;
-          
+
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: FilterChip(
@@ -1202,22 +1408,30 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   Icon(
                     categoryData['icon'] as IconData,
                     size: 15,
-                    color: Colors.white.withValues(alpha: isSelected ? 0.9 : 0.5),
+                    color: Colors.white.withValues(
+                      alpha: isSelected ? 0.9 : 0.5,
+                    ),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     '${categoryData['label']}',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: isSelected ? 0.9 : 0.6),
+                      color: Colors.white.withValues(
+                        alpha: isSelected ? 0.9 : 0.6,
+                      ),
                       fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.w500
+                          : FontWeight.normal,
                     ),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     '$count',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: isSelected ? 0.7 : 0.4),
+                      color: Colors.white.withValues(
+                        alpha: isSelected ? 0.7 : 0.4,
+                      ),
                       fontSize: 12,
                     ),
                   ),
@@ -1373,12 +1587,14 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   Future<void> _editProjectName() async {
     final projectService = ProjectService();
     final project = await projectService.getProject(widget.projectId);
-    
+
     if (project == null) return;
-    
+
     final nameController = TextEditingController(text: _currentTitle);
-    final descriptionController = TextEditingController(text: project.description ?? '');
-    
+    final descriptionController = TextEditingController(
+      text: project.description ?? '',
+    );
+
     final colorOptions = [
       {'name': 'Blue', 'value': '#2196F3'},
       {'name': 'Green', 'value': '#4CAF50'},
@@ -1390,7 +1606,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       {'name': 'Indigo', 'value': '#3F51B5'},
     ];
     String? selectedColor = project.colorTag ?? colorOptions[0]['value'];
-    
+
     final result = await showDialog<Map<String, String?>>(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -1410,30 +1626,58 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               children: [
                 const Text(
                   '專案名稱',
-                  style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 const SizedBox(height: 8),
-                TextField(
-                  controller: nameController,
-                  autofocus: false,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText: '輸入專案名稱',
-                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: nameController,
+                        autofocus: false,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: '輸入專案名稱',
+                          hintStyle: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.5),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: Colors.white.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Colors.blue),
+                          ),
+                        ),
+                      ),
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Colors.blue),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.auto_awesome_rounded,
+                        color: Colors.blue,
+                      ),
+                      tooltip: 'AI 智能命名',
+                      onPressed: () =>
+                          _aiGenerateName(controller: nameController),
                     ),
-                  ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 const Text(
                   '專案描述 (選填)',
-                  style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -1442,10 +1686,14 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     hintText: '輸入專案描述',
-                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+                    hintStyle: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                    ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                      borderSide: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.3),
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -1456,7 +1704,11 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 const SizedBox(height: 16),
                 const Text(
                   '顏色標籤',
-                  style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Wrap(
@@ -1465,7 +1717,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   children: colorOptions.map((color) {
                     final colorValue = color['value']!;
                     final isSelected = selectedColor == colorValue;
-                    final colorInt = int.parse(colorValue.substring(1), radix: 16) + 0xFF000000;
+                    final colorInt =
+                        int.parse(colorValue.substring(1), radix: 16) +
+                        0xFF000000;
                     return GestureDetector(
                       onTap: () => setState(() => selectedColor = colorValue),
                       child: Container(
@@ -1475,19 +1729,29 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                           color: Color(colorInt),
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: isSelected ? Colors.white : Colors.transparent,
+                            color: isSelected
+                                ? Colors.white
+                                : Colors.transparent,
                             width: 3,
                           ),
-                          boxShadow: isSelected ? [
-                            BoxShadow(
-                              color: Color(colorInt).withValues(alpha: 0.5),
-                              blurRadius: 8,
-                              spreadRadius: 2,
-                            ),
-                          ] : null,
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: Color(
+                                      colorInt,
+                                    ).withValues(alpha: 0.5),
+                                    blurRadius: 8,
+                                    spreadRadius: 2,
+                                  ),
+                                ]
+                              : null,
                         ),
                         child: isSelected
-                            ? const Icon(Icons.check, color: Colors.white, size: 18)
+                            ? const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 18,
+                              )
                             : null,
                       ),
                     );
@@ -1519,21 +1783,23 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       final newName = result['name']?.trim();
       final newDescription = result['description']?.trim();
       final newColorTag = result['colorTag'];
-      
+
       if (newName != null && newName.isNotEmpty) {
         try {
           final updatedProject = project.copyWith(
             title: newName,
-            description: newDescription?.isEmpty == true ? null : newDescription,
+            description: newDescription?.isEmpty == true
+                ? null
+                : newDescription,
             colorTag: newColorTag,
             lastUpdatedAt: DateTime.now(),
           );
           await projectService.updateProject(updatedProject);
-          
+
           setState(() {
             _currentTitle = newName;
           });
-          
+
           if (!mounted) return;
           ToastUtils.success(context, '專案資訊已更新');
         } catch (e) {
@@ -1545,11 +1811,11 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   }
 
   /// AI 智能命名
-  Future<void> _aiGenerateName() async {
+  Future<void> _aiGenerateName({TextEditingController? controller}) async {
     try {
       final projectService = ProjectService();
       final files = await projectService.watchFiles(widget.projectId).first;
-      
+
       if (files.isEmpty) {
         if (!mounted) return;
         ToastUtils.info(context, '請先上傳檔案，AI 才能根據內容建議名稱');
@@ -1602,14 +1868,16 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       // 收集檔案資訊和已提取的文字
       final StringBuffer contextBuffer = StringBuffer();
       contextBuffer.writeln('專案中的檔案清單：');
-      
+
       for (final file in files) {
-        contextBuffer.writeln('- ${file.name} (${file.type.toUpperCase()}, ${file.category})');
-        
+        contextBuffer.writeln(
+          '- ${file.name} (${file.type.toUpperCase()}, ${file.category})',
+        );
+
         // 如果有提取的文字，加入前 500 字
         if (file.extractedText != null && file.extractedText!.isNotEmpty) {
-          final preview = file.extractedText!.length > 500 
-              ? '${file.extractedText!.substring(0, 500)}...' 
+          final preview = file.extractedText!.length > 500
+              ? '${file.extractedText!.substring(0, 500)}...'
               : file.extractedText!;
           contextBuffer.writeln('  內容預覽: $preview');
         }
@@ -1617,7 +1885,8 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
 
       // 使用 Gemini 生成專案名稱
       final geminiService = GeminiService();
-      final prompt = '''
+      final prompt =
+          '''
 請根據以下專案的檔案資訊，生成一個簡潔、準確、有意義的專案名稱。
 
 ${contextBuffer.toString()}
@@ -1631,20 +1900,29 @@ ${contextBuffer.toString()}
 專案名稱：''';
 
       final suggestedName = await geminiService.generateText(prompt: prompt);
-      
+
       if (!mounted) return;
       Navigator.of(context).pop(); // 關閉載入對話框
-      
-      final cleanedName = suggestedName.trim()
+
+      final cleanedName = suggestedName
+          .trim()
           .replaceAll('「', '')
           .replaceAll('」', '')
           .replaceAll('『', '')
           .replaceAll('』', '')
           .replaceAll('"', '')
           .replaceAll("'", '');
-      
+
       if (cleanedName.isEmpty) {
         ToastUtils.error(context, 'AI 命名失敗，請重試');
+        return;
+      }
+
+      if (controller != null) {
+        // 如果提供了 controller (在此對話框中)，則只更新 controller 和顯示提示，不直接更新專案
+        controller.text = cleanedName;
+        if (!mounted) return;
+        ToastUtils.success(context, '✨ AI 已為您生成名稱');
         return;
       }
 
@@ -1691,14 +1969,20 @@ ${contextBuffer.toString()}
               const SizedBox(height: 16),
               Text(
                 '當前名稱：$_currentTitle',
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12),
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('保持原名稱', style: TextStyle(color: Colors.white54)),
+              child: const Text(
+                '保持原名稱',
+                style: TextStyle(color: Colors.white54),
+              ),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
@@ -1712,15 +1996,15 @@ ${contextBuffer.toString()}
       if (confirmed == true) {
         try {
           final project = await projectService.getProject(widget.projectId);
-          
+
           if (project != null) {
             final updatedProject = project.copyWith(title: cleanedName);
             await projectService.updateProject(updatedProject);
-            
+
             setState(() {
               _currentTitle = cleanedName;
             });
-            
+
             if (!mounted) return;
             ToastUtils.success(context, '✨ 專案已使用 AI 建議名稱');
           }
@@ -1736,7 +2020,7 @@ ${contextBuffer.toString()}
           Navigator.of(context).pop();
         } catch (_) {}
       }
-      
+
       if (!mounted) return;
       ToastUtils.error(context, 'AI 命名失敗: $e');
     }
@@ -1750,7 +2034,11 @@ class _CategoryFilterDelegate extends SliverPersistentHeaderDelegate {
   _CategoryFilterDelegate({required this.child});
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return child;
   }
 
