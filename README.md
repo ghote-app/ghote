@@ -10,24 +10,39 @@ Modern Flutter app with a clean, responsive UI and smooth animations.
 
 ## Features / 功能特色
 
-- AI Knowledge Extraction | AI 智能知識提取
-  - Upload PDFs/DOCX/notes; get distilled key points, MCQs, Q&A, and flashcards.
+- **AI Knowledge Extraction | AI 智能知識提取**
+  - Upload PDFs, DOCX, or notes; automatically extract key points, generate MCQs, Q&A, and flashcards.
   - 上傳 PDF/DOCX/筆記，AI 自動產出重點摘要、選擇題、問答題與抽認卡。
-- Project-based Organization | 專案式管理
-  - Manage subjects/topics as projects; track progress at a glance.
-  - 以 Project 管理不同科目/主題，掌握學習狀態。
-- Fast Search & Filters | 智能搜尋與篩選
-  - Built-in All/Active/Completed/Archived filters to find content instantly.
-  - 內建 All/Active/Completed/Archived 篩選快速定位內容。
-- Active Recall Tools | 主動回憶工具
-  - Practice with generated MCQs, Q&A, spaced-repetition flashcards.
-  - 練習模式：選擇題／問答題／間隔重複抽認卡。
-- Authentication | 安全登入
+
+- **Project-based Organization | 專案式管理**
+  - Organize learning materials by subject or topic; monitor progress at a glance.
+  - 以 Project 管理不同科目/主題，掌握整體學習狀態。
+
+- **Search & Filters | 搜尋與篩選**
+  - Built-in All/Active/Completed/Archived filters for quick content retrieval.
+  - 內建多種篩選模式，快速定位學習內容。
+
+- **Active Recall Tools | 主動回憶工具**
+  - Practice with AI-generated MCQs, Q&A, and spaced-repetition flashcards.
+  - 支援選擇題、問答題、間隔重複抽認卡等多種練習模式。
+
+- **Cross-Platform | 跨平台支援**
+  - Available on iOS, Android, and Web.
+  - 支援 iOS、Android 與 Web 平台。
+
+- **Secure Authentication | 安全登入**
   - Firebase Authentication with Email/Password and Google Sign-In.
-  - 使用 Firebase Auth（Email/Password、Google 登入）。
-- Modern UI | 現代化介面
-  - Dark theme, glass morphism, smooth animations, fully responsive.
-  - 深色主題、玻璃擬態、流暢動畫、完整響應式。
+  - 採用 Firebase Auth（Email/Password、Google 登入）。
+
+## Download / 下載
+
+| Platform | Link |
+|----------|------|
+| **Web** | [ghote-app.github.io/ghote](https://ghote-app.github.io/ghote/) |
+| **Android APK** | [GitHub Releases](https://github.com/ghote-app/ghote/releases) |
+| **iOS** | TestFlight (coming soon) |
+
+> **Note**: Android users need to enable "Install from unknown sources" to install the APK.
 
 ## Prerequisites
 
@@ -207,8 +222,6 @@ flutter run -d chrome --web-port 8080
 3. 部署完成後可於以下網址存取：
    - [https://ghote-app.github.io/ghote/](https://ghote-app.github.io/ghote/)
 
-手動部署可使用 `./deploy.sh` 生成 `build/web` 後，推送至 `gh-pages` 分支（若採用此流程）。
-
 ### 網站檔案結構
 ```
 lib/website/
@@ -347,49 +360,29 @@ Assets：
 ### Network Issues
 - Google Fonts 需要網路；離線時請改用本地字型
 
-## Recent Updates / 最近更新
+## Testing / 測試
 
-### 2025-10-13: Website 法務頁面 i18n 完成
-- 新增隱私政策與服務條款之完整英文/中文鍵於 `lib/website/i18n.dart`
-- 頁面改為使用 `t('...')` 取得文案
-- 切換語言時，法務頁面內容將自動對應顯示
+### Run all unit tests / 執行所有單元測試
+```bash
+flutter test
+```
 
-### 2025-10-12: 官方網站上線 (PR #18)
-- 使用 Flutter Web 建立的官方網站
-- 完整的服務條款和隱私政策
-- GitHub Actions 自動部署到 GitHub Pages
-- 響應式設計，支援各種裝置尺寸
+### Run with detailed output / 詳細輸出
+```bash
+flutter test --reporter expanded
+```
 
-### 2025-10-12: Google 登入功能整合 (PR #13)
-- 整合 Android 和 iOS 的 Google 登入功能
-- 配置 Google Services 和 Firebase Auth
-- 應用程式圖標更新和啟動畫面優化
-- UI 改進和資源管理優化
+### Run with coverage / 測試覆蓋率
+```bash
+flutter test --coverage
+```
 
-### 2025-10-12: 登入畫面修復 (PR #12)
-- 修復登入畫面鍵盤彈出時的溢位問題
-- 改善不同螢幕尺寸的顯示效果
+### Run specific test file / 執行特定測試檔案
+```bash
+flutter test test/path/to/test_file.dart
+```
 
-### 2025-10-12: Firebase 整合 (PR #11)
-- 將 Firebase 整合到 Android 專案中
-- 更新 Android 建置配置和依賴項目
-
-### 2025-10-12: 身份驗證功能 (PR #10)
-- 加入身份驗證功能
-- 解決 Firebase Auth 的 iOS 建置問題
-- 將 iOS 部署目標從 13.0 更新到 15.0
-
-### 2025-10-11: 團隊協作環境完善
-- 啟用 main 分支保護，要求 PR 和 CI 檢查
-- 當 CI 通過時自動合併 PR
-- 合併後自動刪除功能分支
-- 提供 PR 模板、Issue 模板和自動標籤功能
-
-### 2025-10-11: 程式碼重構
-- 移除平台特定尺寸，改用 MediaQuery 相對尺寸
-- 移除 PlatformUtils，簡化程式碼
-- 移除 liquid_glass_renderer，改用標準 Flutter 組件
-- 新增統一的響應式尺寸管理
+更多測試細節請參考 [Software Test Document](docs/STD.md)。
 
 ## Contributing
 
