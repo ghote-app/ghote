@@ -404,7 +404,7 @@ class _ContentSearchScreenState extends State<ContentSearchScreen>
       children: [
         // 全部
         _buildAllResultsList(),
-        // 抽認卡
+        // 學習卡
         _buildFlashcardsList(_searchResults!.flashcards),
         // 題目
         _buildQuestionsList(_searchResults!.questions),
@@ -420,7 +420,7 @@ class _ContentSearchScreenState extends State<ContentSearchScreen>
       children: [
         // 全部 - 顯示統計概覽
         _buildStatsOverview(),
-        // 抽認卡
+        // 學習卡
         _buildFlashcardsStream(),
         // 題目
         _buildQuestionsStream(),
@@ -995,7 +995,7 @@ class _ContentSearchScreenState extends State<ContentSearchScreen>
 
   // ==================== 導航方法 ====================
 
-  /// 導航到抽認卡學習畫面（跳到指定的抽認卡）
+  /// 導航到學習卡學習畫面（跳到指定的學習卡）
   void _navigateToFlashcard(Flashcard flashcard) {
     Navigator.push(
       context,

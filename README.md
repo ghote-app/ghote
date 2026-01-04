@@ -11,8 +11,8 @@ Modern Flutter app with a clean, responsive UI and smooth animations.
 ## Features / 功能特色
 
 - **AI Knowledge Extraction | AI 智能知識提取**
-  - Upload PDFs, DOCX, or notes; automatically extract key points, generate MCQs, Q&A, and flashcards.
-  - 上傳 PDF/DOCX/筆記，AI 自動產出重點摘要、選擇題、問答題與抽認卡。
+  - Upload PDFs, DOCX, or notes; automatically extract key points, generate MCQs, Q&A, and learn cards.
+  - 上傳 PDF/DOCX/筆記，AI 自動產出重點摘要、選擇題、問答題與學習卡。
 
 - **Project-based Organization | 專案式管理**
   - Organize learning materials by subject or topic; monitor progress at a glance.
@@ -23,8 +23,8 @@ Modern Flutter app with a clean, responsive UI and smooth animations.
   - 內建多種篩選模式，快速定位學習內容。
 
 - **Active Recall Tools | 主動回憶工具**
-  - Practice with AI-generated MCQs, Q&A, and spaced-repetition flashcards.
-  - 支援選擇題、問答題、間隔重複抽認卡等多種練習模式。
+  - Practice with AI-generated MCQs, Q&A, and spaced-repetition learn cards.
+  - 支援選擇題、問答題、間隔重複學習卡等多種練習模式。
 
 - **Cross-Platform | 跨平台支援**
   - Available on iOS, Android, and Web.

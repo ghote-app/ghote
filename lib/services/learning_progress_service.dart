@@ -6,7 +6,7 @@ import '../models/learning_progress.dart';
 /// FR-9 學習進度追蹤服務
 /// FR-9.1: 記錄學習狀態
 /// FR-9.2: 追蹤選擇題正確率
-/// FR-9.3: 統計抽認卡學習進度
+/// FR-9.3: 統計學習卡學習進度
 /// FR-9.4: Project 詳情頁面查看整體學習進度
 /// FR-9.5: 記錄最後查看時間
 class LearningProgressService {
@@ -78,7 +78,7 @@ class LearningProgressService {
     return progress;
   }
 
-  /// FR-9.1 & FR-9.3: 更新抽認卡學習統計
+  /// FR-9.1 & FR-9.3: 更新學習卡學習統計
   Future<void> updateFlashcardStats({
     required String projectId,
     required int totalFlashcards,

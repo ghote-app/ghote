@@ -7,8 +7,8 @@ import '../services/learning_progress_service.dart';
 import '../utils/toast_utils.dart';
 import '../utils/app_locale.dart';
 
-/// FR-8 抽認卡學習功能（整合版）
-/// FR-8.1: 查看文件對應的抽認卡集合
+/// FR-8 學習卡學習功能（整合版）
+/// FR-8.1: 查看文件對應的學習卡集合
 /// FR-8.2: 卡片形式呈現，正面問題，背面答案
 /// FR-8.3: 點擊觸發翻轉動畫
 /// FR-8.4: 左右滑動切換卡片
@@ -19,7 +19,7 @@ import '../utils/app_locale.dart';
 /// FR-8.9: 篩選特定標記狀態的卡片
 class FlashcardsScreen extends StatefulWidget {
   final String projectId;
-  final String? initialFlashcardId; // 可選：導航到特定抽認卡
+  final String? initialFlashcardId; // 可選：導航到特定學習卡
 
   const FlashcardsScreen({
     super.key,
@@ -192,13 +192,13 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
         builder: (context, setState) => AlertDialog(
           backgroundColor: const Color(0xFF1A1A1A),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('生成抽認卡', style: TextStyle(color: Colors.white)),
+          title: const Text('生成學習卡', style: TextStyle(color: Colors.white)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                '將使用 AI 根據您上傳的文件內容生成 10 張抽認卡。\n\n這可能需要一些時間，確定要繼續嗎？',
+                '將使用 AI 根據您上傳的文件內容生成 10 張學習卡。\n\n這可能需要一些時間，確定要繼續嗎？',
                 style: TextStyle(color: Colors.white70),
               ),
               const SizedBox(height: 16),
@@ -270,7 +270,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
               children: [
                 const CircularProgressIndicator(color: Colors.blue),
                 const SizedBox(height: 24),
-                const Text('AI 正在生成抽認卡...', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text('AI 正在生成學習卡...', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
                 Text('正在分析文件內容並生成學習卡片 ($languageText)\n請稍候片刻', textAlign: TextAlign.center, style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14)),
               ],
@@ -290,7 +290,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
         _isFlipped = false;
       });
       
-      ToastUtils.success(context, '✓ 成功生成 ${flashcards.length} 個抽認卡');
+      ToastUtils.success(context, '✓ 成功生成 ${flashcards.length} 個學習卡');
     } catch (e) {
       if (!mounted) return;
       Navigator.of(context).pop();
@@ -302,7 +302,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
     try {
       await _flashcardService.deleteFlashcard(widget.projectId, flashcardId);
       if (!mounted) return;
-      ToastUtils.success(context, '✓ 抽認卡已刪除');
+      ToastUtils.success(context, '✓ 學習卡已刪除');
     } catch (e) {
       if (!mounted) return;
       ToastUtils.error(context, '✗ 刪除失敗: $e');
@@ -315,8 +315,8 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1A1A1A),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('刪除所有抽認卡', style: TextStyle(color: Colors.white)),
-        content: Text('確定要刪除所有 ${flashcards.length} 張抽認卡嗎？此操作無法復原。', style: const TextStyle(color: Colors.white70)),
+        title: const Text('刪除所有學習卡', style: TextStyle(color: Colors.white)),
+        content: Text('確定要刪除所有 ${flashcards.length} 張學習卡嗎？此操作無法復原。', style: const TextStyle(color: Colors.white70)),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('取消', style: TextStyle(color: Colors.white54))),
           ElevatedButton(
@@ -335,7 +335,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
         }
         setState(() => _currentIndex = 0);
         if (!mounted) return;
-        ToastUtils.success(context, '✓ 已刪除 ${flashcards.length} 張抽認卡');
+        ToastUtils.success(context, '✓ 已刪除 ${flashcards.length} 張學習卡');
       } catch (e) {
         if (!mounted) return;
         ToastUtils.error(context, '✗ 刪除失敗: $e');
@@ -410,7 +410,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
               return IconButton(
                 icon: const Icon(Icons.delete_sweep, color: Colors.red),
                 onPressed: () => _deleteAllFlashcards(snapshot.data!),
-                tooltip: '刪除所有抽認卡',
+                tooltip: '刪除所有學習卡',
               );
             },
           ),
@@ -432,7 +432,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
               if (mounted) {
                 setState(() {
                   _flashcards = filteredCards;
-                  // 如果有指定初始抽認卡，跳到該卡片
+                  // 如果有指定初始學習卡，跳到該卡片
                   if (widget.initialFlashcardId != null && _currentIndex == 0) {
                     final targetIndex = _flashcards.indexWhere(
                       (f) => f.id == widget.initialFlashcardId,
@@ -516,8 +516,8 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
       case 'review': message = '沒有需要複習的卡片'; icon = Icons.refresh; break;
       case 'difficult': message = '沒有困難的卡片'; icon = Icons.warning_outlined; break;
       case 'unlearned': message = '所有卡片都已學習過'; icon = Icons.school; break;
-      case 'favorites': message = '還沒有收藏的抽認卡'; icon = Icons.star_border; break;
-      default: message = '沒有抽認卡'; icon = Icons.quiz_outlined;
+      case 'favorites': message = '還沒有收藏的學習卡'; icon = Icons.star_border; break;
+      default: message = '沒有學習卡'; icon = Icons.quiz_outlined;
     }
     
     return Center(
@@ -833,8 +833,8 @@ class _FlashcardsScreenState extends State<FlashcardsScreen>
                         builder: (context) => AlertDialog(
                           backgroundColor: const Color(0xFF1A1A1A),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          title: const Text('刪除抽認卡', style: TextStyle(color: Colors.white)),
-                          content: const Text('確定要刪除這張抽認卡嗎？', style: TextStyle(color: Colors.white70)),
+                          title: const Text('刪除學習卡', style: TextStyle(color: Colors.white)),
+                          content: const Text('確定要刪除這張學習卡嗎？', style: TextStyle(color: Colors.white70)),
                           actions: [
                             TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('取消', style: TextStyle(color: Colors.white54))),
                             ElevatedButton(onPressed: () => Navigator.of(context).pop(true), style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white), child: const Text('刪除')),

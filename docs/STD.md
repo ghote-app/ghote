@@ -1,4 +1,4 @@
-# 測試文件 (STD)
+﻿# 測試文件 (STD)
 
 - **系統名稱**：Ghote 智慧學習平台
 - **專案名稱**：Ghote - AI-Powered Study Assistant
@@ -416,4 +416,5 @@ open coverage/html/index.html
 ---
 
 *文件結束*
+
 

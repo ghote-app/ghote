@@ -1,5 +1,5 @@
 // Flashcard model for spaced repetition learning
-// FR-8: 抽認卡學習功能
+// FR-8: 學習卡學習功能
 
 class Flashcard {
   final String id;

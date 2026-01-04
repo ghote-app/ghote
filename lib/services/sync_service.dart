@@ -101,7 +101,7 @@ class SyncService {
           await _syncLearningProgress(projectId, pendingData['learningProgress']);
         }
 
-        // 同步抽認卡狀態
+        // 同步學習卡狀態
         if (pendingData.containsKey('flashcardStatus')) {
           await _syncFlashcardStatus(projectId, pendingData['flashcardStatus']);
         }
@@ -156,7 +156,7 @@ class SyncService {
     try {
       final prefs = await SharedPreferences.getInstance();
       
-      // 快取抽認卡
+      // 快取學習卡
       final flashcardsSnapshot = await _firestore
           .collection('projects')
           .doc(projectId)
@@ -204,7 +204,7 @@ class SyncService {
     }
   }
 
-  /// 獲取快取的抽認卡
+  /// 獲取快取的學習卡
   Future<List<Flashcard>> getCachedFlashcards(String projectId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -308,7 +308,7 @@ class SyncService {
     }
   }
 
-  /// 記錄離線抽認卡狀態更新
+  /// 記錄離線學習卡狀態更新
   Future<void> recordOfflineFlashcardStatus(
     String projectId,
     String flashcardId,
