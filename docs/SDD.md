@@ -21,6 +21,7 @@
 | 1.1 | feat: implement Clean Architecture and SOLID principles (a5f5886) | 2025/12/23 |
 | 1.2 | feat: extract quiz widgets - QuizFeedback, QuizTypeLabel, QuizDifficultyLabel (1408629) | 2025/12/23 |
 | 1.3 | feat: extract DashboardStatCard and FlashcardProgressHeader widgets (18154d3) | 2025/12/23 |
+| 1.4 | docs: rename flashcard to learn card (抽認卡 → 學習卡) | 2026/01/04 |
 
 ---
 

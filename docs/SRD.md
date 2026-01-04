@@ -23,6 +23,7 @@
 | 1.1  | docs: add SDD and SRD documentation (7209406) | 2025/12/22 |
 | 1.2  | feat: add unit test infrastructure and tests (9f1a4a6) | 2025/12/22 |
 | 1.3  | feat: implement Clean Architecture and SOLID principles (a5f5886) | 2025/12/23 |
+| 1.4  | docs: rename flashcard to learn card (抽認卡 → 學習卡) | 2026/01/04 |
 
 ---
 
@@ -1277,7 +1278,7 @@ dependencies:
 
 **文件結束**
 
-> **版本資訊**: v0.3 - 2025/10/12
+> **版本資訊**: v1.4 - 2026/01/04
 > 
 > 本文件會隨專案進展持續更新，請定期檢查最新版本。部「上傳文件」按鈕
 - 每個文件卡片顯示四種內容類型的數量
