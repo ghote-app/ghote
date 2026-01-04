@@ -202,9 +202,9 @@ stateDiagram-v2
     *   功能：顯示專案統計 (Active/Completed/Archived)、專案列表 (Grid View)、搜尋與篩選。
     *   UI：卡片式設計，支援動畫效果，浮動新增按鈕 (FAB)。
 3.  **專案詳情頁 (Project Detail Screen)**
-    *   功能：顯示檔案列表、檔案分類篩選 (Document/Image/Video/Audio)、上傳檔案、AI 功能入口 (Chat/Flashcards/Questions)。
+    *   功能：顯示檔案列表、檔案分類篩選 (Document/Image/Video/Audio)、上傳檔案、AI 功能入口 (Chat/Learn Cards/Questions)。
     *   UI：Sliver 滾動效果，統計卡片，底部功能導航。
-4.  **學習卡頁 (Flashcards Screen)**
+4.  **學習卡頁 (Learn Cards Screen)**
     *   功能：翻轉卡片學習、標記掌握度 (Easy/Medium/Hard)、收藏卡片、生成新卡片。
     *   UI：3D 翻轉動畫，進度條顯示。
 5.  **測驗頁 (Questions Screen)**
