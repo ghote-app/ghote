@@ -270,6 +270,11 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
       return;
     }
 
+    if (_selectedFiles.isEmpty) {
+      ToastUtils.warning(context, 'Please add at least one file to proceed');
+      return;
+    }
+
     setState(() => _isCreating = true);
 
     try {
@@ -444,7 +449,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
 
               // Add Files Section
               const Text(
-                'Add Files (Or add them later)',
+                'Add Files (Required)',
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 14,
@@ -456,13 +461,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
               if (_selectedFiles.isEmpty)
                 _buildAddFileBox()
               else
-                Column(
-                  children: [
-                    _buildAddFileBox(compact: true),
-                    const SizedBox(height: 8),
-                    _buildFileList(),
-                  ],
-                ),
+                _buildFileList(),
             ],
           ),
         ),
@@ -688,18 +687,41 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
 
   Widget _buildFileList() {
     return Container(
-      constraints: const BoxConstraints(maxHeight: 150),
+      constraints: const BoxConstraints(maxHeight: 200),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListView.separated(
         shrinkWrap: true,
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        itemCount: _selectedFiles.length,
+        padding: EdgeInsets.zero,
+        itemCount: _selectedFiles.length + 1,
         separatorBuilder: (_, __) =>
             Divider(height: 1, color: Colors.white.withValues(alpha: 0.1)),
         itemBuilder: (context, index) {
+          if (index == _selectedFiles.length) {
+            return ListTile(
+              dense: true,
+              onTap: _pickFiles,
+              leading: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.add, color: Colors.blue, size: 16),
+              ),
+              title: const Text(
+                'Add more files',
+                style: TextStyle(
+                  color: Colors.blue,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            );
+          }
+
           final file = _selectedFiles[index];
           final ext = file.extension ?? '';
           // Simple icon logic
