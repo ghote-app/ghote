@@ -24,7 +24,7 @@ class FlashcardService {
           .doc(projectId)
           .collection('flashcards');
 
-  /// 從專案文件生成抽認卡
+  /// 從專案文件生成學習卡
   Future<List<Flashcard>> generateFlashcards({
     required String projectId,
     String? fileId,
@@ -67,10 +67,10 @@ class FlashcardService {
         content = buffer.toString();
       }
 
-      // 調用 Gemini API 生成抽認卡
+      // 調用 Gemini API 生成學習卡
       final languageInstruction = language == 'en'
           ? 'Generate flashcards in English.'
-          : '以繁體中文生成抽認卡。';
+          : '以繁體中文生成學習卡。';
       final exampleFormat = language == 'en'
           ? '''[
   {
@@ -170,11 +170,11 @@ Only return the JSON array, no other text, markdown formatting, or explanations.
         );
       }).toList();
     } catch (e) {
-      throw Exception('解析抽認卡 JSON 失敗: $e');
+      throw Exception('解析學習卡 JSON 失敗: $e');
     }
   }
 
-  /// 獲取專案的抽認卡列表
+  /// 獲取專案的學習卡列表
   Stream<List<Flashcard>> watchFlashcards(String projectId) {
     return _flashcardsCol(projectId)
         .orderBy('createdAt', descending: true)
@@ -184,7 +184,7 @@ Only return the JSON array, no other text, markdown formatting, or explanations.
             .toList());
   }
 
-  /// 更新抽認卡的複習狀態
+  /// 更新學習卡的複習狀態
   Future<void> updateReviewStatus(
     String projectId,
     String flashcardId, {
@@ -201,16 +201,16 @@ Only return the JSON array, no other text, markdown formatting, or explanations.
     }
   }
 
-  /// 刪除抽認卡
+  /// 刪除學習卡
   Future<void> deleteFlashcard(String projectId, String flashcardId) async {
     try {
       await _flashcardsCol(projectId).doc(flashcardId).delete();
     } catch (e) {
-      throw Exception('刪除抽認卡失敗: $e');
+      throw Exception('刪除學習卡失敗: $e');
     }
   }
 
-  /// 刪除與特定文件關聯的所有抽認卡
+  /// 刪除與特定文件關聯的所有學習卡
   Future<int> deleteFlashcardsByFileId(String projectId, String fileId) async {
     try {
       final snapshot = await _flashcardsCol(projectId)
@@ -226,11 +226,11 @@ Only return the JSON array, no other text, markdown formatting, or explanations.
       await batch.commit();
       return snapshot.docs.length;
     } catch (e) {
-      throw Exception('刪除文件相關抽認卡失敗: $e');
+      throw Exception('刪除文件相關學習卡失敗: $e');
     }
   }
 
-  /// 切換抽認卡收藏狀態
+  /// 切換學習卡收藏狀態
   Future<void> toggleFavorite(
     String projectId,
     String flashcardId,
@@ -262,7 +262,7 @@ Only return the JSON array, no other text, markdown formatting, or explanations.
     }
   }
 
-  /// FR-8.9: 根據狀態篩選抽認卡
+  /// FR-8.9: 根據狀態篩選學習卡
   Stream<List<Flashcard>> watchFlashcardsByStatus(String projectId, String status) {
     return _flashcardsCol(projectId)
         .where('status', isEqualTo: status)

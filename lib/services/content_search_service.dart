@@ -97,13 +97,13 @@ class ContentSearchService {
 
   // ==================== FR-10.3: 難度篩選 ====================
 
-  /// 根據難度篩選抽認卡
+  /// 根據難度篩選學習卡
   Stream<List<Flashcard>> watchFlashcardsByDifficulty(
     String projectId, {
     String? difficulty, // 'easy' | 'medium' | 'hard' | null (所有)
     String? fileId,
   }) {
-    // 獲取所有抽認卡，然後在客戶端進行篩選和排序
+    // 獲取所有學習卡，然後在客戶端進行篩選和排序
     // 這樣可以避免 Firestore 複合索引的需求
     return _firestore
         .collection('projects')
@@ -172,7 +172,7 @@ class ContentSearchService {
   Future<List<String>> getAllTags(String projectId) async {
     final Set<String> tags = {};
     
-    // 從抽認卡獲取標籤
+    // 從學習卡獲取標籤
     final flashcardsSnapshot = await _firestore
         .collection('projects')
         .doc(projectId)
@@ -217,7 +217,7 @@ class ContentSearchService {
     return tags.toList()..sort();
   }
 
-  /// 根據標籤篩選抽認卡
+  /// 根據標籤篩選學習卡
   Stream<List<Flashcard>> watchFlashcardsByTag(String projectId, String tag) {
     // 使用客戶端篩選避免索引問題
     return _firestore

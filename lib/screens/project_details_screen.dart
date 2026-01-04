@@ -1297,7 +1297,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           style: const TextStyle(color: Colors.white),
         ),
         content: Text(
-          '確定要刪除「${file.name}」嗎？\n\n⚠️ 此操作會同時刪除該文件生成的所有筆記、抽認卡和練習問題。',
+          '確定要刪除「${file.name}」嗎？\n\n⚠️ 此操作會同時刪除該文件生成的所有筆記、學習卡和練習問題。',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
@@ -1354,7 +1354,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         String message = '✅ 檔案已刪除';
         if (deletedNotes > 0 || deletedFlashcards > 0 || deletedQuestions > 0) {
           message +=
-              '\n已清除 $deletedNotes 份筆記、$deletedFlashcards 張抽認卡、$deletedQuestions 道練習題';
+              '\n已清除 $deletedNotes 份筆記、$deletedFlashcards 張學習卡、$deletedQuestions 道練習題';
         }
         ToastUtils.success(context, message);
       } catch (e) {

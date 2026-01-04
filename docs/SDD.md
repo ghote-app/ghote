@@ -1,4 +1,4 @@
-# 軟體設計文件(SDD)
+﻿# 軟體設計文件(SDD)
 
 **專案名稱：** Ghote 智慧學習輔助 App
 **撰寫日期：** 2025/11/15
@@ -150,7 +150,7 @@ await deleteFileUseCase(projectId: 'xxx', fileId: 'yyy');
 | **ProjectService** | `ProjectService` | 封裝 Firestore 操作，管理專案與檔案元數據 |
 | **StorageService** | `StorageService` | 處理檔案上傳至 Firebase Storage 或本地儲存 |
 | **GeminiService** | `GeminiService` | 封裝 Gemini API 調用，處理 Prompt 與回應解析 |
-| **FlashcardService** | `FlashcardService` | 處理抽認卡生成、查詢與狀態更新 |
+| **FlashcardService** | `FlashcardService` | 處理學習卡生成、查詢與狀態更新 |
 | **QuestionService** | `QuestionService` | 處理測驗題目生成、查詢與刪除 |
 | **ChatService** | `ChatService` | 管理 AI 聊天對話記錄與上下文構建 |
 | **SubscriptionService** | `SubscriptionService` | 管理使用者訂閱狀態與權限檢查 |
@@ -159,7 +159,7 @@ await deleteFileUseCase(projectId: 'xxx', fileId: 'yyy');
 
 ## 3. 流程設計 (Process Design)
 
-### 3.1 抽認卡生成流程 (Activity Diagram)
+### 3.1 學習卡生成流程 (Activity Diagram)
 
 ```mermaid
 sequenceDiagram
@@ -168,11 +168,11 @@ sequenceDiagram
     participant Gemini as Gemini API
     participant Firestore as Cloud Firestore
 
-    User->>App: 點擊「生成抽認卡」
+    User->>App: 點擊「生成學習卡」
     App->>Firestore: 讀取專案文件內容 (Extracted Text)
     Firestore-->>App: 返回文字內容
     App->>Gemini: 發送 Prompt (包含文件內容)
-    Gemini-->>App: 回傳 JSON 格式抽認卡資料
+    Gemini-->>App: 回傳 JSON 格式學習卡資料
     App->>App: 解析 JSON
     App->>Firestore: 儲存 Flashcard Documents
     App->>User: 顯示生成結果
@@ -204,7 +204,7 @@ stateDiagram-v2
 3.  **專案詳情頁 (Project Detail Screen)**
     *   功能：顯示檔案列表、檔案分類篩選 (Document/Image/Video/Audio)、上傳檔案、AI 功能入口 (Chat/Flashcards/Questions)。
     *   UI：Sliver 滾動效果，統計卡片，底部功能導航。
-4.  **抽認卡頁 (Flashcards Screen)**
+4.  **學習卡頁 (Flashcards Screen)**
     *   功能：翻轉卡片學習、標記掌握度 (Easy/Medium/Hard)、收藏卡片、生成新卡片。
     *   UI：3D 翻轉動畫，進度條顯示。
 5.  **測驗頁 (Questions Screen)**
@@ -385,3 +385,4 @@ classDiagram
 | **議題 1** | **API Key 安全性** <br> 在客戶端直接調用 Gemini API 需要暴露 API Key。 | 1. 使用 Firebase Functions 代理 <br> 2. 使用 Firebase Remote Config <br> 3. 限制 API Key 權限 (Referrer/IP) | **方案 2 + 3** <br> **理由**：為保持 Serverless 架構的簡潔性，暫不引入 Cloud Functions。透過 Remote Config 動態派發 Key 並在 Google Cloud Console 限制 Key 的使用範圍。 |
 | **議題 2** | **大文件處理** <br> 手機端記憶體有限，處理大型 PDF 或 OCR 可能導致 Crash。 | 1. 上傳至後端處理 <br> 2. 分頁處理與釋放記憶體 <br> 3. 限制檔案大小 | **方案 2 + 3** <br> **理由**：目前採用純客戶端方案，透過分頁提取文字並及時釋放資源，同時限制上傳檔案大小 (如 10MB) 以確保穩定性。 |
 | **議題 3** | **離線存取** <br> 使用者希望在無網路時也能查看筆記。 | 1. 本地資料庫 (SQLite/Hive) <br> 2. Firestore Offline Persistence | **方案 2 (Firestore Persistence)** <br> **理由**：Firestore SDK 內建強大的離線支援，無需額外實作本地資料庫同步邏輯。 |
+

@@ -128,7 +128,7 @@ final Map<String, Map<String, String>> _strings = {
   'ai.features': {'en': 'AI Features', 'zh': 'AI 功能'},
   'ai.chat': {'en': 'AI Chat', 'zh': 'AI 聊天'},
   'ai.notes': {'en': 'Key Notes', 'zh': '重點筆記'},
-  'ai.flashcards': {'en': 'Flashcards', 'zh': '抽認卡'},
+  'ai.flashcards': {'en': 'Learn Cards', 'zh': '學習卡'},
   'ai.questions': {'en': 'Practice Questions', 'zh': '練習問題'},
   
   // File Categories
@@ -182,7 +182,7 @@ final Map<String, Map<String, String>> _strings = {
   
   // Content Search
   'search.title': {'en': 'Content Search', 'zh': '內容搜尋'},
-  'search.placeholder': {'en': 'Search flashcards, questions, notes...', 'zh': '搜尋抽認卡、題目、筆記...'},
+  'search.placeholder': {'en': 'Search learn cards, questions, notes...', 'zh': '搜尋學習卡、題目、筆記...'},
   'search.noResults': {'en': 'No results found', 'zh': '找不到相關內容'},
   'search.difficulty': {'en': 'Difficulty', 'zh': '難度'},
   'search.tags': {'en': 'Tags', 'zh': '標籤'},
@@ -191,11 +191,11 @@ final Map<String, Map<String, String>> _strings = {
   'search.medium': {'en': 'Medium', 'zh': '中等'},
   'search.hard': {'en': 'Hard', 'zh': '困難'},
   'search.clearFilters': {'en': 'Clear filters', 'zh': '清除篩選'},
-  'search.flashcards': {'en': 'Flashcards', 'zh': '抽認卡'},
+  'search.flashcards': {'en': 'Learn Cards', 'zh': '學習卡'},
   'search.questions': {'en': 'Questions', 'zh': '題目'},
   'search.notes': {'en': 'Notes', 'zh': '筆記'},
   'search.popularTags': {'en': 'Popular tags', 'zh': '熱門標籤'},
-  'search.noFlashcards': {'en': 'No flashcards', 'zh': '沒有抽認卡'},
+  'search.noFlashcards': {'en': 'No learn cards', 'zh': '沒有學習卡'},
   'search.noQuestions': {'en': 'No questions', 'zh': '沒有題目'},
   'search.noNotes': {'en': 'No notes', 'zh': '沒有筆記'},
   'search.singleChoice': {'en': 'Single', 'zh': '單選'},
@@ -271,13 +271,13 @@ final Map<String, Map<String, String>> _strings = {
   'chat.placeholder': {'en': 'Ask about your study materials...', 'zh': '針對學習資料提問...'},
   'chat.send': {'en': 'Send', 'zh': '發送'},
   
-  // Flashcards
-  'flashcards.title': {'en': 'Flashcards', 'zh': '抽認卡'},
-  'flashcards.empty': {'en': 'No flashcards yet', 'zh': '還沒有抽認卡'},
-  'flashcards.generate': {'en': 'Generate Flashcards', 'zh': '生成抽認卡'},
-  'flashcards.generateConfirm': {'en': 'Generate flashcards', 'zh': '生成抽認卡'},
-  'flashcards.generateDesc': {'en': 'AI will generate 10 flashcards from your files.\\n\\nThis may take a moment. Continue?', 'zh': '將使用 AI 根據您上傳的文件內容生成 10 張抽認卡。\\n\\n這可能需要一些時間，確定要繼續嗎？'},
-  'flashcards.generating': {'en': 'Generating flashcards...', 'zh': 'AI 正在生成抽認卡...'},
+  // Learn Cards
+  'flashcards.title': {'en': 'Learn Cards', 'zh': '學習卡'},
+  'flashcards.empty': {'en': 'No learn cards yet', 'zh': '還沒有學習卡'},
+  'flashcards.generate': {'en': 'Generate Learn Cards', 'zh': '生成學習卡'},
+  'flashcards.generateConfirm': {'en': 'Generate learn cards', 'zh': '生成學習卡'},
+  'flashcards.generateDesc': {'en': 'AI will generate 10 learn cards from your files.\\n\\nThis may take a moment. Continue?', 'zh': '將使用 AI 根據您上傳的文件內容生成 10 張學習卡。\\n\\n這可能需要一些時間，確定要繼續嗎？'},
+  'flashcards.generating': {'en': 'Generating learn cards...', 'zh': 'AI 正在生成學習卡...'},
   'flashcards.analyzeFiles': {'en': 'Analyzing files and generating cards', 'zh': '正在分析文件內容並生成學習卡片'},
   'flashcards.flip': {'en': 'Tap to flip', 'zh': '點擊翻轉'},
   'flashcards.flipToAnswer': {'en': 'Tap to see answer', 'zh': '點擊翻轉查看答案'},
@@ -288,14 +288,14 @@ final Map<String, Map<String, String>> _strings = {
   'flashcards.unlearned': {'en': 'Not Started', 'zh': '未學習'},
   'flashcards.all': {'en': 'All', 'zh': '全部'},
   'flashcards.favorites': {'en': 'Favorites', 'zh': '收藏'},
-  'flashcards.deleteAll': {'en': 'Delete all flashcards', 'zh': '刪除所有抽認卡'},
-  'flashcards.deleteAllConfirm': {'en': 'Delete all flashcards?', 'zh': '刪除所有抽認卡'},
+  'flashcards.deleteAll': {'en': 'Delete all learn cards', 'zh': '刪除所有學習卡'},
+  'flashcards.deleteAllConfirm': {'en': 'Delete all learn cards?', 'zh': '刪除所有學習卡'},
   'flashcards.deleteConfirmDesc': {'en': 'This action cannot be undone.', 'zh': '此操作無法復原。'},
   'flashcards.noMastered': {'en': 'No mastered cards yet', 'zh': '還沒有已掌握的卡片'},
   'flashcards.noReview': {'en': 'No cards to review', 'zh': '沒有需要複習的卡片'},
   'flashcards.noDifficult': {'en': 'No difficult cards', 'zh': '沒有困難的卡片'},
   'flashcards.allLearned': {'en': 'All cards learned!', 'zh': '所有卡片都已學習過'},
-  'flashcards.noFavorites': {'en': 'No favorites yet', 'zh': '還沒有收藏的抽認卡'},
+  'flashcards.noFavorites': {'en': 'No favorites yet', 'zh': '還沒有收藏的學習卡'},
   'flashcards.showAll': {'en': 'Show all', 'zh': '顯示全部'},
   'flashcards.question': {'en': 'Question', 'zh': '問題'},
   'flashcards.answer': {'en': 'Answer', 'zh': '答案'},
@@ -329,12 +329,12 @@ final Map<String, Map<String, String>> _strings = {
   
   // Learning Progress
   'progress.title': {'en': 'Learning Progress', 'zh': '學習進度'},
-  'progress.flashcardsProgress': {'en': 'Flashcards', 'zh': '抽認卡進度'},
+  'progress.flashcardsProgress': {'en': 'Learn Cards', 'zh': '學習卡進度'},
   'progress.quizAccuracy': {'en': 'Quiz Accuracy', 'zh': '測驗正確率'},
   'progress.mastered': {'en': 'mastered', 'zh': '已掌握'},
   'progress.questions': {'en': 'questions', 'zh': '題'},
   'progress.lastStudy': {'en': 'Last study', 'zh': '最後學習'},
-  'progress.startLearning': {'en': 'Start learning with flashcards or quizzes', 'zh': '使用抽認卡或測驗開始學習，追蹤您的進度'},
+  'progress.startLearning': {'en': 'Start learning with learn cards or quizzes', 'zh': '使用學習卡或測驗開始學習，追蹤您的進度'},
   
   // Errors & Messages
   'error.network': {'en': 'Network error. Please check your connection.', 'zh': '網路錯誤，請檢查連線。'},

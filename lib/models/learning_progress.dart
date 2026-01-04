@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// FR-9 學習進度追蹤
 /// FR-9.1: 記錄學習狀態
 /// FR-9.2: 追蹤選擇題正確率
-/// FR-9.3: 統計抽認卡學習進度
+/// FR-9.3: 統計學習卡學習進度
 /// FR-9.4: Project 詳情頁面查看整體學習進度
 /// FR-9.5: 記錄最後查看時間
 class LearningProgress {
@@ -64,20 +64,20 @@ class LearningProgress {
     return '${(quizAccuracy * 100).toStringAsFixed(1)}%';
   }
 
-  /// FR-9.3: 計算抽認卡學習進度
+  /// FR-9.3: 計算學習卡學習進度
   double get flashcardProgress {
     if (totalFlashcards == 0) return 0.0;
     return masteredFlashcards / totalFlashcards;
   }
 
-  /// FR-9.3: 取得抽認卡進度百分比字串
+  /// FR-9.3: 取得學習卡進度百分比字串
   String get flashcardProgressPercent {
     return '${(flashcardProgress * 100).toStringAsFixed(1)}%';
   }
 
-  /// 計算整體學習進度（結合抽認卡和測驗）
+  /// 計算整體學習進度（結合學習卡和測驗）
   double get overallProgress {
-    // 抽認卡進度佔 60%，測驗正確率佔 40%
+    // 學習卡進度佔 60%，測驗正確率佔 40%
     return (flashcardProgress * 0.6) + (quizAccuracy * 0.4);
   }
 
@@ -86,7 +86,7 @@ class LearningProgress {
     return '${(overallProgress * 100).toStringAsFixed(1)}%';
   }
 
-  /// 取得已學習的抽認卡數量（不包含未學習）
+  /// 取得已學習的學習卡數量（不包含未學習）
   int get learnedFlashcards {
     return masteredFlashcards + reviewFlashcards + difficultFlashcards;
   }

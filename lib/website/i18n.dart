@@ -59,8 +59,8 @@ final Map<String, Map<String, String>> _strings = {
     'zh': 'AI 智能分析',
   },
   'feature.ai.desc': {
-    'en': 'Extract key points and generate notes, MCQs, Q&A, and flashcards.',
-    'zh': '自動從學習資料中提取核心知識，生成重點筆記、選擇題、問答題及抽認卡',
+    'en': 'Extract key points and generate notes, MCQs, Q&A, and learn cards.',
+    'zh': '自動從學習資料中提取核心知識，生成重點筆記、選擇題、問答題及學習卡',
   },
   'feature.project.title': {
     'en': 'Project Management',
@@ -167,8 +167,8 @@ final Map<String, Map<String, String>> _strings = {
   },
   'tos.section2.title': {'en': '2. Description of Service', 'zh': '2. 服務描述'},
   'tos.section2.content': {
-    'en': 'Ghote is an intelligent study-assistance app focused on learning and knowledge organization. Leveraging AI, it automatically extracts core knowledge from your study materials and presents content in multiple formats, including key notes, multiple-choice questions, Q&A, and flashcards. Users can create Projects to manage different subjects or topics, and AI will analyze and generate various study materials.',
-    'zh': 'Ghote 是一個專注學習與知識整理的智能學習輔助 App，透過 AI 技術自動從學習資料中提取核心知識，並以多種形式呈現學習內容，包括重點筆記、選擇題、問答題及抽認卡。用戶可以建立 Project 管理不同科目或主題的學習資料，AI 會自動分析並生成各種學習材料。',
+    'en': 'Ghote is an intelligent study-assistance app focused on learning and knowledge organization. Leveraging AI, it automatically extracts core knowledge from your study materials and presents content in multiple formats, including key notes, multiple-choice questions, Q&A, and learn cards. Users can create Projects to manage different subjects or topics, and AI will analyze and generate various study materials.',
+    'zh': 'Ghote 是一個專注學習與知識整理的智能學習輔助 App，透過 AI 技術自動從學習資料中提取核心知識，並以多種形式呈現學習內容，包括重點筆記、選擇題、問答題及學習卡。用戶可以建立 Project 管理不同科目或主題的學習資料，AI 會自動分析並生成各種學習材料。',
   },
   'tos.section3.title': {'en': '3. User Responsibilities', 'zh': '3. 用戶責任'},
   'tos.section3.content': {

@@ -149,13 +149,13 @@ class GeminiService {
     }
   }
 
-  /// 生成抽認卡
+  /// 生成學習卡
   Future<List<Map<String, String>>> generateFlashcards({
     required String content,
     int count = 10,
   }) async {
     final prompt = '''
-基於以下內容，生成 $count 個抽認卡。每個抽認卡包含問題和答案。
+基於以下內容，生成 $count 個學習卡。每個學習卡包含問題和答案。
 
 內容：
 $content
